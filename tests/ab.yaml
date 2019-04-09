@@ -15,12 +15,14 @@ spec:
       regex: "^(?!.*Chrome).*Safari.*"
   - headers:
       cookie:
-        regex: "^(.*?;)?(type=insider)(;.*)?$"  
+        regex: "^(.*?;)?(type=insider)(;.*)?$"
   analysis:
     analyticsService: http://iter8analytics
     interval: 1m # optional; required only for live experiments
     experimentDeadline: 20m # optional; required only for live experiments
     warmupRequestCount: 100 # optional; required only for live experiments
+    AB: # all experiments are live experiments
+      maximize: conversion_rate # we will make this a proper user defined metric
     metrics:
     - name: iter8_latency
       succeedOn:
