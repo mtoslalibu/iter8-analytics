@@ -12,7 +12,7 @@ spec:
   match:
   - headers:
       user-agent:
-      regex: "^(?!.*Chrome).*Safari.*"
+        regex: "^(?!.*Chrome).*Safari.*"
   - headers:
       cookie:
         regex: "^(.*?;)?(type=insider)(;.*)?$"
@@ -23,9 +23,9 @@ spec:
     warmupRequestCount: 100 # optional; required only for live experiments
     maxTrafficPercent: 50.0 #optional
     stepSize: 2.0 #optional
-    AB: # all experiments are live experiments
-      maximize: conversion_rate # we will make this a proper user defined metric
     metrics:
+    - name: conversion_rate
+      optimize: True # The presence of the optimize key is what makes this an AB vs canary
     - name: iter8_latency
       succeedOn:
         delta: 0.1 # 10% increase in latency is ok with me
