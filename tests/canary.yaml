@@ -16,9 +16,8 @@ spec:
   - headers:
       cookie:
         regex: "^(.*?;)?(type=insider)(;.*)?$"
-  canary: # optional
-    maxTrafficPercent: 50.0 #optional
-    stepSize: 2.0 #optional
+  maxTrafficPercent: 50.0 #optional
+  stepSize: 2.0 #optional
   analysis:
     analyticsService: http://iter8analytics
     interval: 1m # optional; required only for live experiments

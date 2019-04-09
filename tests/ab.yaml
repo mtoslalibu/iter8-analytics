@@ -21,10 +21,10 @@ spec:
     interval: 1m # optional; required only for live experiments
     experimentDeadline: 20m # optional; required only for live experiments
     warmupRequestCount: 100 # optional; required only for live experiments
+    maxTrafficPercent: 50.0 #optional
+    stepSize: 2.0 #optional
     AB: # all experiments are live experiments
       maximize: conversion_rate # we will make this a proper user defined metric
-      maxTrafficPercent: 50.0 #optional
-      stepSize: 2.0 #optional
     metrics:
     - name: iter8_latency
       succeedOn:
