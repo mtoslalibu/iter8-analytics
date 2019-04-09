@@ -1,0 +1,22 @@
+apiVersion: serving.knative.dev/v1alpha1
+kind: Service
+metadata:
+  name: reviews
+  namespace: default
+spec:
+  runLatest:
+    configuration:
+      revisionTemplate:
+        spec:
+          container:
+            image: kimikowang/reviews-v3:knative_0.1
+            ports: 
+            - containerPort: 9080
+              name: http1
+            env:
+            - name: VERSION
+              value: v3
+            - name: RATINGS_HOSTNAME
+              value: ratings.default.svc.cluster.local
+            - name: RATINGS_SERVER_PORT
+              value: "80"
