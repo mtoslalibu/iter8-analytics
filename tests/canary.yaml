@@ -7,7 +7,7 @@ spec:
   #if you have more than one revision running currently, experiment cannot proceed
   targetService: reviews # required
   experimentNow: True # default True
-  canaryRevision: reviews-v3 # optional; if this is not specified, canary = latest
+  candidate: reviews-v3 # optional; if this is not specified, canary = latest
   # match condition; optional
   match:
   - headers:
@@ -15,7 +15,10 @@ spec:
       regex: "^(?!.*Chrome).*Safari.*"
   - headers:
       cookie:
-        regex: "^(.*?;)?(type=insider)(;.*)?$"  
+        regex: "^(.*?;)?(type=insider)(;.*)?$"
+  canary: # optional
+    maxTrafficPercent: 50.0 #optional
+    stepSize: 2.0 #optional
   analysis:
     analyticsService: http://iter8analytics
     interval: 1m # optional; required only for live experiments
