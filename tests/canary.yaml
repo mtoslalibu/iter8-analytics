@@ -9,13 +9,13 @@ spec:
   experimentNow: True # default True
   candidate: reviews-v3 # optional; if this is not specified, canary = latest
   # match condition; optional
-  match:
-  - headers:
-      user-agent:
-      regex: "^(?!.*Chrome).*Safari.*"
-  - headers:
-      cookie:
-        regex: "^(.*?;)?(type=insider)(;.*)?$"
+  # match: # table this for a while because knative does not support content aware routing
+  # - headers:
+  #     user-agent:
+  #     regex: "^(?!.*Chrome).*Safari.*"
+  # - headers:
+  #     cookie:
+  #       regex: "^(.*?;)?(type=insider)(;.*)?$"
   maxTrafficPercent: 50.0 #optional
   stepSize: 2.0 #optional
   analysis:
@@ -24,14 +24,14 @@ spec:
     experimentDeadline: 20m # optional; required only for live experiments
     warmupRequestCount: 100 # optional; required only for live experiments
     metrics:
-    - name: iter8_latency
+    - name: iter8_mean_latency
       succeedOn:
         delta: 0.1 # 10% increase in latency is ok with me
         confidence: 98
       stopOn: # optional
         threshold: 1.2s
         minRequests: 75 # optional
-    - name: iter8_error_rate
+    - name: iter8_mean_error_rate
       succeedOn:
         threshold: 0.02
         confidence: 99.9

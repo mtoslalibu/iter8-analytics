@@ -1,0 +1,40 @@
+apiVersion: iter8.ibm.com/v1alpha1
+kind: Canary
+metadata:
+  name: reviews
+  namespace: default
+spec:
+  #if you have more than one revision running currently, experiment cannot proceed
+  targetService: reviews # required # targetService is an object ref rather than a name; # knative sink
+  # candidate: reviews-v3 # optional; if this is not specified, canary = latest; objRefs here...
+  # match:  # match condition; optional
+  # - headers:
+  #     user-agent:
+  #     regex: "^(?!.*Chrome).*Safari.*"
+  # - headers:
+  #     cookie:
+  #       regex: "^(.*?;)?(type=insider)(;.*)?$"
+  # maxTrafficPercent: 50.0 #optional
+  # stepSize: 2.0 #optional
+  analysis:
+    analyticsEndpoint: http://iter8analytics # different ways of referencing it including obj ref
+    # credentials for the endpoint; internal ok -- external something has to be thought of
+    # interval: 1m # optional; required only for live experiments
+    experimentDeadline: 20m # optional; required only for live experiments
+    # warmupRequestCount: 100 # optional; required only for live experiments
+    metrics:
+    - name: iter8_latency
+      succeedOn:
+        delta: 0.1 # 10% increase in latency is ok with me
+        confidence: 98
+    #   stopOn: # optional
+    #     threshold: 1.2s
+    #     minRequests: 75 # optional
+    # - name: iter8_error_rate
+    #   succeedOn:
+    #     threshold: 0.02
+    #     confidence: 99.9
+    # - name: iter8_error_count
+    #   stopOn:
+    #     threshold: 20
+    # onSuccess: candidate # baseline, both
