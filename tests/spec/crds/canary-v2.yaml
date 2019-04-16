@@ -17,14 +17,6 @@ spec:
       criterion:
         type: delta
         value: 0.1
-    - metricName: iter8_stddev_latency
-      criterion:
-        type: delta
-        value: 0.5
-    - metricName: iter8_error_rate
-      criterion:
-        type: threshold
-        value: 0.02 # absolute threshold; 2%
     - name: iter8_error_count
       criterion:
         type: threshold

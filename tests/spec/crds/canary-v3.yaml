@@ -19,10 +19,6 @@ spec:
         type: delta
         value: 0.1
         sampleSize: 100 # if not specified, there is no requirement of min sample size
-    - metricName: iter8_stddev_latency
-      criterion:
-        type: delta
-        value: 0.5
     - metricName: iter8_error_rate
       criterion:
         type: threshold

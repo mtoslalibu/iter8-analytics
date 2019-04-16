@@ -31,6 +31,8 @@ spec:
       criterion:
         type: threshold
         value: 0.02 # absolute threshold; 2%
+        confidence: 98
+        useForTrafficControl: False
     - name: iter8_error_count
       criterion:
         type: threshold
