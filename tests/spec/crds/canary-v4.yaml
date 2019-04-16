@@ -22,18 +22,15 @@ spec:
         type: delta
         value: 0.1
         sampleSize: 100 # if not specified, there is no requirement of min sample size
-      failureTolerance: 10 # optional; default = 10
     - metricName: iter8_stddev_latency
       criterion:
         type: delta # 50% increase in latency's stddev is ok with me
         value: 0.5
         confidence: 98 # confidence based tests
-      failureTolerance: 10 # optional; default = 10
     - metricName: iter8_error_rate
       criterion:
         type: threshold
         value: 0.02 # absolute threshold; 2%
-      failureTolerance: 3 # optional; default = 10
     - name: iter8_error_count
       criterion:
         type: threshold
@@ -41,5 +38,5 @@ spec:
         # absolute threshold; 2%
         # optional; 0 means stop experiment immediately if this \
         # threshold is breached; default = 10
-      failureTolerance: 0 # optional; default = 10
+        stopOnFailure: true
     onSuccess: candidate # baseline, both
