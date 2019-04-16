@@ -17,19 +17,16 @@ spec:
       criterion:
         type: delta
         value: 0.1
-      failureTolerance: 10 # optional; default = 10
     - metricName: iter8_stddev_latency
       criterion:
         type: delta
         value: 0.5
-      failureTolerance: 10 # optional; default = 10
     - metricName: iter8_error_rate
       criterion:
         type: threshold
         value: 0.02 # absolute threshold; 2%
-      failureTolerance: 3 # optional; default = 10
     - name: iter8_error_count
       criterion:
         type: threshold
         value: 20
-      failureTolerance: 0 # optional; default = 10
+        stopOnFailure: true

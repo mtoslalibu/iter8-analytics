@@ -17,4 +17,3 @@ spec:
       criterion:
         type: delta
         value: 0.1
-      failureTolerance: 10 # optional; default = 10
