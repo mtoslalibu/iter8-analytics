@@ -5,11 +5,10 @@ metadata:
   namespace: default
 spec:
   targetService: reviews # required; targetService is an object ref rather than a name; # knative sink
-  analysis:
-    trafficControl:
-      strategy: "check_and_increment" # required;
-      maxTrafficPercent: 50.0 #optional; default = 50.0
-      stepSize: 2.0 #optional; default = 2.0
+  trafficControl:
+    strategy: "check_and_increment" # required;
+    maxTrafficPercent: 50.0 #optional; default = 50.0
+    stepSize: 2.0 #optional; default = 2.0
     analyticsEndPoint: http://iter8analytics/analytics/canary
     interval: 1m # optional; default = 1 min
     experimentDeadline: 30m # optional; default = 30 min
