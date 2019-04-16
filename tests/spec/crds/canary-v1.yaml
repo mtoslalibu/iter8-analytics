@@ -1,0 +1,20 @@
+apiVersion: iter8.ibm.com/v1alpha1
+kind: Canary
+metadata:
+  name: reviews
+  namespace: default
+spec:
+  targetService: reviews # required; targetService is an object ref rather than a name; # knative sink
+  analysis:
+    trafficControl:
+      strategy: "check_and_increment" # required;
+      maxTrafficPercent: 50.0 #optional; default = 50.0
+      stepSize: 2.0 #optional; default = 2.0
+    analyticsEndPoint: http://iter8analytics/analytics/canary
+    interval: 1m # optional; 1 min default;
+    experimentDeadline: 30m # optional; 30 min default;
+    metrics:
+    - name: iter8_mean_latency
+      succeedOn:
+        threshold: 1.2 # absolute threshold
+        failureTolerance: 10 # optional; default = 10

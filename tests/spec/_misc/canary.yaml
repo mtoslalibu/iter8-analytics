@@ -6,7 +6,6 @@ metadata:
 spec:
   #if you have more than one revision running currently, experiment cannot proceed
   targetService: reviews # required
-  experimentNow: True # default True
   candidate: reviews-v3 # optional; if this is not specified, canary = latest
   # match condition; optional
   # match: # table this for a while because knative does not support content aware routing
@@ -28,6 +27,7 @@ spec:
     - name: iter8_mean_latency
       succeedOn:
         delta: 0.1 # 10% increase in latency is ok with me
+    #   sample_size: 100 # default value    
         confidence: 98
       stopOn: # optional
         threshold: 1.2s

@@ -1,0 +1,39 @@
+apiVersion: iter8.ibm.com/v1alpha1
+kind: Canary
+metadata:
+  name: reviews
+  namespace: default
+spec:
+  targetService: reviews # required; targetService is an object ref rather than a name; # knative sink
+  candidate: reviews-v2 # optional; default = latest; this is the name of the revision
+  analysis:
+    trafficControl:
+      strategy: "check_and_increment" # required;
+      maxTrafficPercent: 50.0 #optional; default = 50.0
+      stepSize: 2.0 #optional; default = 2.0
+    analyticsEndPoint: http://iter8analytics/analytics/canary
+    interval: 1m # optional; default = 1 min
+    experimentDeadline: 30m # optional; default = 30 min
+    warmupRequestCount: 10 # optional; default = 10
+    metrics:
+    - name: iter8_mean_latency
+      succeedOn:
+        delta: 0.1 # relative threshold; baseline should have at most 10% latency increase
+        # sampleSize optional; if sample size is smaller than this, do not consider it a success
+        sampleSize: 100 # if not specified, there is no requirement of min sample size
+        failureTolerance: 10 # optional; default = 10
+    - name: iter8_stddev_latency
+      succeedOn:
+        delta: 0.5 # 50% increase in latency is ok with me
+        confidence: 98 # confidence based tests
+    - name: iter8_error_rate
+      succeedOn:
+        threshold: 0.02 # absolute threshold; 2%
+        failureTolerance: 3 # optional; default = 10
+    - name: iter8_error_count
+      succeedOn:
+        threshold: 20 # absolute threshold; 2%
+        # optional; 0 means stop experiment immediately if this \
+        # threshold is breached; default = 10
+        failureTolerance: 0
+    onSuccess: candidate # baseline, both
