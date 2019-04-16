@@ -1,0 +1,84 @@
+{
+    "metric_backend_url": "http://...",
+
+    "baseline": {
+        "metrics": [
+            {
+                "name": "iter8_latency",
+                "type": "histogram",
+                "sample_size": 347,
+                "statistics": {
+                  "min": 10,
+                  "max": 768,
+                  "mean": 56.8,
+                  "stddev": 14.78,
+                  "first_quartile": 200,
+                  "median": 70,
+                  "third_quartile": 200,
+                  "95th_percentile": 600,
+                  "99th_percentile": 750
+                },
+                "value": null
+            },
+            {
+                "name": "iter8_error_rate",
+                "type": "gauge",
+                "sample_size": 347,
+                "statistics": null,
+                "value": 0.25
+            },
+            {
+                "name": "iter8_error_count",
+                "type": "counter",
+                "sample_size": 347,
+                "statistics": null,
+                "value": 12
+            }
+        ],
+        "traffic_percentage": 85
+    },
+    "candidate": {
+        "metrics": [
+        ],
+        "traffic_percentage": 15
+    },
+    "assessment": {
+        "summary": {
+            "conclusions": [
+                "Data does not support the conclusion that the candidate succeeded.",
+                "Experiment can continue safely."
+            ],
+            "all_success_criteria_met": false,
+            "abort_experiment": false
+        },
+        "success_criteria": [
+            {
+                "metric_name": "iter8_latency",
+                "conclusion": [
+                    "Data does not support the conclusion that iter8_latency of the candidate is within 0.1 of the baseline",
+                    "Failure counter is at 7 for iter8_latency, which is less than 10"
+                ],
+                "success_criterion_met": false,
+                "abort_experiment": false
+            },
+            {
+                "metric_name": "iter8_error_rate",
+                "conclusion": [
+                    "Data supports the conclusion that iter8_error_rate of the candidate is within 0.02."
+                ],
+                "success_criterion_met": true,
+                "abort_experiment": false
+            },
+            {
+                "metric_name": "iter8_error_count",
+                "conclusion": [
+                    "iter8_error_count of the candidate is within 20."
+                ],
+                "success_criterion_met": true,
+                "abort_experiment": false
+            }
+        ]
+    },
+    "_last_state": {
+    }
+}
