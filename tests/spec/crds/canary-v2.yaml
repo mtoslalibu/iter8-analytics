@@ -12,20 +12,24 @@ spec:
     analyticsEndPoint: http://iter8analytics/analytics/canary
     interval: 1m # optional; 1 min default;
     experimentDeadline: 30m # optional; 30 min default;
-    metrics:
-    - name: iter8_latency
-      succeedOn:
-        delta: 0.1 # relative threshold; baseline should have at most 10% latency increase
-        failureTolerance: 10 # optional; default = 10
-    - name: iter8_stddev_latency
-      succeedOn:
-        delta: 0.5 # relative threshold; baseline should have at most 10% latency increase
-        failureTolerance: 10 # optional; default = 10
-    - name: iter8_error_rate
-      succeedOn:
-        threshold: 0.02 # absolute threshold; 2%
-        failureTolerance: 3 # optional; default = 10
+    successCriteria:
+    - metricName: iter8_latency
+      criterion:
+        type: delta
+        value: 0.1
+      failureTolerance: 10 # optional; default = 10
+    - metricName: iter8_stddev_latency
+      criterion:
+        type: delta
+        value: 0.5
+      failureTolerance: 10 # optional; default = 10
+    - metricName: iter8_error_rate
+      criterion:
+        type: threshold
+        value: 0.02 # absolute threshold; 2%
+      failureTolerance: 3 # optional; default = 10
     - name: iter8_error_count
-      succeedOn:
-        threshold: 20 # absolute threshold; 2%
-        failureTolerance: 0 # optional; default = 10
+      criterion:
+        type: threshold
+        value: 20
+      failureTolerance: 0 # optional; default = 10

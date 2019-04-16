@@ -13,24 +13,25 @@ spec:
     interval: 1m # optional; default = 1 min
     experimentDeadline: 30m # optional; default = 30 min
     warmupRequestCount: 10 # optional; default = 10
-    metrics:
-    - name: iter8_latency
-      succeedOn:
-        delta: 0.1 # relative threshold; baseline should have at most 10% latency increase
-        # sampleSize optional; if sample size is smaller than this, do not consider it a success
+    successCriteria:
+    - metricName: iter8_latency
+      criterion:
+        type: delta
+        value: 0.1
         sampleSize: 100 # if not specified, there is no requirement of min sample size
-        failureTolerance: 10 # optional; default = 10
-    - name: iter8_stddev_latency
-      succeedOn:
-        delta: 0.5 # relative threshold; baseline should have at most 10% latency increase
-        failureTolerance: 10 # optional; default = 10
-    - name: iter8_error_rate
-      succeedOn:
-        threshold: 0.02 # absolute threshold; 2%
-        failureTolerance: 3 # optional; default = 10
+      failureTolerance: 10 # optional; default = 10
+    - metricName: iter8_stddev_latency
+      criterion:
+        type: delta
+        value: 0.5
+      failureTolerance: 10 # optional; default = 10
+    - metricName: iter8_error_rate
+      criterion:
+        type: threshold
+        value: 0.02 # absolute threshold; 2%
+      failureTolerance: 3 # optional; default = 10
     - name: iter8_error_count
-      succeedOn:
-        threshold: 20 # absolute threshold; 2%
-        # optional; 0 means stop experiment immediately if this \
-        # threshold is breached; default = 10
-        failureTolerance: 0
+      criterion:
+        type: threshold
+        value: 20
+      failureTolerance: 0 # optional; default = 10

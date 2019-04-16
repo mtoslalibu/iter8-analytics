@@ -12,8 +12,9 @@ spec:
     analyticsEndPoint: http://iter8analytics/analytics/canary
     interval: 1m # optional; 1 min default;
     experimentDeadline: 30m # optional; 30 min default;
-    metrics:
-    - name: iter8_latency
-      succeedOn:
-        threshold: 1.2 # absolute threshold
-        failureTolerance: 10 # optional; default = 10
+    successCriteria:
+    - metricName: iter8_latency
+      criterion:
+        type: delta
+        value: 0.1
+      failureTolerance: 10 # optional; default = 10
