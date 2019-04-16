@@ -14,7 +14,7 @@ spec:
     experimentDeadline: 30m # optional; default = 30 min
     warmupRequestCount: 10 # optional; default = 10
     metrics:
-    - name: iter8_mean_latency
+    - name: iter8_latency
       succeedOn:
         delta: 0.1 # relative threshold; baseline should have at most 10% latency increase
         # sampleSize optional; if sample size is smaller than this, do not consider it a success

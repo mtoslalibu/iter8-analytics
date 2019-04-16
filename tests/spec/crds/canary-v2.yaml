@@ -13,7 +13,7 @@ spec:
     interval: 1m # optional; 1 min default;
     experimentDeadline: 30m # optional; 30 min default;
     metrics:
-    - name: iter8_mean_latency
+    - name: iter8_latency
       succeedOn:
         delta: 0.1 # relative threshold; baseline should have at most 10% latency increase
         failureTolerance: 10 # optional; default = 10

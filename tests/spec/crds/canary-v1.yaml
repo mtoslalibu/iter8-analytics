@@ -13,7 +13,7 @@ spec:
     interval: 1m # optional; 1 min default;
     experimentDeadline: 30m # optional; 30 min default;
     metrics:
-    - name: iter8_mean_latency
+    - name: iter8_latency
       succeedOn:
         threshold: 1.2 # absolute threshold
         failureTolerance: 10 # optional; default = 10
