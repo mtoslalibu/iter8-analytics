@@ -3,14 +3,16 @@
         "start_time": "",
         "end_time": "",
         "tags": {
-            "destination_service_name": "reviews-v2-service"
+            "destination_service_name": "reviews-v2-service",
+            "destination_service_namespace": "default"
         }
     },
     "candidate": {
         "start_time": "",
         "end_time": "",
         "tags": {
-            "destination_service_name": "reviews-v3-service"
+            "destination_service_name": "reviews-v3-service",
+            "destination_service_namespace": "default"
         }
     },
     "traffic_control": {
