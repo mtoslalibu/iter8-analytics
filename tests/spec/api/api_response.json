@@ -6,8 +6,8 @@
             {
                 "name": "iter8_latency",
                 "type": "histogram",
-                "sample_size": 347,
                 "statistics": {
+                  "sample_size": 347,
                   "min": 10,
                   "max": 768,
                   "mean": 56.8,
@@ -17,22 +17,23 @@
                   "third_quartile": 200,
                   "95th_percentile": 600,
                   "99th_percentile": 750
-                },
-                "value": null
+                }
             },
             {
                 "name": "iter8_error_rate",
                 "type": "gauge",
-                "sample_size": 347,
-                "statistics": null,
-                "value": 0.25
+                "statistics": {
+                  "sample_size": 347,
+                  "value": 0.25
+                }
             },
             {
                 "name": "iter8_error_count",
                 "type": "counter",
-                "sample_size": 347,
-                "statistics": null,
-                "value": 12
+                "statistics": {
+                  "sample_size": 347,
+                  "value": 0.25
+                }
             }
         ],
         "traffic_percentage": 85
