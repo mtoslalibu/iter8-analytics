@@ -33,7 +33,7 @@ class Iter8Histogram(Iter8Metric): # custom
                 "destination_service_namespace": "default"
             }
         }, {
-            "query_name": "mean_latency",
+            "query_name": "mean",
             "query_template": "(sum(increase(istio_request_duration_seconds_sum{source_app='istio-ingressgateway', reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_request_duration_seconds_count{source_app='istio-ingressgateway', reporter='source'}[$interval]$offset_str)) by ($entity_labels))",
             "entity_tags": {
                 "destination_service_name": "reviews-v2-service",
@@ -100,7 +100,7 @@ class Iter8Gauge(Iter8Metric): # custom
                 "destination_service_namespace": "default"
             }
         }, {
-            "query_name": "error_rate",
+            "query_name": "gauge",
             "query_template": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels))",
             "entity_tags": {
                 "destination_service_name": "reviews-v2-service",
@@ -110,7 +110,6 @@ class Iter8Gauge(Iter8Metric): # custom
         """
         super().__init__(name, type, query_specs)
         # the above call should have created self.prom
-
 
 class Iter8Counter(Iter8Gauge): # counter is a gauge whose value keeps increasing
     pass
