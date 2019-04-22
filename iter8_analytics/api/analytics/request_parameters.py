@@ -6,8 +6,8 @@ from flask_restplus import fields
 from iter8_analytics.api.restplus import api
 
 ####
-# Schema of the request body with the parameters
-# GET /analytics/canary/check_and_increment
+# Schema of the request body with the parameters for
+# POST /analytics/canary/check_and_increment
 ####
 START_TIME_PARAM_STR = 'start_time'
 END_TIME_PARAM_STR = 'end_time'
@@ -105,8 +105,9 @@ traffic_control = api.model('traffic_control', {
         'baseline version; "canary": all traffic goes to the canary version; '
         '"both": traffic is split across baseline and canary. Defaults to '
         '"canary"'),
-    SUCCESS_CRITERIA_STR: fields.Nested(
-        success_criterion, required=True,
+    SUCCESS_CRITERIA_STR: fields.List(
+        fields.Nested(success_criterion),
+        required=True,
         description='List of criteria for assessing the canary version')
 })
 
