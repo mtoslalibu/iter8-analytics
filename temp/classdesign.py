@@ -3,17 +3,12 @@ class Iter8Metric:
         self.name = name
         self.type = type
         self.query_specs = query_specs
-        self.prom_queries = [PrometheusQuery(prom_url, query_spec["query_name"], query_spec["query_template"]) for query_spec in query_specs]
-        raise NotImplementedError
+        self.prom_queries = [PrometheusQuery(prom_url, query_spec) for query_spec in query_specs]
 
-    def get_stats(self, interval, offset):
+    def get_stats(self, interval_str, offset_str=""):
         results = {}
         for query in self.prom_queries:
-            results[query.query_name] = query.query_from_template({
-                "interval": interval,
-                "offset_str": offset
-                entity_labels: ",".join(...)
-            })
+            results[query.query_name] = query.query_from_template(interval_str, offset_str)
         return results
 
 
@@ -26,13 +21,13 @@ class Iter8Histogram(Iter8Metric): # custom
             "query_name": "sample_size",
             "query_template": "sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_service_name": "treenode-s6dml-service",
                 "destination_service_namespace": "default"
             }
         }, {
             "query_name": "min",
             "query_template": "sum(increase(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels)",
-            "statistic": "min",
+            "aggregation": "min",
             "entity_tags": {
                 "destination_service_name": "reviews-v2-service",
                 "destination_service_namespace": "default"
@@ -47,14 +42,14 @@ class Iter8Histogram(Iter8Metric): # custom
         }, {
             "query_name": "max",
             "query_template": "sum(increase(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels)",
-            "statistic": "max",
+            "aggregation": "max",
             "entity_tags": {
                 "destination_service_name": "reviews-v2-service",
                 "destination_service_namespace": "default"
         }, {
             "query_name": "stddev",
             "query_template": "sum(increase(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels)",
-            "statistic": "stddev",
+            "aggregation": "stddev",
             "entity_tags": {
                 "destination_service_name": "reviews-v2-service",
                 "destination_service_namespace": "default"
@@ -92,26 +87,6 @@ class Iter8Histogram(Iter8Metric): # custom
         """
         super().__init__(name, type, query_specs)
 
-    # def get_stats(self, interval, offset):
-    #     results = self.get_query_results(interval, offset)
-    #     statistics = {}
-    #
-    #     return {
-    #         "sample_size": results["sample_size"],
-    #         "statistics":
-    #         {
-    #             "min": results["statistics"]["min"],
-    #             "mean": results["statistics"]["mean"],
-    #             "max": results["statistics"]["max"],
-    #             "stddev": results["statistics"]["stddev"],
-    #             "first_quartile": results["statistics"]["first_quartile"],
-    #             "median": results["statistics"]["median"],
-    #             "third_quartile": results["statistics"]["third_quartile"],
-    #             "95th_percentile": results["statistics"]["95th_percentile"],
-    #             "99th_percentile": results["statistics"]["99th_percentile"]
-    #           }
-    #     }
-
 class Iter8Gauge(Iter8Metric): # custom
     def __init__(self, name, type, query_specs):
         """
@@ -135,13 +110,6 @@ class Iter8Gauge(Iter8Metric): # custom
         """
         super().__init__(name, type, query_specs)
         # the above call should have created self.prom
-
-    # def get_stats(self, interval, offset):
-    #     results = self.get_query_results(interval, offset)
-    #     return {
-    #         "sample_size": results["sample_size"],
-    #         "value": results["error_rate"]
-    #     }
 
 
 class Iter8Counter(Iter8Gauge): # counter is a gauge whose value keeps increasing

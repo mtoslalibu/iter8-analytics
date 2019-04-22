@@ -1,0 +1,37 @@
+from string import Template
+import requests
+
+class PrometheusQuery():
+    def __init__(self, prometheus_url, query_spec):
+        self.prometheus_url = prometheus_url +  "/api/v1/query"
+        self.query_spec = query_spec
+
+    def query_from_template(interval_str, offset_str):
+        kwargs = {
+        "interval": interval_str, #interval must be interval string
+        "offset_str": f" offset {offset_str}" if offset_str else "", #offset must be offset string
+        "entity_labels": ",".join(self.query_spec["entity_tags"].keys())
+        }
+        query_template = Template(self.query_spec["query_template"])
+        query = query_template.substitute(**kwargs)
+        return self.query(query)
+
+    def query(self, query):
+        params = {'query': query}
+        prom_result = requests.get(self.prometheus_url, params=params).json()
+        return self.post_process(prom_result)
+
+
+    def post_process(self, prom_result):
+        results = prom_result["data"]["result"]
+        if prom_result["status"] == "error":
+            raise ValueError("Invalid query")
+        if results == []:
+            return None
+        data = []
+        match_key = self.query_spec["entity_tags"]
+        for each_result in results:
+            if each_result["metric"] == match_key:
+                return each_result["value"]
+        #handle corner cases
+        
