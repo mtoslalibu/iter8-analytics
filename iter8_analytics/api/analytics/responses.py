@@ -173,7 +173,7 @@ ASSESSMENT_STR = 'assessment'
 
 check_and_increment_response = api.model('check_and_increment_response', {
     METRIC_BACKEND_URL_STR: fields.String(
-        required=True, 
+        required=True,
         example='http://localhost:9090',
         description='URL to query the time-series database'),
     request_parameters.BASELINE_STR: fields.Nested(
@@ -189,5 +189,6 @@ check_and_increment_response = api.model('check_and_increment_response', {
     ASSESSMENT_STR: fields.Nested(
         assessment,
         required=True,
-        description='Summary of the canary assessment based on success criteria')
+        description='Summary of the canary assessment based on success '
+        'criteria')
 })
