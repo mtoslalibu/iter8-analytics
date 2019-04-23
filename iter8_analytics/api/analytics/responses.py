@@ -190,5 +190,9 @@ check_and_increment_response = api.model('check_and_increment_response', {
         assessment,
         required=True,
         description='Summary of the canary assessment based on success '
-        'criteria')
+        'criteria'),
+    request_parameters.LAST_STATE_STR: fields.Raw(
+        required=True,
+        description='State returned by the server, to be passed on the '
+        'next call')
 })

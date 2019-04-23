@@ -112,6 +112,7 @@ traffic_control = api.model('traffic_control', {
 })
 
 TRAFFIC_CONTROL_STR = 'traffic_control'
+LAST_STATE_STR = '_last_state'
 
 check_and_increment_parameters = api.model('check_and_increment_parameters', {
     BASELINE_STR: fields.Nested(
@@ -126,5 +127,8 @@ check_and_increment_parameters = api.model('check_and_increment_parameters', {
         'version'),
     TRAFFIC_CONTROL_STR: fields.Nested(
         traffic_control, required=True,
-        description='Parameters controlling the behavior of the analytics')
+        description='Parameters controlling the behavior of the analytics'),
+    LAST_STATE_STR: fields.Raw(
+        required=True,
+        description='State returned by the server on the previous call')
 })
