@@ -1,0 +1,4 @@
+{
+  "metric_backend_url": "http://prometheus.istio-system.svc.cluster.local:9090",
+  "test_connection_query": "istio_requests_total"
+}

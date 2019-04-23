@@ -1,22 +1,28 @@
 class StatisticalTests: # only provides class methods for statistical tests; cannot be instantiated
     @staticmethod
     def simple_threshold(candidate_metric, criterion):
-        test_result = {}
+        test_result = {
+            "sample_size_sufficient": True
+        }
         if candidate_metric["statistics"]["sample_size"] < criterion["sampleSize"]:
+            test_result["sample_size_sufficient"] = False
             test_result["success"] = False
         else:
-            if candidate_metric["statistics"]["value"] < criterion["value"]:
+            if candidate_metric["statistics"]["value"] <= criterion["value"]:
                 test_result["success"] = True
             else:
                 test_result["success"] = False
         return test_result
 
     def simple_delta(baseline_metric, candidate_metric, criterion):
-        test_result = {}
-        if candidate_metric["statistics"]["sample_size"] < criterion["sampleSize"]:
+        test_result = {
+            "sample_size_sufficient": True
+        }
+        if candidate_metric["statistics"]["sample_size"] < criterion["sampleSize"] or baseline_metric["statistics"]["sample_size"] < criterion["sampleSize"]:
+            test_result["sample_size_sufficient"] = False
             test_result["success"] = False
         else:
-            if candidate_metric["statistics"]["value"] < ((1 + criterion["value"]) * baseline_metric["statistics"]["value"]):
+            if candidate_metric["statistics"]["value"] <= ((1 + criterion["value"]) * baseline_metric["statistics"]["value"]):
                 test_result["success"] = True
             else:
                 test_result["success"] = False
@@ -53,10 +59,12 @@ class SuccessCriterion:
         delta_or_threshold = "delta" if self.criterion["type"] == "delta" else "threshold"
         confidence_str = f"with confidence {self.criterion['confidence']}%" if "confidence" in self.criterion else ""
         baseline_str = "of the baseline" if self.criterion["type"] == "delta" else ""
+        result_str = f"{self.metric_name} of the candidate {is_or_is_not} within {delta_or_threshold} {self.criterion['value']} {confidence_str} {baseline_str}. "
+        conclusion_str = "Insufficient sample size. " if not test_result["sample_size_sufficient"] else result_str
 
         return {
             "metric_name": self.metric_name,
-            "conclusion": [f"{self.metric_name} of the candidate {is_or_is_not} within {delta_or_threshold} {self.criterion['value']} {confidence_str} {baseline_str}"],
+            "conclusion": [conclusion_str],
             "success_criterion_met": test_result["success"],
             "abort_experiment": self.criterion["stop_on_failure"] and not test_result["success"]
         }

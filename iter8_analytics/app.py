@@ -21,7 +21,7 @@ app.config['RESTPLUS_MASK_SWAGGER'] = False
 
 @app.after_request
 def modify_headers(response):
-    '''Sets the server HTTP header returned to the clients for all requests 
+    '''Sets the server HTTP header returned to the clients for all requests
     to hide the runtime information'''
     response.headers['server'] = 'iter8 Analytics'
     return response
@@ -46,7 +46,7 @@ def config_logger():
 
 
 def config_env():
-    '''Reads the environment variables that control the server behavior and 
+    '''Reads the environment variables that control the server behavior and
     populates the config dictionary'''
     logging.getLogger(__name__).info('Configuring iter8 analytics server')
 
