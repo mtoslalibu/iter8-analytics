@@ -1,9 +1,27 @@
 class StatisticalTests: # only provides class methods for statistical tests; cannot be instantiated
+    @staticmethod
+    def simple_threshold(candidate_metric, criterion):
+        test_result = {}
+        if candidate_metric["statistics"]["sample_size"] < criterion["sampleSize"]:
+            test_result["success"] = False
+        else:
+            if candidate_metric["statistics"]["value"] < criterion["value"]:
+                test_result["success"] = True
+            else:
+                test_result["success"] = False
+        return test_result
 
-  @staticmethod
-  def add_element(x):
-     pass
-     
+    def simple_delta(baseline_metric, candidate_metric, criterion):
+        test_result = {}
+        if candidate_metric["statistics"]["sample_size"] < criterion["sampleSize"]:
+            test_result["success"] = False
+        else:
+            if candidate_metric["statistics"]["value"] < ((1 + criterion["value"]) * baseline_metric["statistics"]["value"]):
+                test_result["success"] = True
+            else:
+                test_result["success"] = False
+        return test_result
+
 class SuccessCriterion:
     """
     Class with methods for performing a statistical test on a metric.
@@ -61,5 +79,5 @@ class ThresholdCriterion(SuccessCriterion):
 
     def test(self):
         # t_test, bernoulli_test are the other options beyond simple_threshold
-        test_result = StatisticalTests.simple_threshold(self.candidate_metric)
+        test_result = StatisticalTests.simple_threshold(self.candidate_metric, self.criterion)
         return self.post_processed_test_result(test_result)
