@@ -100,7 +100,7 @@ class Iter8Gauge(Iter8Metric): # custom
                 "destination_service_namespace": "default"
             }
         }, {
-            "query_name": "gauge",
+            "query_name": "value",
             "query_template": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels))",
             "entity_tags": {
                 "destination_service_name": "reviews-v2-service",
