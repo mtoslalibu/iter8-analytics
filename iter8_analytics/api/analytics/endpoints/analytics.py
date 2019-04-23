@@ -20,7 +20,7 @@ analytics_namespace = api.namespace(
 #################
 
 @analytics_namespace.route('/canary/check_and_increment')
-class CanaryTest(Resource):
+class CanaryCheckAndIncrement(Resource):
 
     @api.expect(request_parameters.check_and_increment_parameters,
                 validate=True)

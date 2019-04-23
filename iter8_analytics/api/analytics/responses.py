@@ -133,7 +133,7 @@ summary = api.model('summary', {
     )
 })
 
-success_criterion_output = api.model('success_criterion', {
+success_criterion_output = api.model('success_criterion_output', {
     METRIC_NAME_STR: fields.String(
         required=True, example='iter8_latency',
         description='Name identifying the metric'),
