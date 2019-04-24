@@ -1,0 +1,10 @@
+[
+  {
+    "name": "istio_request_duration_seconds_sum",
+    "template": "istio_request_duration_seconds_sum",
+    ""
+
+  }, {
+
+  }
+]
