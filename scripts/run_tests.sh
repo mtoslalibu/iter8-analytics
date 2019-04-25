@@ -2,9 +2,6 @@
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-
-# export ISTIO_ANALYTICS_DEBUG=false
-
 echo ""
 echo ""
 echo "===================================="
