@@ -107,3 +107,4 @@ venv.bak/
 # VSCode
 .vscode
 
+code_coverage/
