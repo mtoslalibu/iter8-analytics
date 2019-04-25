@@ -1,0 +1,52 @@
+    {
+    "baseline": {
+        "start_time": "",
+        "end_time": "",
+        "tags": {
+            "destination_service_name": "reviews-v2-service",
+            "destination_service_namespace": "default"
+        }
+    },
+    "candidate": {
+        "start_time": "",
+        "end_time": "",
+        "tags": {
+            "destination_service_name": "reviews-v3-service",
+            "destination_service_namespace": "default"
+        }
+    },
+    "traffic_control": {
+        "strategy": "check_and_increment",
+        "max_traffic_percent": 50.0,
+        "step_size": 2,
+        "warmup_request_count": 100,
+        "successCriteria": [
+            {
+                "metricName": "iter8_latency",
+                "criterion": {
+                    "type": "delta",
+                    "value": 0.1,
+                    "sampleSize": 100
+                }
+            },
+            {
+                "metricName": "iter8_error_rate",
+                "criterion": {
+                    "type": "threshold",
+                    "value": 0.02,
+                    "confidence": 98,
+                    "use_for_traffic_control": false
+                }
+            },
+            {
+                "name": "iter8_error_count",
+                "criterion": {
+                    "type": "threshold",
+                    "value": 20,
+                    "stop_on_failure": true
+                }
+            }
+        ],
+    "_last_state": {
+    }
+}

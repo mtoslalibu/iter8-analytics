@@ -6,32 +6,33 @@ metadata:
 spec:
   #if you have more than one revision running currently, experiment cannot proceed
   targetService: reviews # required
-  experimentNow: True # default True
   candidate: reviews-v3 # optional; if this is not specified, canary = latest
   # match condition; optional
-  match:
-  - headers:
-      user-agent:
-      regex: "^(?!.*Chrome).*Safari.*"
-  - headers:
-      cookie:
-        regex: "^(.*?;)?(type=insider)(;.*)?$"
-  maxTrafficPercent: 50.0 #optional
-  stepSize: 2.0 #optional
+  # match: # table this for a while because knative does not support content aware routing
+  # - headers:
+  #     user-agent:
+  #     regex: "^(?!.*Chrome).*Safari.*"
+  # - headers:
+  #     cookie:
+  #       regex: "^(.*?;)?(type=insider)(;.*)?$"
+  trafficControl:
+    maxTrafficPercent: 50.0 #optional
+    stepSize: 2.0 #optional
   analysis:
     analyticsService: http://iter8analytics
     interval: 1m # optional; required only for live experiments
     experimentDeadline: 20m # optional; required only for live experiments
     warmupRequestCount: 100 # optional; required only for live experiments
     metrics:
-    - name: iter8_latency
+    - name: iter8_mean_latency
       succeedOn:
         delta: 0.1 # 10% increase in latency is ok with me
+    #   sample_size: 100 # default value    
         confidence: 98
       stopOn: # optional
         threshold: 1.2s
         minRequests: 75 # optional
-    - name: iter8_error_rate
+    - name: iter8_mean_error_rate
       succeedOn:
         threshold: 0.02
         confidence: 99.9
