@@ -1,6 +1,7 @@
 {
     "iter8_latency": {
         "type": "histogram",
+        "assessment_statistic_name": "mean",
         "query_templates": {
         "sample_size": "sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
         "min": "sum(increase(istio_request_duration_seconds_bucket{reporter='source', source_app='istio-ingressgateway'}[$interval]$offset_str)) by (le, $entity_labels)",
@@ -16,6 +17,7 @@
       },
     "iter8_error_rate": {
         "type": "gauge",
+        "assessment_statistic_name": "value",
         "query_templates": {
           "sample_size": "sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
           "value": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels))"
@@ -23,6 +25,7 @@
       },
     "iter8_error_count": {
         "type": "counter",
+        "assessment_statistic_name": "value",
         "query_templates": {
         "sample_size": "sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
         "value": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels))"
