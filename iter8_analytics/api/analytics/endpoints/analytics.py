@@ -64,6 +64,7 @@ class CanaryCheckAndIncrement(Resource):
         print(self.response["assessment"]["success_criteria"])
 
     def create_response_object(self, payload):
+        """Create response object corresponding to payload. This has everything."""
         self.response = {
             "metric_backend_url": prom_config["metric_backend_url"],
             "canary": {
