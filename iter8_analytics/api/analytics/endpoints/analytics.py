@@ -52,7 +52,7 @@ class CanaryCheckAndIncrement(Resource):
         for each_criterion in payload["traffic_control"]["success_criteria"]:
             self.response["baseline"]["metrics"].append(self.get_results(each_criterion["metric_name"], payload["baseline"]))
             self.response["canary"]["metrics"].append(self.get_results(each_criterion["metric_name"], payload["canary"]))
-            self.get_success_criteria(each_criterion)
+            #self.get_success_criteria(each_criterion)
         return self.response
 
     def get_success_criteria(self, criterion):
