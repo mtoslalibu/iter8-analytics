@@ -55,7 +55,7 @@ class CanaryCheckAndIncrement(Resource):
             self.append_success_criteria(each_criterion)
 
         self.append_assessment_summary()
-        self.append_traffic_decision(payload["_last_state"])
+        self.append_traffic_decision(payload)
         return self.response
 
     def append_success_criteria(self, criterion):
