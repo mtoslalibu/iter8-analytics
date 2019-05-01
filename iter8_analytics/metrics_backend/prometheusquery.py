@@ -20,7 +20,7 @@ class PrometheusQuery():
 
     def query(self, query):
         params = {'query': query}
-        log.info(query)
+        #log.info(query)
         prom_result = requests.get(self.prometheus_url, params=params).json()
         return self.post_process(prom_result)
 

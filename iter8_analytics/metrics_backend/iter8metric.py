@@ -27,7 +27,9 @@ class Iter8MetricFactory:
             query_spec = {}
             query_spec["query_name"] = query
             query_spec["query_template"] = metrics_config[metric_name]["query_templates"][query]
-            query_spec["zero_value_on_null"] = metrics_config[metric_name]["zero_value_on_null"]
+            query_spec["zero_value_on_null"] = False
+            if query_spec["query_name"] == "value" or query_spec["query_name"] == "sample_size":
+                query_spec["zero_value_on_null"] = metrics_config[metric_name]["zero_value_on_null"]
             query_spec["entity_tags"] = entity_tag
             metric_spec["query_specs"].append(query_spec)
         return metric_spec
@@ -37,10 +39,16 @@ class Iter8MetricFactory:
         start = parser.parse(start_time)
         end = parser.parse(end_time)
         now = datetime.now(timezone.utc)
-        interval = end-start
-        offset = now-end
-        interval_str = str(interval.seconds) + "s"
-        offset_str = str(offset.seconds) + "s"
+        if start < end:
+            interval = end-start
+            interval_str = str(interval.seconds) + "s"
+            if end < now:
+                offset = now-end
+                offset_str = str(offset.seconds) + "s"
+            else:
+                offset_str = ""
+        else:
+            raise ValueError("Start time must be less than end time")
         return interval_str,offset_str
 
 class Iter8Metric:

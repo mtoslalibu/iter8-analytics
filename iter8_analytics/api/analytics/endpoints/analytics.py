@@ -52,15 +52,22 @@ class CanaryCheckAndIncrement(Resource):
         for each_criterion in payload["traffic_control"]["success_criteria"]:
             self.response["baseline"]["metrics"].append(self.get_results(each_criterion["metric_name"], payload["baseline"]))
             self.response["canary"]["metrics"].append(self.get_results(each_criterion["metric_name"], payload["canary"]))
-            self.get_success_criteria(each_criterion)
+            self.append_success_criteria(each_criterion)
+
+        self.append_assessment_summary()
         return self.response
 
-    def get_success_criteria(self, criterion):
+    def append_success_criteria(self, criterion):
         if criterion["type"] == "delta":
             self.response["assessment"]["success_criteria"].append(DeltaCriterion(criterion, self.response["baseline"]["metrics"][-1], self.response["canary"]["metrics"][-1]).test())
         else:
             self.response["assessment"]["success_criteria"].append(ThresholdCriterion(criterion, self.response["canary"]["metrics"][-1]).test())
-        print(self.response["assessment"]["success_criteria"])
+        #print(self.response["assessment"]["success_criteria"])
+
+    def append_assessment_summary(self):
+        self.response["assessment"]["summary"]["all_success_criteria_met"] = all(each_criterion["success_criterion_met"] for each_criterion in self.response["assessment"]["success_criteria"])
+        self.response["assessment"]["summary"]["abort_experiment"] = any(each_criterion["abort_experiment"] for each_criterion in self.response["assessment"]["success_criteria"])
+        self.response["assessment"]["summary"]["conclusions"] = ["All ok"]
 
     def create_response_object(self, payload):
         """Create response object corresponding to payload. This has everything and more."""
