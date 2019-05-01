@@ -15,11 +15,11 @@ TAGS_PARAM_STR = 'tags'
 
 version_definition = api.model('version_definition', {
     START_TIME_PARAM_STR: fields.DateTime(
-        required=True, dt_format='iso8601',
+        required=True, dt_format='iso8601', example="2019-05-01T19:00:02.389Z",
         description='ISO8601 timestamp for the beginning of the time range '
         'of interest'),
     END_TIME_PARAM_STR: fields.DateTime(
-        required=False, dt_format='iso8601',
+        required=False, dt_format='iso8601', example="2019-05-01T19:30:02.389Z",
         description='ISO8601 timestamp for the end of the time range of '
         'interest; if omitted, current time is assumed'),
     TAGS_PARAM_STR: fields.Raw(
