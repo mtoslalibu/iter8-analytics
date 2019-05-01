@@ -11,6 +11,8 @@ import iter8_analytics.constants as constants
 from flask_restplus import Resource
 from flask import request
 
+from datetime import datetime, timezone
+
 import json
 import os
 import logging
@@ -162,8 +164,9 @@ class CanaryCheckAndIncrement(Resource):
         metric_spec = self.metric_factory.create_metric_spec(
             metrics_config, metric_name, payload["tags"])
         metrics_object = self.metric_factory.get_iter8_metric(metric_spec)
+        end_time = payload["end_time"] if "end_time" in payload else str(datetime.now(timezone.utc))
         interval_str, offset_str = self.metric_factory.get_interval_and_offset_str(
-            payload["start_time"], payload["end_time"])
+            payload["start_time"], end_time)
         statistics = metrics_object.get_stats(interval_str, offset_str)
         return {
             "metric_name": metric_name,
