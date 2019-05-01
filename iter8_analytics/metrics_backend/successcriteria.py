@@ -15,6 +15,7 @@ class StatisticalTests: # only provides class methods for statistical tests; can
                 test_result["success"] = False
         return test_result
 
+    @staticmethod
     def simple_delta(baseline_metric, candidate_metric, criterion):
         #handle None response
         test_result = {
