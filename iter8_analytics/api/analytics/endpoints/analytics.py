@@ -92,10 +92,16 @@ class CanaryCheckAndIncrement(Resource):
             new_canary_traffic_percentage = last_state["canary"]["traffic_percentage"]
         new_baseline_traffic_percentage = 100.0 - new_canary_traffic_percentage
 
-        self.response["_last_state"] = last_state
+        self.response["_last_state"] = {
+            "baseline": {
+                "traffic_percentage": new_baseline_traffic_percentage
+            },
+            "canary": {
+                "traffic_percentage": new_canary_traffic_percentage
+            }
+        }
         self.response["baseline"]["traffic_percentage"] = new_baseline_traffic_percentage
-        self.response["canary"]["traffic_percentage"] = new_canary_traffic_percentage
-        
+        self.response["canary"]["traffic_percentage"] = new_canary_traffic_percentage        
 
     def create_response_object(self, payload):
         """Create response object corresponding to payload. This has everything and more."""
