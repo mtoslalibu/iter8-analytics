@@ -27,6 +27,7 @@ class Iter8MetricFactory:
             query_spec = {}
             query_spec["query_name"] = query
             query_spec["query_template"] = metrics_config[metric_name]["query_templates"][query]
+            query_spec["zero_value_on_null"] = metrics_config[metric_name]["zero_value_on_null"]
             query_spec["entity_tags"] = entity_tag
             metric_spec["query_specs"].append(query_spec)
         return metric_spec
@@ -64,70 +65,87 @@ class Iter8Histogram(Iter8Metric): # custom
         type = "histogram",
         query_specs = [{
             "query_name": "sample_size",
+            "zero_value_on_null": true,
             "query_template": "sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
             "entity_tags": {
-                "destination_service_name": "treenode-s6dml-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
             }
         }, {
             "query_name": "min",
+            "zero_value_on_null": true,
             "query_template": "sum(increase(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels)",
             "aggregation": "min",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
             }
         }, {
             "query_name": "mean",
+            "zero_value_on_null": true,
             "query_template": "(sum(increase(istio_request_duration_seconds_sum{source_app='istio-ingressgateway', reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_request_duration_seconds_count{source_app='istio-ingressgateway', reporter='source'}[$interval]$offset_str)) by ($entity_labels))",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
             }
         }, {
             "query_name": "max",
+            "zero_value_on_null": true,
             "query_template": "sum(increase(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels)",
             "aggregation": "max",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
+            }
         }, {
             "query_name": "stddev",
+            "zero_value_on_null": true,
             "query_template": "sum(increase(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels)",
             "aggregation": "stddev",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
+            }
         }, {
             "query_name": "first_quantile",
+            "zero_value_on_null": true,
             "query_template": "histogram_quantile(0.25, sum(rate(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels))",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
+            }
         }, {
             "query_name": "median",
+            "zero_value_on_null": true,
             "query_template": "histogram_quantile(0.5, sum(rate(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels))",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
+            }
         }, {
             "query_name": "third_quantile",
+            "zero_value_on_null": true,
             "query_template": "histogram_quantile(0.75, sum(rate(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels))",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
+            }
         }, {
             "query_name": "95th_percentile",
+            "zero_value_on_null": true,
             "query_template": "histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels))",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
+            }
         }, {
             "query_name": "99th_percentile",
+            "zero_value_on_null": true,
             "query_template": "histogram_quantile(0.99, sum(rate(istio_request_duration_seconds_bucket{reporter="source", source_app="istio-ingressgateway"}[$interval]$offset_str)) by (le, $entity_labels))",
             "entity_tags": {
-                "destination_service_name": "reviews-v2-service",
+                "destination_workload": "reviews-v2",
                 "destination_service_namespace": "default"
+            }
         }]
         """
         super().__init__(metric_spec, metrics_backend_url)

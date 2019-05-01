@@ -5,7 +5,7 @@ REST resources related to canary analytics.
 import iter8_analytics.api.analytics.request_parameters as request_parameters
 import iter8_analytics.api.analytics.responses as responses
 from iter8_analytics.api.restplus import api
-from iter8_analytics.metrics_backend.iter8metric import Iter8Histogram, Iter8Gauge, Iter8Counter, Iter8MetricFactory
+from iter8_analytics.metrics_backend.iter8metric import Iter8MetricFactory
 from iter8_analytics.metrics_backend.successcriteria import DeltaCriterion, ThresholdCriterion
 from flask_restplus import Resource
 from flask import request
@@ -52,15 +52,14 @@ class CanaryCheckAndIncrement(Resource):
         for each_criterion in payload["traffic_control"]["success_criteria"]:
             self.response["baseline"]["metrics"].append(self.get_results(each_criterion["metric_name"], payload["baseline"]))
             self.response["canary"]["metrics"].append(self.get_results(each_criterion["metric_name"], payload["canary"]))
-            #self.get_success_criteria(each_criterion)
+            self.get_success_criteria(each_criterion)
         return self.response
 
     def get_success_criteria(self, criterion):
-        assessment_statistic_name = metrics_config[criterion["metric_name"]]["assessment_statistic_name"]
         if criterion["type"] == "delta":
-            self.response["assessment"]["success_criteria"].append(DeltaCriterion(criterion, self.response["baseline"]["metrics"][-1], self.response["canary"]["metrics"][-1], assessment_statistic_name).test())
+            self.response["assessment"]["success_criteria"].append(DeltaCriterion(criterion, self.response["baseline"]["metrics"][-1], self.response["canary"]["metrics"][-1]).test())
         else:
-            self.response["assessment"]["success_criteria"].append(ThresholdCriterion(criterion, self.response["canary"]["metrics"][-1], assessment_statistic_name).test())
+            self.response["assessment"]["success_criteria"].append(ThresholdCriterion(criterion, self.response["canary"]["metrics"][-1]).test())
         print(self.response["assessment"]["success_criteria"])
 
     def create_response_object(self, payload):

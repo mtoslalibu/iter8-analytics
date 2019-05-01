@@ -1,6 +1,7 @@
 class StatisticalTests: # only provides class methods for statistical tests; cannot be instantiated
     @staticmethod
-    def simple_threshold(candidate_metric, criterion, assessment_statistic_name):
+    def simple_threshold(candidate_metric, criterion):
+        #handle None response
         test_result = {
             "sample_size_sufficient": True
         }
@@ -8,13 +9,14 @@ class StatisticalTests: # only provides class methods for statistical tests; can
             test_result["sample_size_sufficient"] = False
             test_result["success"] = False
         else:
-            if candidate_metric["statistics"][assessment_statistic_name] <= criterion["value"]:
+            if candidate_metric["statistics"]["value"] <= criterion["value"]:
                 test_result["success"] = True
             else:
                 test_result["success"] = False
         return test_result
 
-    def simple_delta(baseline_metric, candidate_metric, criterion, assessment_statistic_name):
+    def simple_delta(baseline_metric, candidate_metric, criterion):
+        #handle None response
         test_result = {
             "sample_size_sufficient": True
         }
@@ -22,7 +24,7 @@ class StatisticalTests: # only provides class methods for statistical tests; can
             test_result["sample_size_sufficient"] = False
             test_result["success"] = False
         else:
-            if candidate_metric["statistics"][assessment_statistic_name] <= ((1 + criterion["value"]) * baseline_metric["statistics"][assessment_statistic_name]):
+            if candidate_metric["statistics"]["value"] <= ((1 + criterion["value"]) * baseline_metric["statistics"]["value"]):
                 test_result["success"] = True
             else:
                 test_result["success"] = False
@@ -32,7 +34,7 @@ class SuccessCriterion:
     """
     Class with methods for performing a statistical test on a metric.
     """
-    def __init__(self, criterion_wrapper, assessment_statistic_name):
+    def __init__(self, criterion_wrapper):
         """
         criterion_wrapper:  {
                         "metricName": "iter8_error_rate",
@@ -47,7 +49,6 @@ class SuccessCriterion:
         self.criterion_wrapper = criterion_wrapper
         self.metric_name = criterion_wrapper["metric_name"]
         self.criterion = criterion_wrapper
-        self.assessment_statistic_name = assessment_statistic_name
         if "stop_on_failure" not in self.criterion:
             self.criterion["stop_on_failure"] = False
 #        self.iter8metric = Iter8Metric.create(name, entity_tags)
@@ -71,23 +72,23 @@ class SuccessCriterion:
         }
 
 class DeltaCriterion(SuccessCriterion):
-    def __init__(self, criterion, baseline_metrics, canary_metrics, assessment_statistic_name):
-        super().__init__(criterion, assessment_statistic_name)
+    def __init__(self, criterion, baseline_metrics, canary_metrics):
+        super().__init__(criterion)
         self.baseline_metric = baseline_metrics
         self.candidate_metric = canary_metrics
 
     def test(self):
         # t_delta, bernoulli_delta are the other options beyond simple_delta
-        test_result = StatisticalTests.simple_delta(self.baseline_metric, self.candidate_metric, self.criterion, self.assessment_statistic_name)
+        test_result = StatisticalTests.simple_delta(self.baseline_metric, self.candidate_metric, self.criterion)
         return self.post_process_test_result(test_result)
 
 
 class ThresholdCriterion(SuccessCriterion):
-    def __init__(self, criterion, canary_metrics, assessment_statistic_name):
-        super().__init__(criterion, assessment_statistic_name)
+    def __init__(self, criterion, canary_metrics):
+        super().__init__(criterion)
         self.candidate_metric = canary_metrics
 
     def test(self):
         # t_test, bernoulli_test are the other options beyond simple_threshold
-        test_result = StatisticalTests.simple_threshold(self.candidate_metric, self.criterion, self.assessment_statistic_name)
+        test_result = StatisticalTests.simple_threshold(self.candidate_metric, self.criterion)
         return self.post_process_test_result(test_result)
