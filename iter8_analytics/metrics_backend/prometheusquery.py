@@ -39,7 +39,6 @@ class PrometheusQuery():
                 return 0
             else:
                 return None
-        data = []
         match_key = self.query_spec["entity_tags"]
         for each_result in results:
             if each_result["metric"] == match_key:
