@@ -41,10 +41,11 @@ class Iter8MetricFactory:
         now = datetime.now(timezone.utc)
         if start < end:
             interval = end-start
-            interval_str = str(interval.seconds) + "s"
+            interval_str = str(interval.total_seconds()) + "s"
             if end < now:
                 offset = now-end
-                offset_str = str(offset.seconds) + "s"
+                if offset.total_seconds() > 0:
+                    offset_str = str(offset.total_seconds()) + "s"
             else:
                 offset_str = ""
         else:
