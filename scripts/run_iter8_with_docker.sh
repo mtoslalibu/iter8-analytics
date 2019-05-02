@@ -2,8 +2,11 @@
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-# Set this environment variable to point to your Prometheus query server
-ITER8_ANALYTICS_METRICS_BACKEND_URL="http:/localhost:9090"
+DEFAULT_PROMETHEUS_URL="http://localhost:9090"
+
+if [ -z "${ITER8_ANALYTICS_METRICS_BACKEND_URL}" ]; then
+   ITER8_ANALYTICS_METRICS_BACKEND_URL=$DEFAULT_PROMETHEUS_URL
+fi
 
 echo "Cleaning up..."
 docker rm -f iter8-analytics 2>/dev/null
