@@ -121,6 +121,10 @@ class CanaryCheckAndIncrement(Resource):
             }
         else:
             last_state = experiment["_last_state"]
+        if "step_size" not in experiment["traffic_control"]:
+            experiment["traffic_control"]["step_size"] = 0
+        if "max_traffic_percent" not in experiment["traffic_control"]:
+            experiment["traffic_control"]["max_traffic_percent"] = 0
         # Compute current decisions below based on increment or hold
         if self.response["assessment"]["summary"]["all_success_criteria_met"]:
             new_canary_traffic_percentage = min(
