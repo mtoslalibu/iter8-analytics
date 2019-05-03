@@ -8,7 +8,7 @@ from iter8_analytics.api.restplus import api
 from iter8_analytics.metrics_backend.iter8metric import Iter8MetricFactory
 from iter8_analytics.metrics_backend.successcriteria import DeltaCriterion, ThresholdCriterion
 import iter8_analytics.constants as constants
-from flask_restplus import Resource
+import flask_restplus
 from flask import request
 
 from datetime import datetime, timezone
@@ -67,7 +67,7 @@ analytics_namespace = api.namespace(
 
 
 @analytics_namespace.route('/canary/check_and_increment')
-class CanaryCheckAndIncrement(Resource):
+class CanaryCheckAndIncrement(flask_restplus.Resource):
 
     @api.expect(request_parameters.check_and_increment_parameters,
                 validate=True)
@@ -85,7 +85,10 @@ class CanaryCheckAndIncrement(Resource):
         log.info("Fixed experiment")
         self.create_response_object()
         log.info("Created response object")
-        self.append_metrics_and_success_criteria()
+        try:
+            self.append_metrics_and_success_criteria()
+        except ValueError as e:
+            flask_restplus.errors.abort(code=400, message=str(e))
         log.info("Appended metrics and success criteria")
         self.append_assessment_summary()
         log.info("Append assessment summary")
