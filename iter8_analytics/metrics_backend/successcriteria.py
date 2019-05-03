@@ -22,7 +22,7 @@ class StatisticalTests: # only provides class methods for statistical tests; can
             "sample_size_sufficient": True
         }
         if "sample_size" not in criterion:
-            criterion["sample_size"] = 0
+            criterion["sample_size"] = 10
         if candidate_metric["statistics"]["sample_size"] < criterion["sample_size"] or baseline_metric["statistics"]["sample_size"] < criterion["sample_size"]:
             test_result["sample_size_sufficient"] = False
             test_result["success"] = False
