@@ -27,7 +27,7 @@ class Iter8MetricFactory:
             query_spec = {}
             query_spec["query_name"] = query
             query_spec["query_template"] = metrics_config[metric_name]["query_templates"][query]
-            query_spec["zero_value_on_nodata"] = metric_spec["zero_value_on_nodata"]
+            query_spec["zero_value_on_nodata"] = metrics_config[metric_name]["zero_value_on_nodata"]
             query_spec["entity_tags"] = entity_tag
             metric_spec["query_specs"].append(query_spec)
         return metric_spec
