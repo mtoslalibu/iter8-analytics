@@ -5,7 +5,6 @@ import math
 
 log = logging.getLogger(__name__)
 
-
 class PrometheusQuery():
     def __init__(self, prometheus_url, query_spec):
         self.prometheus_url = prometheus_url + "/api/v1/query"
@@ -48,6 +47,8 @@ class PrometheusQuery():
                 result_float = float(each_result["value"][1])
                 if not math.isnan(result_float):
                     return float(each_result["value"][1])
+                else:
+                    break
         if self.query_spec["zero_value_on_nodata"] == True:
             return 0
         else:

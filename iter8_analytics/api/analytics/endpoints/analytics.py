@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 metrics_config = {
     "iter8_latency": {
         "type": "histogram",
-        "zero_value_on_nodata": False,
+        "zero_value_on_nodata": True,
         "query_templates": {
             "sample_size": "sum(increase(istio_requests_total{reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
             # "min": "sum(increase(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels)",
