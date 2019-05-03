@@ -44,7 +44,7 @@ class Iter8MetricFactory:
             interval_str = str(int(interval.total_seconds())) + "s"
             if end < now:
                 offset = now-end
-                if offset.total_seconds() > 0:
+                if offset.total_seconds() >= 1.0:
                     offset_str = str(int(offset.total_seconds())) + "s"
             else:
                 offset_str = ""
