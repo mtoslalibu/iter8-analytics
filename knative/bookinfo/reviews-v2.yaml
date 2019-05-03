@@ -9,7 +9,7 @@ spec:
       revisionTemplate:
         spec:
           container:
-            image: kimikowang/reviews-v2:knative_0.1
+            image: iter8/reviews-v2:knative_0.1
             ports: 
             - containerPort: 9080
               name: http1
