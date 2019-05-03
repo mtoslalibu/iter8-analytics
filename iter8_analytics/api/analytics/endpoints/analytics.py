@@ -77,40 +77,18 @@ class CanaryCheckAndIncrement(Resource):
         log.info('Started processing request to assess the canary using the '
                  '"check_and_increment" strategy')
 
+        self.metric_factory = Iter8MetricFactory(prom_url)
+
         payload = request.get_json()
-        self.metric_factory = Iter8MetricFactory(
-            prom_url)
-        self.create_response_object(payload)
-
-        for each_criterion in payload["traffic_control"]["success_criteria"]:
-            self.response["baseline"]["metrics"].append(self.get_results(
-                each_criterion["metric_name"], payload["baseline"]))
-            self.response["canary"]["metrics"].append(self.get_results(
-                each_criterion["metric_name"], payload["canary"]))
-            self.append_success_criteria(each_criterion)
-
+        self.experiment = self.fix_experiment_defaults(payload)
+        self.create_response_object()
+        self.append_metrics_and_success_criteria()
         self.append_assessment_summary()
-        self.append_traffic_decision(payload)
+        self.append_traffic_decision()
         return self.response
 
-    def append_success_criteria(self, criterion):
-        if criterion["type"] == "delta":
-            self.response["assessment"]["success_criteria"].append(DeltaCriterion(
-                criterion, self.response["baseline"]["metrics"][-1], self.response["canary"]["metrics"][-1]).test())
-        else:
-            self.response["assessment"]["success_criteria"].append(
-                ThresholdCriterion(criterion, self.response["canary"]["metrics"][-1]).test())
-        # print(self.response["assessment"]["success_criteria"])
-
-    def append_assessment_summary(self):
-        self.response["assessment"]["summary"]["all_success_criteria_met"] = all(
-            each_criterion["success_criterion_met"] for each_criterion in self.response["assessment"]["success_criteria"])
-        self.response["assessment"]["summary"]["abort_experiment"] = any(
-            each_criterion["abort_experiment"] for each_criterion in self.response["assessment"]["success_criteria"])
-        self.response["assessment"]["summary"]["conclusions"] = ["All ok"]
-
-    def append_traffic_decision(self, experiment):
-        if not experiment["_last_state"]:  # if it is empty
+    def fix_experiment_defaults(self, payload):
+        if not payload["_last_state"]:  # if it is empty
             last_state = {
                 "baseline": {
                     "traffic_percentage": 100.0
@@ -119,34 +97,28 @@ class CanaryCheckAndIncrement(Resource):
                     "traffic_percentage": 0.0
                 }
             }
+            payload["_last_state"] = last_state
+            payload["first_iteration"] = True
         else:
-            last_state = experiment["_last_state"]
-        if "step_size" not in experiment["traffic_control"]:
-            experiment["traffic_control"]["step_size"] = 2.0
-        if "max_traffic_percent" not in experiment["traffic_control"]:
-            experiment["traffic_control"]["max_traffic_percent"] = 50
-        # Compute current decisions below based on increment or hold
-        if self.response["assessment"]["summary"]["all_success_criteria_met"]:
-            new_canary_traffic_percentage = min(
-                last_state["canary"]["traffic_percentage"] +
-                experiment["traffic_control"]["step_size"],
-                experiment["traffic_control"]["max_traffic_percent"])
-        else:
-            new_canary_traffic_percentage = last_state["canary"]["traffic_percentage"]
-        new_baseline_traffic_percentage = 100.0 - new_canary_traffic_percentage
+            payload["first_iteration"] = False
 
-        self.response["_last_state"] = {
-            "baseline": {
-                "traffic_percentage": new_baseline_traffic_percentage
-            },
-            "canary": {
-                "traffic_percentage": new_canary_traffic_percentage
-            }
-        }
-        self.response["baseline"]["traffic_percentage"] = new_baseline_traffic_percentage
-        self.response["canary"]["traffic_percentage"] = new_canary_traffic_percentage
+        if not "end_time" in payload["baseline"]:
+            payload["baseline"]["end_time"] = str(datetime.now(timezone.utc))
+        if not "end_time" in payload["canary"]:
+            payload["canary"]["end_time"] = str(datetime.now(timezone.utc))
 
-    def create_response_object(self, payload):
+        for criterion in payload["traffic_control"]["success_criteria"]:
+            if "sample_size" not in criterion:
+                criterion["sample_size"] = 10
+
+        if "step_size" not in payload["traffic_control"]:
+            payload["traffic_control"]["step_size"] = 2.0
+        if "max_traffic_percent" not in payload["traffic_control"]:
+            payload["traffic_control"]["max_traffic_percent"] = 50
+
+        return payload
+
+    def create_response_object(self):
         """Create response object corresponding to payload. This has everything and more."""
         self.response = {
             "metric_backend_url": prom_url,
@@ -164,16 +136,62 @@ class CanaryCheckAndIncrement(Resource):
             }
         }
 
-    def get_results(self, metric_name, payload):
+    def append_metrics_and_success_criteria(self):
+        for criterion in self.experiment["traffic_control"]["success_criteria"]:
+            self.response["baseline"]["metrics"].append(self.get_results(
+                criterion["metric_name"], self.experiment["baseline"]))
+            self.response["canary"]["metrics"].append(self.get_results(
+                criterion["metric_name"], self.experiment["canary"]))
+            self.append_success_criteria(criterion)
+
+    def get_results(self, metric_name, entity):
         metric_spec = self.metric_factory.create_metric_spec(
-            metrics_config, metric_name, payload["tags"])
+            metrics_config, metric_name, entity["tags"])
         metrics_object = self.metric_factory.get_iter8_metric(metric_spec)
-        end_time = payload["end_time"] if "end_time" in payload else str(datetime.now(timezone.utc))
         interval_str, offset_str = self.metric_factory.get_interval_and_offset_str(
-            payload["start_time"], end_time)
+            entity["start_time"], entity["end_time"])
         statistics = metrics_object.get_stats(interval_str, offset_str)
         return {
             "metric_name": metric_name,
             "metric_type": metrics_config[metric_name]["type"],
             "statistics": statistics
         }
+
+    def append_success_criteria(self, criterion):
+        if criterion["type"] == "delta":
+            self.response["assessment"]["success_criteria"].append(DeltaCriterion(
+                criterion, self.response["baseline"]["metrics"][-1], self.response["canary"]["metrics"][-1]).test())
+        else:
+            self.response["assessment"]["success_criteria"].append(
+                ThresholdCriterion(criterion, self.response["canary"]["metrics"][-1]).test())
+        # print(self.response["assessment"]["success_criteria"])
+
+    def append_assessment_summary(self):
+        self.response["assessment"]["summary"]["all_success_criteria_met"] = all(
+            criterion["success_criterion_met"] for criterion in self.response["assessment"]["success_criteria"])
+        self.response["assessment"]["summary"]["abort_experiment"] = any(
+            criterion["abort_experiment"] for criterion in self.response["assessment"]["success_criteria"])
+        self.response["assessment"]["summary"]["conclusions"] = ["All ok"]
+
+    def append_traffic_decision(self):
+        last_state = self.experiment["_last_state"]
+        # Compute current decisions below based on increment or hold
+        if self.experiment["first_iteration"] or self.response["assessment"]["summary"]["all_success_criteria_met"]:
+            new_canary_traffic_percentage = min(
+                last_state["canary"]["traffic_percentage"] +
+                self.experiment["traffic_control"]["step_size"],
+                self.experiment["traffic_control"]["max_traffic_percent"])
+        else:
+            new_canary_traffic_percentage = last_state["canary"]["traffic_percentage"]
+        new_baseline_traffic_percentage = 100.0 - new_canary_traffic_percentage
+
+        self.response["_last_state"] = {
+            "baseline": {
+                "traffic_percentage": new_baseline_traffic_percentage
+            },
+            "canary": {
+                "traffic_percentage": new_canary_traffic_percentage
+            }
+        }
+        self.response["baseline"]["traffic_percentage"] = new_baseline_traffic_percentage
+        self.response["canary"]["traffic_percentage"] = new_canary_traffic_percentage
