@@ -39,6 +39,7 @@ class Iter8MetricFactory:
         start = parser.parse(start_time)
         end = parser.parse(end_time)
         now = datetime.now(timezone.utc)
+        offset_str = ""
         if start <= end:
             interval = max(end - start, timedelta(seconds = 1))
             interval_str = str(int(interval.total_seconds())) + "s"
@@ -46,8 +47,6 @@ class Iter8MetricFactory:
                 offset = now-end
                 if offset.total_seconds() >= 1.0:
                     offset_str = str(int(offset.total_seconds())) + "s"
-            else:
-                offset_str = ""
         else:
             raise ValueError("Start time cannot exceed end time")
         return interval_str,offset_str
