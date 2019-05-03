@@ -1,6 +1,6 @@
 from iter8_analytics.metrics_backend.prometheusquery import PrometheusQuery
 import dateutil.parser as parser
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 class Iter8MetricFactory:
     def __init__(self, metrics_backend_url):
@@ -39,8 +39,8 @@ class Iter8MetricFactory:
         start = parser.parse(start_time)
         end = parser.parse(end_time)
         now = datetime.now(timezone.utc)
-        if start < end:
-            interval = end-start
+        if start <= end:
+            interval = max(end - start, timedelta(seconds = 1))
             interval_str = str(int(interval.total_seconds())) + "s"
             if end < now:
                 offset = now-end
@@ -49,7 +49,7 @@ class Iter8MetricFactory:
             else:
                 offset_str = ""
         else:
-            raise ValueError("Start time must be less than end time")
+            raise ValueError("Start time cannot exceed end time")
         return interval_str,offset_str
 
 class Iter8Metric:
