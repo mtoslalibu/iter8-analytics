@@ -27,9 +27,12 @@ class Iter8MetricFactory:
             query_spec = {}
             query_spec["query_name"] = query
             query_spec["query_template"] = metrics_config[metric_name]["query_templates"][query]
-            query_spec["zero_value_on_null"] = False
-            if query_spec["query_name"] == "value" or query_spec["query_name"] == "sample_size":
-                query_spec["zero_value_on_null"] = metrics_config[metric_name]["zero_value_on_null"]
+            if query_spec["query_name"] == "sample_size":
+                query_spec["zero_value_on_nodata"] = True
+            if query_spec["query_name"] == "value":
+                query_spec["zero_value_on_nodata"] = True
+            else:
+                query_spec["zero_value_on_nodata"] = False
             query_spec["entity_tags"] = entity_tag
             metric_spec["query_specs"].append(query_spec)
         return metric_spec
