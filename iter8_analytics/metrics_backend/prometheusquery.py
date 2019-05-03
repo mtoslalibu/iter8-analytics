@@ -1,7 +1,7 @@
 from string import Template
 import requests
 import logging
-import numpy as np
+import math
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class PrometheusQuery():
         for each_result in results:
             if each_result["metric"] == match_key:
                 result_float = float(each_result["value"][1])
-                if not np.isnan(result_float):
+                if not math.isnan(result_float):
                     return float(each_result["value"][1])
         if self.query_spec["zero_value_on_nodata"] == True:
             return 0
