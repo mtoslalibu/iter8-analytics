@@ -38,8 +38,7 @@ class TestAnalyticsAPI(unittest.TestCase):
         log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
 
         with requests_mock.mock() as m:
-            #test_response = json.load(open("../data/test_response.py"))
-            m.get(self.metrics_endpoint, json=json.load(open("tests/data/testresponse.json")))
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/sample_iter8_response.json")))
 
             ###################
             # Test request with an empty body
@@ -147,7 +146,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
             self.assertEqual(resp.status_code, 400,
-                             'Missing success_criteria parameter'
+                             'Missing success_criteria missing in payload'
                              .format(resp.status_code))
 
 
@@ -176,5 +175,113 @@ class TestAnalyticsAPI(unittest.TestCase):
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
             self.assertEqual(resp.status_code, 400,
-                             'Missing baseline parameter'
+                             'Missing baseline missing in payload'
+                             .format(resp.status_code))
+
+            ###################
+            # Test request with missing value in success_criteria
+            ###################
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_name": "reviews-v2"
+                    }
+                },
+                "canary": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_name": "reviews-v2"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_latency",
+                            "type": "delta"
+                        }
+                    ]
+                },
+                "_last_state": {}
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+
+            self.assertEqual(resp.status_code, 400,
+                             'Missing value in success_criteria'
+                             .format(resp.status_code))
+
+
+            ###################
+            # Test request with unknown metric_name in success_criteria
+            ###################
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_name": "reviews-v2"
+                    }
+                },
+                "canary": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_name": "reviews-v2"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_throughput",
+                            "type": "delta",
+                            "value": 0.02
+                        }
+                    ]
+                },
+                "_last_state": {}
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+
+            self.assertEqual(resp.status_code, 400,
+                             'Unknown metric_name in success_criteria'
+                             .format(resp.status_code))
+
+            ###################
+            # Test request with unknown type in success_criteria
+            ###################
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_name": "reviews-v2"
+                    }
+                },
+                "canary": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_name": "reviews-v2"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_latency",
+                            "type": "normal",
+                            "value": 0.02
+                        }
+                    ]
+                },
+                "_last_state": {}
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+
+            self.assertEqual(resp.status_code, 400,
+                             'Unknown type in success_criteria'
                              .format(resp.status_code))
