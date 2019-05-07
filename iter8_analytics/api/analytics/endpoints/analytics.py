@@ -76,24 +76,22 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
         """Assess the canary version and recommend traffic-control actions."""
         log.info('Started processing request to assess the canary using the '
                  '"check_and_increment" strategy')
-
-        self.metric_factory = Iter8MetricFactory(prom_url)
-
-        payload = request.get_json()
-        log.info("Extracted payload")
-        self.experiment = self.fix_experiment_defaults(payload)
-        log.info("Fixed experiment")
-        self.create_response_object()
-        log.info("Created response object")
         try:
+            self.metric_factory = Iter8MetricFactory(prom_url)
+            payload = request.get_json()
+            log.info("Extracted payload")
+            self.experiment = self.fix_experiment_defaults(payload)
+            log.info("Fixed experiment")
+            self.create_response_object()
+            log.info("Created response object")
             self.append_metrics_and_success_criteria()
-        except ValueError as e:
+            log.info("Appended metrics and success criteria")
+            self.append_assessment_summary()
+            log.info("Append assessment summary")
+            self.append_traffic_decision()
+            log.info("Append traffic decision")
+        except Exception as e:
             flask_restplus.errors.abort(code=400, message=str(e))
-        log.info("Appended metrics and success criteria")
-        self.append_assessment_summary()
-        log.info("Append assessment summary")
-        self.append_traffic_decision()
-        log.info("Append traffic decision")
         return self.response
 
     def fix_experiment_defaults(self, payload):

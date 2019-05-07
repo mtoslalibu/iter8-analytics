@@ -19,6 +19,8 @@ class Iter8MetricFactory:
 
     @staticmethod
     def create_metric_spec(metrics_config, metric_name, entity_tag):
+        if metric_name not in metrics_config:
+            raise KeyError("Metric name not found in Metrics Configuration")
         metric_spec = {}
         metric_spec["name"] = metric_name
         metric_spec["type"] = metrics_config[metric_name]["type"]
