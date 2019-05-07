@@ -47,9 +47,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json={})
             # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400,
-                             'Received an empty json'
-                             .format(resp.status_code))
+            self.assertEqual(resp.status_code, 400, 'Received an empty json')
             assert b'is a required property' in resp.data
 
 
@@ -85,9 +83,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
 
-            self.assertEqual(resp.status_code, 200,
-                             'Expected a 200 HTTP code, but received a {0}'
-                             .format(resp.status_code))
+            self.assertEqual(resp.status_code, 200, 'Expected a 200 HTTP code')
 
             ##################
             # Test request with start_time missing in payload
@@ -118,9 +114,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400,
-                             'Missing start_time parameter'
-                             .format(resp.status_code))
+            self.assertEqual(resp.status_code, 400, 'Missing start_time parameter')
             assert b'\'start_time\' is a required property' in resp.data
 
             ##################
@@ -146,9 +140,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400,
-                             'Missing success_criteria missing in payload'
-                             .format(resp.status_code))
+            self.assertEqual(resp.status_code, 400, 'Missing success_criteria missing in payload')
 
             assert b'\'success_criteria\' is a required property' in resp.data
 
@@ -177,9 +169,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400,
-                             'Baseline missing in payload'
-                             .format(resp.status_code))
+            self.assertEqual(resp.status_code, 400, 'Baseline missing in payload')
 
             assert b'\'baseline\' is a required property' in resp.data
             ###################
@@ -213,9 +203,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
 
-            self.assertEqual(resp.status_code, 400,
-                             'Missing value in success_criteria'
-                             .format(resp.status_code))
+            self.assertEqual(resp.status_code, 400, 'Missing value in success_criteria')
 
             assert b'\'value\' is a required property' in resp.data
 
@@ -251,9 +239,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
 
-            self.assertEqual(resp.status_code, 400,
-                             'Unknown metric_name in success_criteria'
-                             .format(resp.status_code))
+            self.assertEqual(resp.status_code, 400, 'Unknown metric_name in success_criteria')
 
             assert b'Metric name not found' in resp.data
 
@@ -289,7 +275,5 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
 
-            self.assertEqual(resp.status_code, 400,
-                             'Unknown type in success_criteria'
-                             .format(resp.status_code))
+            self.assertEqual(resp.status_code, 400, 'Unknown type in success_criteria')
             assert b'\'normal\' is not one of [\'delta\', \'threshold\']' in resp.data
