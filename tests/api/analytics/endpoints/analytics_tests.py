@@ -5,13 +5,13 @@ import json
 from iter8_analytics import app as flask_app
 from iter8_analytics.api.analytics import responses as responses
 from iter8_analytics.api.analytics import request_parameters as request_parameters
+import iter8_analytics.constants as constants
 import dateutil.parser as parser
 
 import logging
 import os
 import requests_mock
 log = logging.getLogger(__name__)
-
 
 class TestAnalyticsAPI(unittest.TestCase):
 
@@ -26,30 +26,19 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         # Get an internal Flask test client
         cls.flask_test = flask_app.app.test_client()
-        cls.backend_url = "http://localhost:9090"
-        cls.metrics_endpoint = f'{cls.backend_url}/api/v1/query'
 
+        cls.backend_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
+        cls.metrics_endpoint = f'{cls.backend_url}/api/v1/query'
         log.info('Completed initialization for all analytics REST API tests.')
 
-    def test_check_and_increment(self):
+    def test_payload_check_and_increment(self):
         """Tests the REST endpoint /analytics/canary/check_and_increment."""
 
         endpoint = f'http://localhost:5555/api/v1/analytics/canary/check_and_increment'
         log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
 
         with requests_mock.mock() as m:
-            m.get(self.metrics_endpoint, json=json.load(open("tests/data/sample_iter8_response.json")))
-
-            ###################
-            # Test request with an empty body
-            ###################
-
-            # Call the REST API via the test client
-            resp = self.flask_test.post(endpoint, json={})
-            # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400, 'Received an empty json')
-            assert b'is a required property' in resp.data
-
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/sample_prometheus_response.json")))
 
             ###################
             # Test request with some required parameters
@@ -83,7 +72,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
 
-            self.assertEqual(resp.status_code, 200, 'Expected a 200 HTTP code')
+            self.assertEqual(resp.status_code, 200, resp.data)
 
             ##################
             # Test request with start_time missing in payload
