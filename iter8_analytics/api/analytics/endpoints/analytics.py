@@ -180,8 +180,8 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
         self.response["assessment"]["summary"]["abort_experiment"] = any(
             criterion["abort_experiment"] for criterion in self.response["assessment"]["success_criteria"])
         self.response["assessment"]["summary"]["conclusions"] = []
-        if ((datetime.now(timezone.utc) - parser.parse(self.experiment["baseline"]["end_time"])).total_seconds() >= 10800) or ((datetime.now(timezone.utc) - parser.parse(self.experiment["canary"]["end_time"])).total_seconds() >= 10800):
-            self.response["assessment"]["summary"]["conclusions"].append("The experiment end time is more than 3 hours ago")
+        if ((datetime.now(timezone.utc) - parser.parse(self.experiment["baseline"]["end_time"])).total_seconds() >= 1800) or ((datetime.now(timezone.utc) - parser.parse(self.experiment["canary"]["end_time"])).total_seconds() >= 10800):
+            self.response["assessment"]["summary"]["conclusions"].append("The experiment end time is more than 30 mins ago")
 
         success_criteria_met_str = "not" if not(self.response["assessment"]["summary"]["all_success_criteria_met"]) else ""
         if self.response["assessment"]["summary"]["abort_experiment"]:
