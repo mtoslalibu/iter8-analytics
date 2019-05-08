@@ -182,9 +182,10 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
         self.response["assessment"]["summary"]["conclusions"] = []
         if ((datetime.now(timezone.utc) - parser.parse(self.experiment["baseline"]["end_time"])).total_seconds() >= 10800) or ((datetime.now(timezone.utc) - parser.parse(self.experiment["canary"]["end_time"])).total_seconds() >= 10800):
             self.response["assessment"]["summary"]["conclusions"].append("The experiment end time is more than 3 hours ago")
-        abort_str = "need not" if not(self.response["assessment"]["summary"]["abort_experiment"]) else "needs to"
+
         success_criteria_met_str = "not" if not(self.response["assessment"]["summary"]["all_success_criteria_met"]) else ""
-        self.response["assessment"]["summary"]["conclusions"].append(f"The experiment {abort_str} be aborted")
+        if self.response["assessment"]["summary"]["abort_experiment"]:
+            self.response["assessment"]["summary"]["conclusions"].append(f"The experiment needs to be aborted")
         self.response["assessment"]["summary"]["conclusions"].append(f"All success criteria were {success_criteria_met_str} met")
 
     def append_traffic_decision(self):
