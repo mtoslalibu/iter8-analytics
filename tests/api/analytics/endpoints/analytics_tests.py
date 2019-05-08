@@ -35,14 +35,16 @@ class TestAnalyticsAPI(unittest.TestCase):
         """Tests the REST endpoint /analytics/canary/check_and_increment."""
 
         endpoint = f'http://localhost:5555/api/v1/analytics/canary/check_and_increment'
-        log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
 
         with requests_mock.mock() as m:
-            m.get(self.metrics_endpoint, json=json.load(open("tests/data/sample_prometheus_response.json")))
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
 
             ###################
             # Test request with some required parameters
             ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
 
             parameters = {
                 "baseline": {
@@ -77,6 +79,10 @@ class TestAnalyticsAPI(unittest.TestCase):
             ##################
             # Test request with start_time missing in payload
             ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with start_time missing in payload")
+
             parameters = {
                 "baseline": {
                     "tags": {
@@ -109,6 +115,10 @@ class TestAnalyticsAPI(unittest.TestCase):
             ##################
             # Test request with success_criteria missing in payload
             ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with success_criteria missing in payload")
+
             parameters = {
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
@@ -137,6 +147,10 @@ class TestAnalyticsAPI(unittest.TestCase):
             ###################
             # Test request with baseline missing in payload
             ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with baseline missing in payload")
+
             parameters = {
                 "canary": {
                     "start_time": "2019-04-24T19:40:32.017Z",
@@ -164,6 +178,10 @@ class TestAnalyticsAPI(unittest.TestCase):
             ###################
             # Test request with missing value in success_criteria
             ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with missing value in success_criteria")
+
 
             parameters = {
                 "baseline": {
@@ -199,6 +217,9 @@ class TestAnalyticsAPI(unittest.TestCase):
             ###################
             # Test request with unknown metric_name in success_criteria
             ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with unknown metric_name in success_criteria")
 
             parameters = {
                 "baseline": {
@@ -235,6 +256,9 @@ class TestAnalyticsAPI(unittest.TestCase):
             ###################
             # Test request with unknown type in success_criteria
             ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with unknown type in success_criteria")
 
             parameters = {
                 "baseline": {
@@ -266,3 +290,48 @@ class TestAnalyticsAPI(unittest.TestCase):
 
             self.assertEqual(resp.status_code, 400, 'Unknown type in success_criteria')
             assert b'\'normal\' is not one of [\'delta\', \'threshold\']' in resp.data
+
+    def test_no_data_from_prometheus(self):
+        """Tests the REST endpoint /analytics/canary/check_and_increment."""
+
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/check_and_increment'
+
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_no_data_response.json")))
+
+            ###################
+            # Test request with no data from prometheus
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with no data from prometheus")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_name": "reviews-v2"
+                    }
+                },
+                "canary": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_name": "reviews-v2"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_latency",
+                            "type": "delta",
+                            "value": 0.02
+                        }
+                    ]
+                },
+                "_last_state": {}
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+
+            self.assertEqual(resp.status_code, 200, resp.data)
