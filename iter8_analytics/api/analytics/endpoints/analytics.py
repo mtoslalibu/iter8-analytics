@@ -10,8 +10,9 @@ from iter8_analytics.metrics_backend.successcriteria import DeltaCriterion, Thre
 import iter8_analytics.constants as constants
 import flask_restplus
 from flask import request
+from datetime import datetime, timezone, timedelta
+import dateutil.parser as parser
 
-from datetime import datetime, timezone
 
 import json
 import os
@@ -178,7 +179,13 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
             criterion["success_criterion_met"] for criterion in self.response["assessment"]["success_criteria"])
         self.response["assessment"]["summary"]["abort_experiment"] = any(
             criterion["abort_experiment"] for criterion in self.response["assessment"]["success_criteria"])
-        self.response["assessment"]["summary"]["conclusions"] = ["All ok"]
+        self.response["assessment"]["summary"]["conclusions"] = []
+        if ((datetime.now(timezone.utc) - parser.parse(self.experiment["baseline"]["end_time"])).total_seconds() >= 10800) or ((datetime.now(timezone.utc) - parser.parse(self.experiment["canary"]["end_time"])).total_seconds() >= 10800):
+            self.response["assessment"]["summary"]["conclusions"].append("The experiment end time is more than 3 hours ago")
+        abort_str = "need not" if not(self.response["assessment"]["summary"]["abort_experiment"]) else "needs to"
+        success_criteria_met_str = "not" if not(self.response["assessment"]["summary"]["all_success_criteria_met"]) else ""
+        self.response["assessment"]["summary"]["conclusions"].append(f"The experiment {abort_str} be aborted")
+        self.response["assessment"]["summary"]["conclusions"].append(f"All success criteria were {success_criteria_met_str} met")
 
     def append_traffic_decision(self):
         last_state = self.experiment["_last_state"]
