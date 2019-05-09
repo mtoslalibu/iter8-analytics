@@ -60,7 +60,7 @@ class SuccessCriterion:
     def post_process_test_result(self, test_result):
         is_or_is_not = "is" if test_result["success"] else "is not"
         delta_or_threshold = "delta" if self.criterion["type"] == "delta" else "threshold"
-        confidence_str = f"with confidence {self.criterion['confidence']}%" if "confidence" in self.criterion else ""
+        confidence_str = f"with confidence {self.criterion['confidence']}%" if ("confidence" in self.criterion and (self.criterion["confidence"] > 0)) else ""
         baseline_str = "of the baseline" if self.criterion["type"] == "delta" else ""
         result_str = f"{self.metric_name} of the candidate {is_or_is_not} within {delta_or_threshold} {self.criterion['value']} {confidence_str} {baseline_str}. "
         conclusion_str = "Insufficient sample size. " if not test_result["sample_size_sufficient"] else result_str
