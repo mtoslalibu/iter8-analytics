@@ -16,10 +16,11 @@
 ```
 cd iter8/
 ```
-* Set Prometheus backend url to the variable `ITER8_ANALYTICS_METRICS_BACKEND_URL`. If not set, a default of `http://localhost:9090` is used.
+* Set Prometheus backend url to the variable `ITER8_ANALYTICS_METRICS_BACKEND_URL`.
 ```
-export ITER8_ANALYTICS_METRICS_BACKEND_URL=http://1.2.3.4:5678
+export ITER8_ANALYTICS_METRICS_BACKEND_URL=<Your Prometheus backend URL>
 ```
+By default, the url http://localhost:9090 is used.
 * Build the iter8 docker image
 ```
 ./scripts/build_docker_image.sh
