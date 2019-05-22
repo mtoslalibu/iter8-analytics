@@ -16,7 +16,7 @@ cd $SCRIPTDIR/..
 DEFAULT_PROMETHEUS_URL="http://localhost:9090"
 
 if [ -z "${ITER8_ANALYTICS_METRICS_BACKEND_URL}" ]; then
-   ITER8_ANALYTICS_METRICS_BACKEND_URL=$DEFAULT_PROMETHEUS_URL
+   export ITER8_ANALYTICS_METRICS_BACKEND_URL=$DEFAULT_PROMETHEUS_URL
 fi
 
 nosetests --exe --with-coverage --cover-package=iter8_analytics --cover-html --cover-html-dir=$SCRIPTDIR/../code_coverage
