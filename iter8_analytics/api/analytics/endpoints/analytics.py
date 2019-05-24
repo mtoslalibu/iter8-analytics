@@ -59,7 +59,7 @@ metrics_config = {
 
 prom_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
 DataCapture.data_capture_mode = os.getenv(constants.ITER8_DATA_CAPTURE_MODE_ENV)
-log.info(f"{DataCapture.data_capture_mode}")
+
 
 analytics_namespace = api.namespace(
     'analytics',
@@ -80,6 +80,7 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
         """Assess the canary version and recommend traffic-control actions."""
         log.info('Started processing request to assess the canary using the '
                  '"check_and_increment" strategy')
+        log.info(f"Data Capture Mode: {DataCapture.data_capture_mode}")
         try:
             self.metric_factory = Iter8MetricFactory(prom_url)
             payload = request.get_json()
