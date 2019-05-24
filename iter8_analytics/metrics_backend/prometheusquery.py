@@ -2,6 +2,7 @@ from string import Template
 import requests
 import logging
 import math
+from iter8_analytics.metrics_backend.datacapture import DataCapture
 
 log = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class PrometheusQuery():
     def query(self, query):
         params = {'query': query}
         log.info(query)
+        DataCapture.append_value("prometheus_requests", query)
         prom_result = requests.get(self.prometheus_url, params=params).json()
         return self.post_process(prom_result)
 

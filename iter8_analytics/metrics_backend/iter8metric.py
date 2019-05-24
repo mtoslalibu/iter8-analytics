@@ -1,6 +1,7 @@
 from iter8_analytics.metrics_backend.prometheusquery import PrometheusQuery
 import dateutil.parser as parser
 from datetime import datetime, timezone, timedelta
+from iter8_analytics.metrics_backend.datacapture import DataCapture
 
 class Iter8MetricFactory:
     def __init__(self, metrics_backend_url):
@@ -63,6 +64,7 @@ class Iter8Metric:
         results = {}
         for query in self.prom_queries:
             results[query.query_spec["query_name"]] = query.query_from_template(interval_str, offset_str)
+            DataCapture.append_value("prometheus_responses", results[query.query_spec["query_name"]])
         return results
 
 
