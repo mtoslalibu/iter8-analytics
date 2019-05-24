@@ -6,6 +6,7 @@ import iter8_analytics.api.analytics.request_parameters as request_parameters
 import iter8_analytics.api.analytics.responses as responses
 from iter8_analytics.api.restplus import api
 from iter8_analytics.metrics_backend.iter8metric import Iter8MetricFactory
+from iter8_analytics.metrics_backend.datacapture import DataCapture
 from iter8_analytics.metrics_backend.successcriteria import DeltaCriterion, ThresholdCriterion
 import iter8_analytics.constants as constants
 import flask_restplus
@@ -57,6 +58,8 @@ metrics_config = {
 }
 
 prom_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
+DataCapture.data_capture_mode = os.getenv(constants.ITER8_DATA_CAPTURE_MODE_ENV)
+log.info(f"{DataCapture.data_capture_mode}")
 
 analytics_namespace = api.namespace(
     'analytics',
@@ -81,6 +84,7 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
             self.metric_factory = Iter8MetricFactory(prom_url)
             payload = request.get_json()
             log.info("Extracted payload")
+            DataCapture.fill_value("request_payload", payload)
             self.experiment = self.fix_experiment_defaults(payload)
             log.info("Fixed experiment")
             self.create_response_object()
@@ -91,6 +95,8 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
             log.info("Append assessment summary")
             self.append_traffic_decision()
             log.info("Append traffic decision")
+            DataCapture.fill_value("service_response", self.response)
+            DataCapture.save_data()
         except Exception as e:
             flask_restplus.errors.abort(code=400, message=str(e))
         return self.response
