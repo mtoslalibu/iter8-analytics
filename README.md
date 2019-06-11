@@ -1,6 +1,6 @@
 # iter8
 
-[![Build Status](https://travis.ibm.com/istio-research/iter8.svg?token=PbqjhFTz8kmzqqC9jUkr&branch=master)](https://travis.ibm.com/istio-research/iter8)
+[![Build Status](https://travis.ibm.com/istio-research/iter8.svg?token=PbqjhFTz8kmzqqC9jUkr&branch=master)](https://travis.ibm.com/istio-research/iter8) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ## Requirements
 
