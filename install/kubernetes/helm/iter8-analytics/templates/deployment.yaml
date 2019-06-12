@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "iter8-analytics.fullname" . }}
+  namespace: {{ .Values.namespace }}
   labels:
     app.kubernetes.io/name: {{ include "iter8-analytics.name" . }}
     helm.sh/chart: {{ include "iter8-analytics.chart" . }}

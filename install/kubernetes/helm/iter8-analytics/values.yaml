@@ -9,8 +9,14 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+namespace: iter8
+
 iter8Config:
+
+  # Prometheus URL that iter8-analytics will use for querying it
   metricsBackendURL: "http://prometheus.istio-system:9090"
+
+  # Port used by the iter8-analytics API server
   iter8Port: 80
 
 nameOverride: "iter8-analytics"
