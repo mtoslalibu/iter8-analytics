@@ -64,7 +64,6 @@ class Iter8Metric:
         results = {}
         for query in self.prom_queries:
             results[query.query_spec["query_name"]] = query.query_from_template(interval_str, offset_str)
-            DataCapture.append_value("prometheus_responses", results[query.query_spec["query_name"]])
         return results
 
 
