@@ -67,13 +67,24 @@ class TestAnalyticsAPI(unittest.TestCase):
                 self.assertTrue(conclusion_check)
 
 
-    def test_rollforward_rollforward(self):
-        all_files = os.listdir("tests/data/rf_rf")
+    def test_rollforward(self):
+        all_files = os.listdir("tests/data/rf")
 
         for each_file in all_files:
             if each_file == ".DS_Store":
                 continue
-            with open("tests/data/rf_rf/"+each_file) as f:
+            with open("tests/data/rf/"+each_file) as f:
+                experiment_data = json.load(f)
+                self.conduct_experiment(experiment_data)
+
+
+    def test_rollback(self):
+        all_files = os.listdir("tests/data/rb")
+
+        for each_file in all_files:
+            if each_file == ".DS_Store":
+                continue
+            with open("tests/data/rb/"+each_file) as f:
                 experiment_data = json.load(f)
                 self.conduct_experiment(experiment_data)
 
