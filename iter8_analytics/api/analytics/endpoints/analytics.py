@@ -18,6 +18,7 @@ import dateutil.parser as parser
 import json
 import os
 import logging
+import copy
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +86,7 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
             self.metric_factory = Iter8MetricFactory(prom_url)
             payload = request.get_json()
             log.info("Extracted payload")
-            DataCapture.fill_value("request_payload", payload)
+            DataCapture.fill_value("request_payload", copy.deepcopy(payload))
             self.experiment = self.fix_experiment_defaults(payload)
             log.info("Fixed experiment")
             self.create_response_object()

@@ -1,6 +1,10 @@
 """Tests for the analytics REST API."""
 
 import unittest
+from unittest.mock import Mock
+from unittest.mock import patch
+from requests.models import Response
+
 import json
 from iter8_analytics import app as flask_app
 from iter8_analytics.api.analytics import responses as responses
@@ -11,10 +15,14 @@ import dateutil.parser as parser
 import logging
 import os
 import requests_mock
+import requests
 log = logging.getLogger(__name__)
 
-class TestAnalyticsAPI(unittest.TestCase):
+import re
 
+from urllib.parse import urlencode
+
+class TestAnalyticsAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup common to all tests."""
@@ -29,7 +37,56 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         cls.backend_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
         cls.metrics_endpoint = f'{cls.backend_url}/api/v1/query'
+        cls.endpoint = f'http://localhost:5555/api/v1/analytics/canary/check_and_increment'
         log.info('Completed initialization for all analytics REST API tests.')
+
+
+    def conduct_experiment(self,experiment_data):
+        for iteration in experiment_data:
+            with patch('requests.get') as mock_get:
+                response_list = []
+                for each_dict in iteration["prometheus_responses"]:
+                    the_response = Response()
+                    the_response._content=bytes(json.dumps(each_dict), 'utf-8')
+                    response_list.append(the_response)
+
+                log.info(iteration["prometheus_responses"])
+
+                mock_get.side_effect = response_list
+
+                payload = iteration["request_payload"]
+
+                resp = self.flask_test.post(self.endpoint, json=payload)
+                bytecode_response = resp.data
+                json_response = json.loads(bytecode_response.decode('utf8').replace("'", '"'))
+
+                self.assertEqual(json_response["_last_state"], iteration["service_response"]["_last_state"])
+                self.assertEqual(json_response["assessment"]["summary"]["all_success_criteria_met"], iteration["service_response"]["assessment"]["summary"]["all_success_criteria_met"])
+                self.assertEqual(json_response["assessment"]["summary"]["abort_experiment"], iteration["service_response"]["assessment"]["summary"]["abort_experiment"])
+                conclusion_check = True if set(iteration["service_response"]["assessment"]["summary"]["conclusions"]).issubset(json_response["assessment"]["summary"]["conclusions"]) else False
+                self.assertTrue(conclusion_check)
+
+
+    def test_rollforward(self):
+        all_files = os.listdir("tests/data/rf")
+
+        for each_file in all_files:
+            if each_file == ".DS_Store":
+                continue
+            with open("tests/data/rf/"+each_file) as f:
+                experiment_data = json.load(f)
+                self.conduct_experiment(experiment_data)
+
+
+    def test_rollback(self):
+        all_files = os.listdir("tests/data/rb")
+
+        for each_file in all_files:
+            if each_file == ".DS_Store":
+                continue
+            with open("tests/data/rb/"+each_file) as f:
+                experiment_data = json.load(f)
+                self.conduct_experiment(experiment_data)
 
     def test_payload_check_and_increment(self):
         """Tests the REST endpoint /analytics/canary/check_and_increment."""
@@ -335,3 +392,13 @@ class TestAnalyticsAPI(unittest.TestCase):
             resp = self.flask_test.post(endpoint, json=parameters)
 
             self.assertEqual(resp.status_code, 200, resp.data)
+
+
+    def test_rollforward_rollback(self):
+        pass
+
+    def test_rollback_rollforward(self):
+        pass
+
+    def test_rollback_rollback(self):
+        pass
