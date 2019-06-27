@@ -10,6 +10,7 @@ from iter8_analytics import app as flask_app
 from iter8_analytics.api.analytics import responses as responses
 from iter8_analytics.api.analytics import request_parameters as request_parameters
 import iter8_analytics.constants as constants
+from iter8_analytics.metrics_backend.successcriteria import StatisticalTests, SuccessCriterion
 import dateutil.parser as parser
 
 import logging
@@ -402,3 +403,17 @@ class TestAnalyticsAPI(unittest.TestCase):
 
     def test_rollback_rollback(self):
         pass
+
+    def test_abort_experiment(self):
+        sc = SuccessCriterion({
+                        "metric_name": "iter8_error_rate",
+                        "type": "threshold",
+                        "value": 0.02,
+                        "stop_on_failure": True
+                    })
+
+        tr = sc.post_process_test_result({
+            "sample_size_sufficient": False,
+            "success": False
+        })
+        assert(not tr["abort_experiment"])

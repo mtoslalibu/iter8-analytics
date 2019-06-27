@@ -35,21 +35,17 @@ class SuccessCriterion:
     """
     Class with methods for performing a statistical test on a metric.
     """
-    def __init__(self, criterion_wrapper):
+    def __init__(self, criterion):
         """
-        criterion_wrapper:  {
-                        "metricName": "iter8_error_rate",
-                        "criterion": {
-                            "type": "threshold",
-                            "value": 0.02,
-                            "confidence": 98,
-                            "use_for_traffic_control": false
-                        }
+        criterion:  {
+                        "metric_name": "iter8_error_rate",
+                        "type": "threshold",
+                        "value": 0.02,
+                        "stop_on_failure": True
                     }
         """
-        self.criterion_wrapper = criterion_wrapper
-        self.metric_name = criterion_wrapper["metric_name"]
-        self.criterion = criterion_wrapper
+        self.metric_name = criterion["metric_name"]
+        self.criterion = criterion
         if "stop_on_failure" not in self.criterion:
             self.criterion["stop_on_failure"] = False
 #        self.iter8metric = Iter8Metric.create(name, entity_tags)
@@ -69,7 +65,7 @@ class SuccessCriterion:
             "metric_name": self.metric_name,
             "conclusions": [conclusion_str],
             "success_criterion_met": test_result["success"],
-            "abort_experiment": self.criterion["stop_on_failure"] and not test_result["success"]
+            "abort_experiment": self.criterion["stop_on_failure"] and test_result["sample_size_sufficient"] and not test_result["success"]
         }
 
 class DeltaCriterion(SuccessCriterion):
