@@ -22,42 +22,6 @@ import copy
 
 log = logging.getLogger(__name__)
 
-metrics_config = {
-    "iter8_latency": {
-        "type": "histogram",
-        "zero_value_on_nodata": True,
-        "query_templates": {
-            "sample_size": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
-            # "min": "sum(increase(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels)",
-            # "mean": "(sum(increase(istio_request_duration_seconds_sum{reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_request_duration_seconds_count{reporter='source'}[$interval]$offset_str)) by ($entity_labels))",
-            # "max": "sum(increase(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels)",
-            # "stddev": "sum(increase(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels)",
-            # "first_quartile": "histogram_quantile(0.25, sum(rate(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels))",
-            # "median": "histogram_quantile(0.5, sum(rate(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels))",
-            # "third_quartile": "histogram_quantile(0.75, sum(rate(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels))",
-            # "95th_percentile": "histogram_quantile(0.95, sum(rate(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels))",
-            # "99th_percentile": "histogram_quantile(0.99, sum(rate(istio_request_duration_seconds_bucket{reporter='source'}[$interval]$offset_str)) by (le, $entity_labels))",
-            "value": "(sum(increase(istio_request_duration_seconds_sum{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_request_duration_seconds_count{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels))"
-        }
-    },
-    "iter8_error_rate": {
-        "type": "gauge",
-        "zero_value_on_nodata": True,
-        "query_templates": {
-            "sample_size": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
-            "value": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels) / sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)"
-        }
-    },
-    "iter8_error_count": {
-        "type": "counter",
-        "zero_value_on_nodata": True,
-        "query_templates": {
-            "sample_size": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
-            "value": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)"
-        }
-    }
-}
-
 prom_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
 DataCapture.data_capture_mode = os.getenv(constants.ITER8_DATA_CAPTURE_MODE_ENV)
 
@@ -155,32 +119,37 @@ class CanaryCheckAndIncrement(flask_restplus.Resource):
     def append_metrics_and_success_criteria(self):
         for criterion in self.experiment["traffic_control"]["success_criteria"]:
             self.response["baseline"]["metrics"].append(self.get_results(
-                criterion["metric_name"], self.experiment["baseline"]))
+                criterion, self.experiment["baseline"]))
             self.response["canary"]["metrics"].append(self.get_results(
-                criterion["metric_name"], self.experiment["canary"]))
+                criterion, self.experiment["canary"]))
+            log.info(f"Appended metric: {criterion['metric_name']}")
             self.append_success_criteria(criterion)
 
-    def get_results(self, metric_name, entity):
+    def get_results(self, criterion, entity):
         metric_spec = self.metric_factory.create_metric_spec(
-            metrics_config, metric_name, entity["tags"])
+            criterion, entity["tags"])
         metrics_object = self.metric_factory.get_iter8_metric(metric_spec)
         interval_str, offset_str = self.metric_factory.get_interval_and_offset_str(
             entity["start_time"], entity["end_time"])
-        statistics = metrics_object.get_stats(interval_str, offset_str)
+        prometheus_results_per_success_criteria = metrics_object.get_stats(interval_str, offset_str)
+        """
+        prometheus_results_per_success_criteria = {'statistics': {'sample_size': '12', 'value': 13}, 'messages': ["sample_size: Query success, result found", "value: Query success, result found"]}
+        """
         return {
-            "metric_name": metric_name,
-            "metric_type": metrics_config[metric_name]["type"],
-            "statistics": statistics
+            "metric_name": criterion["metric_name"],
+            "metric_type": criterion["metric_type"],
+            "statistics": prometheus_results_per_success_criteria["statistics"]
         }
 
     def append_success_criteria(self, criterion):
+        log.info("Appending Success Criteria")
         if criterion["type"] == "delta":
             self.response["assessment"]["success_criteria"].append(DeltaCriterion(
                 criterion, self.response["baseline"]["metrics"][-1], self.response["canary"]["metrics"][-1]).test())
         else:
             self.response["assessment"]["success_criteria"].append(
                 ThresholdCriterion(criterion, self.response["canary"]["metrics"][-1]).test())
-        # print(self.response["assessment"]["success_criteria"])
+        log.info(" Success Criteria appended")
 
     def append_assessment_summary(self):
         self.response["assessment"]["summary"]["all_success_criteria_met"] = all(
