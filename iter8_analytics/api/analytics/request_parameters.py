@@ -134,6 +134,7 @@ traffic_control = api.model('traffic_control', {
 })
 
 TRAFFIC_CONTROL_STR = 'traffic_control'
+
 LAST_STATE_STR = '_last_state'
 
 check_and_increment_parameters = api.model('check_and_increment_parameters', {
