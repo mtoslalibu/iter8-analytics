@@ -23,7 +23,7 @@ import re
 
 from urllib.parse import urlencode
 
-class TestAnalyticsAPI(unittest.TestCase):
+class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup common to all tests."""
@@ -38,10 +38,10 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         cls.backend_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
         cls.metrics_endpoint = f'{cls.backend_url}/api/v1/query'
-        cls.endpoint = f'http://localhost:5555/api/v1/analytics/canary/check_and_increment'
+        #cls.metrics_endpoint = f'http://localhost:9090/api/v1/query'
         log.info('Completed initialization for all analytics REST API tests.')
 
-
+    ##All tests after this involve the /analytics/canary/check_and_increment endpoint (until mentioned otherwise)
     def test_payload_check_and_increment(self):
         """Tests the REST endpoint /analytics/canary/check_and_increment."""
 
@@ -61,12 +61,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -104,12 +106,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -145,7 +149,7 @@ class TestAnalyticsAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
 
-            correct_response = {"baseline":{"traffic_percentage":75.0,"success_criterion_information":[[0,0]]},"candidate":{"traffic_percentage":25,"success_criterion_information":[[0,0]]}}
+            correct_response = {"baseline":{"traffic_percentage":73.0,"success_criterion_information":[[21,21.764]]},"candidate":{"traffic_percentage":27,"success_criterion_information":[[19,19.677]]}}
             self.assertEqual(resp.status_code, 200, resp.data)
 
             self.assertEqual(resp.get_json()["_last_state"], correct_response)
@@ -161,12 +165,14 @@ class TestAnalyticsAPI(unittest.TestCase):
             parameters = {
                 "baseline": {
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -204,12 +210,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -237,6 +245,7 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -275,12 +284,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -319,12 +330,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -363,12 +376,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -406,12 +421,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -436,8 +453,10 @@ class TestAnalyticsAPI(unittest.TestCase):
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
             self.assertEqual(resp.status_code, 400, 'new metric_type in payload')
-
-            assert b'\'random\' is not one of [\'Performance\', \'Correctness\']' in resp.data
+            log.info("\n\n")
+            log.info(resp.data)
+            log.info("\n\n")
+            assert b'\'random\' is not one of [\'Correctness\', \'Performance\']' in resp.data
 
             ##################
             # Test request with metric_query_template missing in payload
@@ -450,12 +469,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -494,12 +515,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -527,6 +550,70 @@ class TestAnalyticsAPI(unittest.TestCase):
             assert b'\'metric_sample_size_query_template\' is a required property' in resp.data
 
 
+    def test_baseline_failing_success_criteria(self):
+        """Tests the REST endpoint /analytics/canary/check_and_increment."""
+
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/check_and_increment'
+
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_baseline_failing_response.json")))
+
+            ###################
+            # Test request when both candidate and baseline fail success criteria
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request when both candidate and baseline fail success criteria")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_count",
+                            "metric_type": "Correctness",
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "threshold",
+                            "value": 2,
+                            "sample_size": 0,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {
+                    "baseline": {
+                        "traffic_percentage":98.0,
+                        "success_criterion_information":[[1,0.0]]
+                        },
+                    "candidate": {
+                        "traffic_percentage":2,
+                        "success_criterion_information":[[1,0.0]]
+                        }
+                    }
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            assert 'The baseline version did not meet success criteria' in resp.get_json()["assessment"]["summary"]["conclusions"]
+
+
+
 
     def test_no_data_from_prometheus(self):
         """Tests the REST endpoint /analytics/canary/check_and_increment."""
@@ -547,12 +634,14 @@ class TestAnalyticsAPI(unittest.TestCase):
                 "baseline": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v1"
                     }
                 },
                 "candidate": {
                     "start_time": "2019-04-24T19:40:32.017Z",
                     "tags": {
+                        "destination_service_namespace": "default",
                         "destination_workload": "reviews-v3"
                     }
                 },
@@ -578,3 +667,316 @@ class TestAnalyticsAPI(unittest.TestCase):
             resp = self.flask_test.post(endpoint, json=parameters)
 
             self.assertEqual(resp.status_code, 200, resp.data)
+
+    #All tests after this involve the /analytics/canary/epsilon_t_greedy endpoint
+    def test_payload_epsilon_t_greedy(self):
+        """Tests the REST endpoint /analytics/canary/epsilon_t_greedy."""
+
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/epsilon_t_greedy'
+
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+
+            ###################
+            # Test request with some required parameters
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_count",
+                            "metric_type": "Correctness",
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "delta",
+                            "value": 0.02,
+                            "sample_size": 0,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {}
+            }
+
+            # Call the REST API via the test client
+            # resp = self.flask_test.post(endpoint, json=parameters)
+            # self.assertEqual(resp.status_code, 200, resp.data)
+
+            ##################
+            # Test request with pre filled last state in payload on iteration 4
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "end_time": "2019-04-24T20:30:02.389Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "end_time": "2019-04-24T20:30:02.389Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "max_traffic_percent": 100,
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_count",
+                            "metric_type": "Correctness",
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "delta",
+                            "value": 0.02,
+                            "sample_size": 0,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {
+                    "baseline": {
+                        "traffic_percentage": 13,
+                        "success_criterion_information": [
+                            [
+                            1,
+                            2
+                            ]
+                        ]
+                        },
+                    "candidate": {
+                        "traffic_percentage": 87,
+                        "success_criterion_information": [
+                            [
+                            2,
+                            3
+                            ]
+                        ]
+                        },
+                    "effective_iteration_count": 4
+                    }
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            correct_response = {"baseline":{"traffic_percentage":10.0,"success_criterion_information":[[21,21.764]]},"candidate":{"traffic_percentage":90,"success_criterion_information":[[19,19.677]]},"effective_iteration_count":5}
+            self.assertEqual(resp.get_json()["_last_state"], correct_response)
+
+
+            ##################
+            # Test request with pre filled last state in payload on iteration 5- when no change is observed
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_count",
+                            "metric_type": "Correctness",
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "delta",
+                            "value": 0.02,
+                            "sample_size": 0,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {
+                    "baseline": {
+                        "traffic_percentage": 10,
+                        "success_criterion_information": [
+                            [21,21.764]
+                        ]
+                        },
+                    "candidate": {
+                        "traffic_percentage": 90,
+                        "success_criterion_information": [
+                            [19,19.677]
+                        ]
+                        },
+                    "effective_iteration_count": 5
+                    }
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            correct_response = {"baseline":{"traffic_percentage":10.0,"success_criterion_information":[[21,21.764]]},"candidate":{"traffic_percentage":90,"success_criterion_information":[[19,19.677]]},"effective_iteration_count":5}
+            self.assertEqual(resp.get_json()["_last_state"], correct_response)
+
+    # Test request when candidate fails success criteria
+    def test_candidate_failing_success_criteria(self):
+        """Tests the REST endpoint /analytics/canary/epsilon_t_greedy."""
+
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/epsilon_t_greedy'
+
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_baseline_failing_response.json")))
+
+            ###################
+            # Test request when both candidate and baseline fail success criteria
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request when both candidate and baseline fail success criteria")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_count",
+                            "metric_type": "Correctness",
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "threshold",
+                            "value": 2,
+                            "sample_size": 1,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {
+                    "baseline": {
+                        "traffic_percentage": 90,
+                        "success_criterion_information": [
+                            [1,0.0]
+                        ]
+                        },
+                    "candidate": {
+                        "traffic_percentage": 10,
+                        "success_criterion_information": [
+                            [1,0.0]
+                        ]
+                        },
+                    "effective_iteration_count": 3
+                    }
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            assert 'The baseline version did not meet success criteria' in resp.get_json()["assessment"]["summary"]["conclusions"]
+
+
+
+            ###################
+            # Test request when candidate fails success criteria because sample size requirements are not met
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request when both candidate and baseline fail success criteria")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_count",
+                            "metric_type": "Correctness",
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "threshold",
+                            "value": 2,
+                            "sample_size": 10,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {
+                    "baseline": {
+                        "traffic_percentage": 90,
+                        "success_criterion_information": [
+                            [1,0.0]
+                        ]
+                        },
+                    "candidate": {
+                        "traffic_percentage": 10,
+                        "success_criterion_information": [
+                            [1,0.0]
+                        ]
+                        },
+                    "effective_iteration_count": 3
+                    }
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            correct_response = {'baseline': {'traffic_percentage': 90.0, 'success_criterion_information': [[4, 4.0]]}, 'candidate': {'traffic_percentage': 10, 'success_criterion_information': [[5, 5.0]]}, 'effective_iteration_count': 3}
+            self.assertEqual(correct_response, resp.get_json()["_last_state"])

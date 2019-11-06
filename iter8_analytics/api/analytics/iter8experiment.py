@@ -3,18 +3,36 @@ import iter8_analytics.api.analytics.responses as responses
 
 from datetime import datetime, timezone, timedelta
 CHANGE_OBSERVED_STR = "change_observed"
-class LastState():
+SUCCESS_CRITERION_INFORMATION_STR="success_criterion_information"
+EFFECTIVE_ITERATION_COUNT_STR="effective_iteration_count"
+
+class CheckAndIncrementLastState():
     def __init__(self, baseline_traffic, candidate_traffic, baseline_success_criterion_information, candidate_success_criterion_information):
         self.last_state = {
             request_parameters.BASELINE_STR: {
                 responses.TRAFFIC_PERCENTAGE_STR: baseline_traffic,
-                "success_criterion_information": baseline_success_criterion_information
+                SUCCESS_CRITERION_INFORMATION_STR: baseline_success_criterion_information
             },
             request_parameters.CANDIDATE_STR: {
                 responses.TRAFFIC_PERCENTAGE_STR: candidate_traffic,
-                "success_criterion_information": candidate_success_criterion_information
+                SUCCESS_CRITERION_INFORMATION_STR: candidate_success_criterion_information
             },
             CHANGE_OBSERVED_STR: False
+        }
+
+class EpsilonTGreedyLastState():
+    def __init__(self, baseline_traffic, candidate_traffic, baseline_success_criterion_information, candidate_success_criterion_information, effective_iteration_count):
+        self.last_state = {
+            request_parameters.BASELINE_STR: {
+                responses.TRAFFIC_PERCENTAGE_STR: baseline_traffic,
+                SUCCESS_CRITERION_INFORMATION_STR: baseline_success_criterion_information
+            },
+            request_parameters.CANDIDATE_STR: {
+                responses.TRAFFIC_PERCENTAGE_STR: candidate_traffic,
+                SUCCESS_CRITERION_INFORMATION_STR: candidate_success_criterion_information
+            },
+            CHANGE_OBSERVED_STR: False,
+            EFFECTIVE_ITERATION_COUNT_STR: effective_iteration_count
         }
 
 class ServicePayload():
@@ -59,14 +77,35 @@ class TrafficControl():
         self.warmup_request_count = 0 if request_parameters.WARMUP_REQUEST_COUNT_STR not in traffic_control else traffic_control[request_parameters.WARMUP_REQUEST_COUNT_STR]
 
 
-class Experiment():
+class CheckAndIncrementExperiment():
     def __init__(self, payload):
         self.experiment = {}
         if not payload[request_parameters.LAST_STATE_STR]:  # if it is empty
-            last_state = LastState(100, 0, [], [])
+            last_state = CheckAndIncrementLastState(100, 0, [], [])
             first_iteration = True
         else:
-            last_state = LastState(payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][responses.TRAFFIC_PERCENTAGE_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR]["success_criterion_information"], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR]["success_criterion_information"])
+            last_state = CheckAndIncrementLastState(payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][responses.TRAFFIC_PERCENTAGE_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][SUCCESS_CRITERION_INFORMATION_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][SUCCESS_CRITERION_INFORMATION_STR])
+            first_iteration = False
+
+        baseline_payload = ServicePayload(payload[request_parameters.BASELINE_STR])
+        candidate_payload = ServicePayload(payload[request_parameters.CANDIDATE_STR])
+
+        traffic_control = TrafficControl(payload[request_parameters.TRAFFIC_CONTROL_STR])
+
+        self.last_state = last_state
+        self.first_iteration = first_iteration
+        self.baseline = baseline_payload
+        self.candidate = candidate_payload
+        self.traffic_control = traffic_control
+
+class EpsilonTGreedyExperiment():
+    def __init__(self, payload):
+        self.experiment = {}
+        if not payload[request_parameters.LAST_STATE_STR]:  # if it is empty
+            last_state = EpsilonTGreedyLastState(100, 0, [], [], 0)
+            first_iteration = True
+        else:
+            last_state = EpsilonTGreedyLastState(payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][responses.TRAFFIC_PERCENTAGE_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][SUCCESS_CRITERION_INFORMATION_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][SUCCESS_CRITERION_INFORMATION_STR], payload[request_parameters.LAST_STATE_STR][EFFECTIVE_ITERATION_COUNT_STR])
             first_iteration = False
 
         baseline_payload = ServicePayload(payload[request_parameters.BASELINE_STR])
