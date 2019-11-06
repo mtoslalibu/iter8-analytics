@@ -7,7 +7,7 @@ all: build-default
 clean-pyc:
 	find iter8_analytics -type f \
 	  \( -name '__pycache__' -o -name '*.pyc' -o -name '*.pyo' -o -name '*~' \) \
-	-exec rm --force {} +
+	-exec rm -f {} +
 
 # Deploy analytics engine to the Kubernetes cluster configured in $KUBECONFIG or ~/.kube/config
 deploy: 
