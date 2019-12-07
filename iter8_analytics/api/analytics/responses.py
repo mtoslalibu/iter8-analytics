@@ -71,17 +71,20 @@ stat_details = api.model('stat_details', {
 
 METRIC_BACKEND_URL_STR = 'metric_backend_url'
 METRIC_NAME_STR = 'metric_name'
-METRIC_TYPE_STR = 'metric_type'
 STATISTICS_STR = 'statistics'
 
 metric_details = api.model('metric_details', {
     METRIC_NAME_STR: fields.String(
         required=True, example='iter8_latency',
         description='Name identifying the metric'),
-    METRIC_TYPE_STR: fields.String(
-        required=True,
-        enum=[request_parameters.CORRECTNESS_METRIC_TYPE_STR, request_parameters.PERFORMANCE_METRIC_TYPE_STR],
-        example=request_parameters.CORRECTNESS_METRIC_TYPE_STR, description='Metric type'),
+    request_parameters.IS_COUNTER_STR: fields.Boolean(
+        required=True, description='Describles the type of metric. '
+        'Options: "True": Metrics which are cumulative in nature '
+        'and represent monotonically increasing values ; '
+        '"False": Metrics which are not cumulative'),
+    request_parameters.ABSENT_VALUE_STR: fields.String(
+        required=True, description='Describes what value should be returned '
+        'if Prometheus did not find any data corresponding to the metric'),
     STATISTICS_STR: fields.Nested(
         stat_details, required=True,
         description='Measurements computed for the metric')

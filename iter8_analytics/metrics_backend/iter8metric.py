@@ -19,9 +19,10 @@ class Iter8MetricFactory:
     def create_metric_spec(criterion, entity_tag):
         metric_spec = {}
         metric_spec["name"] = criterion.metric_name
-        metric_spec[request_parameters.METRIC_TYPE_STR] = criterion.metric_type
-        metric_spec["query_specs"] = [{"query_name": "value", "query_template": criterion.metric_query_template, request_parameters.METRIC_TYPE_STR: criterion.metric_type, "entity_tags": entity_tag},
-        {"query_name": "sample_size", "query_template": criterion.metric_sample_size_query_template, request_parameters.METRIC_TYPE_STR: request_parameters.CORRECTNESS_METRIC_TYPE_STR, "entity_tags": entity_tag}]
+        metric_spec[request_parameters.IS_COUNTER_STR] = criterion.is_counter
+        metric_spec[request_parameters.ABSENT_VALUE_STR] = criterion.absent_value
+        metric_spec["query_specs"] = [{"query_name": "value", "query_template": criterion.metric_query_template, request_parameters.IS_COUNTER_STR: criterion.is_counter, request_parameters.ABSENT_VALUE_STR: criterion.absent_value, "entity_tags": entity_tag},
+        {"query_name": "sample_size", "query_template": criterion.metric_sample_size_query_template, request_parameters.IS_COUNTER_STR: True, request_parameters.ABSENT_VALUE_STR: "0", "entity_tags": entity_tag}]
         return metric_spec
 
     @staticmethod
@@ -44,7 +45,8 @@ class Iter8MetricFactory:
 class Iter8Metric:
     def __init__(self, metric_spec, metrics_backend_url):
         self.name = metric_spec["name"]
-        self.metric_type = metric_spec[request_parameters.METRIC_TYPE_STR]
+        self.is_counter = metric_spec[request_parameters.IS_COUNTER_STR]
+        self.absent_value = metric_spec[request_parameters.ABSENT_VALUE_STR]
         self.query_specs = metric_spec["query_specs"]
         self.metrics_backend_url = metrics_backend_url
         self.prom_queries = [PrometheusQuery(self.metrics_backend_url, query_spec) for query_spec in self.query_specs]

@@ -28,7 +28,8 @@ class TestAnalyticsAPI(unittest.TestCase):
     def test_abort_experiment(self):
         criterion = SC({
                         "metric_name": "iter8_error_rate",
-                        "metric_type": "Correctness",
+                        "is_counter": True,
+                        "absent_value": "0",
                         "type": "threshold",
                         "value": 0.02,
                         "stop_on_failure": True,
@@ -48,7 +49,8 @@ class TestAnalyticsAPI(unittest.TestCase):
         #Testing Threshold Criterion
         criterion = SC({
         "metric_name": "iter8_error_count",
-        "metric_type": "Correctness",
+        "is_counter": True,
+        "absent_value": "0",
         "metric_query_template": "query_template",
         "metric_sample_size_query_template": "query_template",
         "type": "threshold",
@@ -59,7 +61,8 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         candidate_metrics = {
         "metric_name": "iter8_error_count",
-        "metric_type": "Correctness",
+        "is_counter": True,
+        "absent_value": "0",
         "statistics": {'sample_size': 12, 'value': 13}
         }
 
@@ -80,7 +83,8 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         baseline_metrics = {
         "metric_name": "iter8_error_count",
-        "metric_type": "Correctness",
+        "is_counter": True,
+        "absent_value": "0",
         "statistics": {'sample_size': 30, 'value': 12}
         }
 
@@ -107,7 +111,8 @@ class TestAnalyticsAPI(unittest.TestCase):
         #Testing Threshold Criterion
         criterion = SC({
         "metric_name": "iter8_error_count",
-        "metric_type": "Correctness",
+        "is_counter": True,
+        "absent_value": "0",
         "metric_query_template": "query_template",
         "metric_sample_size_query_template": "query_template",
         "type": "threshold",
@@ -118,7 +123,8 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         candidate_metrics = {
         "metric_name": "iter8_error_count",
-        "metric_type": "Correctness",
+        "is_counter": True,
+        "absent_value": "0",
         "statistics": {'sample_size': 10, 'value': 12}
         }
 
@@ -128,7 +134,8 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         baseline_metrics = {
         "metric_name": "iter8_error_count",
-        "metric_type": "Correctness",
+        "is_counter": True,
+        "absent_value": "0",
         "statistics": {'sample_size': 12, 'value': 13}
         }
 

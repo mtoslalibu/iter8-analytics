@@ -63,7 +63,8 @@ class SuccessCriterion:
         """
         criterion:  {
             "metric_name": "iter8_latency",
-            "metric_type": "Performance",
+            "is_counter": False,
+            "absent_value": "None",
             "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
             "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
             "type": "delta",
@@ -74,7 +75,8 @@ class SuccessCriterion:
             }
         """
         self.metric_name = criterion[request_parameters.METRIC_NAME_STR]
-        self.metric_type = criterion[request_parameters.METRIC_TYPE_STR]
+        self.is_counter = criterion[request_parameters.IS_COUNTER_STR]
+        self.absent_value = criterion[request_parameters.ABSENT_VALUE_STR]
         self.metric_query_template = criterion[request_parameters.METRIC_QUERY_TEMPLATE_STR]
         self.metric_sample_size_query_template = criterion[request_parameters.METRIC_SAMPLE_SIZE_QUERY_TEMPLATE]
         self.type = criterion[request_parameters.CRITERION_TYPE_STR]

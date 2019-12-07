@@ -30,9 +30,8 @@ version_definition = api.model('version_definition', {
 })
 
 METRIC_NAME_STR = 'metric_name'
-METRIC_TYPE_STR = 'metric_type'
-PERFORMANCE_METRIC_TYPE_STR = 'Performance'
-CORRECTNESS_METRIC_TYPE_STR = 'Correctness'
+IS_COUNTER_STR = 'is_counter'
+ABSENT_VALUE_STR = 'absent_value'
 METRIC_QUERY_TEMPLATE_STR = 'metric_query_template'
 METRIC_SAMPLE_SIZE_QUERY_TEMPLATE = 'metric_sample_size_query_template'
 
@@ -50,11 +49,14 @@ success_criterion_default = api.model('success_criterion_default', {
         required=True,
         description='Name of the metric to which the criterion applies',
         example='iter8_error_count'),
-    METRIC_TYPE_STR: fields.String(
-        required=True, enum=[CORRECTNESS_METRIC_TYPE_STR, PERFORMANCE_METRIC_TYPE_STR],
-        description='Metric type. Options: "Performance": Metrics which '
-        'measure the performance of a microservice; '
-        '"Correctness": Metrics which measure the correctness of a microservice'),
+    IS_COUNTER_STR: fields.Boolean(
+        required=True, description='Describles the type of metric. '
+        'Options: "True": Metrics which are cumulative in nature '
+        'and represent monotonically increasing values ; '
+        '"False": Metrics which are not cumulative'),
+    ABSENT_VALUE_STR: fields.String(
+        required=True, description='Describes what value should be returned '
+        'if Prometheus did not find any data corresponding to the metric'),
     METRIC_QUERY_TEMPLATE_STR: fields.String(
         required=True,
         description='Prometheus Query of the metric to which the criterion applies',
@@ -90,8 +92,6 @@ success_criterion_default = api.model('success_criterion_default', {
         'requirement')
 })
 METRIC_NATURE_STR='metric_nature'
-CUMULATIVE_METRIC_TYPE_STR = 'Cumulative'
-MEANABLE_METRIC_TYPE_STR = 'Meanable'
 MIN_STR = "min"
 MAX_STR = "max"
 MIN_MAX_STR = "min, max"
@@ -109,16 +109,14 @@ success_criterion_pbr = api.model('success_criterion_pbr', {
         required=True,
         description='Name of the metric to which the criterion applies',
         example='iter8_error_count'),
-    METRIC_TYPE_STR: fields.String(
-        required=True, enum=[CORRECTNESS_METRIC_TYPE_STR, PERFORMANCE_METRIC_TYPE_STR],
-        description='Metric type. Options: "Performance": Metrics which '
-        'measure the performance of a microservice; '
-        '"Correctness": Metrics which measure the correctness of a microservice'),
-    METRIC_NATURE_STR: fields.String(
-        required=True, enum=[CUMULATIVE_METRIC_TYPE_STR, MEANABLE_METRIC_TYPE_STR],
-        description='Metric type. Options: "Cumulative": Metrics which '
-        'are additive in nature'
-        '"Meanable": Metrics which compute averages'),
+    IS_COUNTER_STR: fields.Boolean(
+        required=True, description='Describles the type of metric. '
+        'Options: "True": Metrics which are cumulative in nature '
+        'and represent monotonically increasing values ; '
+        '"False": Metrics which are not cumulative'),
+    ABSENT_VALUE_STR: fields.String(
+        required=True, description='Describes what value should be returned '
+        'if Prometheus did not find any data corresponding to the metric'),
     MIN_MAX_STR: fields.Nested(
         min_max, required=False,
         description='Minimum and Maximum value of the metric'),

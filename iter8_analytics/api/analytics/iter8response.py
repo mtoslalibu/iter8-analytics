@@ -73,7 +73,8 @@ class Response():
         """
         return {
             request_parameters.METRIC_NAME_STR: criterion.metric_name,
-            request_parameters.METRIC_TYPE_STR: criterion.metric_type,
+            request_parameters.IS_COUNTER_STR: criterion.is_counter,
+            request_parameters.ABSENT_VALUE_STR: criterion.absent_value,
             responses.STATISTICS_STR: prometheus_results_per_success_criteria[responses.STATISTICS_STR]
         }
 
