@@ -78,7 +78,7 @@ class SuccessCriterion:
             request_parameters.METRIC_NAME_STR: self.criterion.metric_name,
             responses.CONCLUSIONS_STR: [conclusion_str],
             responses.SUCCESS_CRITERION_MET_STR: test_result[SUCCESS_STR],
-            responses.ABORT_EXPERIMENT_STR: self.criterion.stop_on_failure and test_result[SAMPLE_SIZE_SUFFICIENT_STR] and not test_result[SUCCESS_STR],
+            responses.ABORT_EXPERIMENT_STR: (self.criterion.stop_on_failure and test_result[SAMPLE_SIZE_SUFFICIENT_STR] and not test_result[SUCCESS_STR]) or (criterion.is_counter and not test_result[SUCCESS_STR]),
             SAMPLE_SIZE_SUFFICIENT_STR: test_result[SAMPLE_SIZE_SUFFICIENT_STR]
         }
 
