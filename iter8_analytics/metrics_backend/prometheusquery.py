@@ -58,7 +58,7 @@ class PrometheusQuery():
                 metric_type_flag = True
         if metric_type_flag == True:
             try:
-                return_value = int(self.query_spec[request_parameters.ABSENT_VALUE_STR])
+                return_value = float(self.query_spec[request_parameters.ABSENT_VALUE_STR])
                 prom_result["value"] = return_value
             except:
                 prom_result["value"] = None

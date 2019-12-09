@@ -55,7 +55,8 @@ success_criterion_default = api.model('success_criterion_default', {
         'and represent monotonically increasing values ; '
         '"False": Metrics which are not cumulative'),
     ABSENT_VALUE_STR: fields.String(
-        required=True, description='Describes what value should be returned '
+        required=False, example="2.0", default="0.0",
+        description='Describes what value should be returned '
         'if Prometheus did not find any data corresponding to the metric'),
     METRIC_QUERY_TEMPLATE_STR: fields.String(
         required=True,
@@ -115,7 +116,8 @@ success_criterion_pbr = api.model('success_criterion_pbr', {
         'and represent monotonically increasing values ; '
         '"False": Metrics which are not cumulative'),
     ABSENT_VALUE_STR: fields.String(
-        required=True, description='Describes what value should be returned '
+        required=False, example="2.0", default="0.0",
+        description='Describes what value should be returned '
         'if Prometheus did not find any data corresponding to the metric'),
     MIN_MAX_STR: fields.Nested(
         min_max, required=False,

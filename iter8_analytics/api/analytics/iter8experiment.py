@@ -76,7 +76,7 @@ class SuccessCriterion:
         """
         self.metric_name = criterion[request_parameters.METRIC_NAME_STR]
         self.is_counter = criterion[request_parameters.IS_COUNTER_STR]
-        self.absent_value = criterion[request_parameters.ABSENT_VALUE_STR]
+        self.absent_value = "0.0" if request_parameters.ABSENT_VALUE_STR not in criterion else criterion[request_parameters.ABSENT_VALUE_STR]
         self.metric_query_template = criterion[request_parameters.METRIC_QUERY_TEMPLATE_STR]
         self.metric_sample_size_query_template = criterion[request_parameters.METRIC_SAMPLE_SIZE_QUERY_TEMPLATE]
         self.type = criterion[request_parameters.CRITERION_TYPE_STR]

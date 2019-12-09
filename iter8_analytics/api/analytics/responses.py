@@ -83,7 +83,7 @@ metric_details = api.model('metric_details', {
         'and represent monotonically increasing values ; '
         '"False": Metrics which are not cumulative'),
     request_parameters.ABSENT_VALUE_STR: fields.String(
-        required=True, description='Describes what value should be returned '
+        required=False, default="0.0", description='Describes what value should be returned '
         'if Prometheus did not find any data corresponding to the metric'),
     STATISTICS_STR: fields.Nested(
         stat_details, required=True,
