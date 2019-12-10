@@ -92,7 +92,7 @@ success_criterion_default = api.model('success_criterion_default', {
         'the criterion is satisfied; if not specified, there is no confidence '
         'requirement')
 })
-METRIC_NATURE_STR='metric_nature'
+
 MIN_STR = "min"
 MAX_STR = "max"
 MIN_MAX_STR = "min, max"
