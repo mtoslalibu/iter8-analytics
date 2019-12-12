@@ -77,7 +77,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_rate",
                             "is_counter": False,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -123,7 +123,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_rate",
                             "is_counter": False,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -183,7 +183,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_count",
                             "is_counter": True,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -257,7 +257,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_count",
                             "is_counter": True,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -304,7 +304,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_count",
                             "is_counter": True,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -325,11 +325,11 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             assert b'\'value\' is a required property' in resp.data
 
             ###################
-            # Test request with unknown type in success_criteria
+            # Test request with Unknown type in is_counter
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-            log.info("Test request with unknown type in success_criteria")
+            log.info("Test request with Unknown type in is_counter")
 
             parameters = {
                 "baseline": {
@@ -351,7 +351,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_count",
                             "is_counter": "No",
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "normal",
@@ -368,7 +368,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
 
-            self.assertEqual(resp.status_code, 400, 'Unknown type in success_criteria')
+            self.assertEqual(resp.status_code, 400, 'Unknown type in is_counter')
 
             assert b"\'No\' is not of type \'boolean\'" in resp.data
             assert b'\'normal\' is not one of [\'delta\', \'threshold\']' in resp.data
@@ -378,7 +378,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-            log.info("Test request with metric_type missing in payload")
+            log.info("Test request with is_counter missing in payload")
 
             parameters = {
                 "baseline": {
@@ -414,17 +414,17 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400, 'success_criteria missing in payload')
+            self.assertEqual(resp.status_code, 400, 'is_counter missing in payload')
 
             assert b'\'is_counter\' is a required property' in resp.data
             #assert b'\'absent_value\' is a required property' in resp.data
 
             ##################
-            # Test request with new metric type in payload
+            # Test request with absent value of type float in payload
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-            log.info("Test request with new metric_type in payload")
+            log.info("Test request with absent value of type float in payload")
 
             parameters = {
                 "baseline": {
@@ -462,7 +462,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400, 'new metric_type in payload')
+            self.assertEqual(resp.status_code, 400, 'new absent_value type in payload')
             assert b'0 is not of type \'string\'' in resp.data
 
             ##################
@@ -492,7 +492,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_count",
                             "is_counter": True,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
                             "value": 0.02,
@@ -539,7 +539,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_count",
                             "is_counter": True,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
                             "value": 0.02,
@@ -682,7 +682,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_rate",
                             "is_counter": False,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
@@ -760,7 +760,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_rate",
                             "is_counter": False,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -862,7 +862,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_rate",
                             "is_counter": False,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -910,7 +910,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_rate",
                             "is_counter": False,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -978,7 +978,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_rate",
                             "is_counter": False,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -1048,7 +1048,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_count",
                             "is_counter": True,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
@@ -1110,7 +1110,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                         {
                             "metric_name": "iter8_error_count",
                             "is_counter": True,
-                            "absent_value": "0",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
@@ -1184,7 +1184,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                  {
                      "metric_name": "iter8_error_count",
                      "is_counter": True,
-                     "absent_value": "0",
+                     "absent_value": "0.0",
                      "min, max": {
                          "min": 0,
                          "max": 0
