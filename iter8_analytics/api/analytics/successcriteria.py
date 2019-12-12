@@ -53,7 +53,7 @@ class SuccessCriterion:
         criterion:  {
                         "metric_name": "iter8_error_count",
                         "is_counter": True,
-                        "absent_value": "0",
+                        "absent_value": "0.0",
                         "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                         "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                         "type": "delta",
