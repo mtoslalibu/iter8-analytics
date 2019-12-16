@@ -3,6 +3,7 @@ import requests
 import logging
 import math
 from iter8_analytics.metrics_backend.datacapture import DataCapture
+import iter8_analytics.api.analytics.request_parameters as request_parameters
 
 log = logging.getLogger(__name__)
 
@@ -56,8 +57,9 @@ class PrometheusQuery():
                 prom_result["message"] = "No matching entity found in Prometheus or result was NaN. Return value based on metric type"
                 metric_type_flag = True
         if metric_type_flag == True:
-            if self.query_spec["metric_type"] == "Correctness":
-                prom_result["value"] = 0
-            elif self.query_spec["metric_type"] == "Performance":
-                prom_result["value"]= None
+            try:
+                return_value = float(self.query_spec[request_parameters.ABSENT_VALUE_STR])
+                prom_result["value"] = return_value
+            except:
+                prom_result["value"] = None
         return prom_result

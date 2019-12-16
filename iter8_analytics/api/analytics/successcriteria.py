@@ -27,6 +27,8 @@ class StatisticalTests: # only provides class methods for statistical tests; can
     @staticmethod
     def simple_delta(baseline_metric, candidate_metric, criterion):
         #handle None response
+        if criterion.is_counter:
+            raise ValueError("Delta criterion cannot be used with counter metric.")
         test_result = {
             SAMPLE_SIZE_SUFFICIENT_STR: True
         }
@@ -50,7 +52,8 @@ class SuccessCriterion:
         """
         criterion:  {
                         "metric_name": "iter8_error_count",
-                        "metric_type": "Performance",
+                        "is_counter": True,
+                        "absent_value": "0.0",
                         "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                         "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                         "type": "delta",
@@ -71,13 +74,16 @@ class SuccessCriterion:
         confidence_str = f"with confidence {self.criterion.confidence}%" if (self.criterion.confidence > 0) else ""
         baseline_str = "of the baseline" if self.criterion.type == "delta" else ""
         result_str = f"{self.criterion.metric_name} of the candidate {is_or_is_not} within {delta_or_threshold} {self.criterion.value} {confidence_str} {baseline_str}. "
-        conclusion_str = "Insufficient sample size. " if not test_result[SAMPLE_SIZE_SUFFICIENT_STR] else result_str
+        conclusion_str = ["Insufficient sample size. " if not test_result[SAMPLE_SIZE_SUFFICIENT_STR] else result_str]
+        counter_exceeded = True if (self.criterion.is_counter and test_result[SAMPLE_SIZE_SUFFICIENT_STR] and (self.criterion.type== "threshold") and not test_result[SUCCESS_STR]) else False
+        if counter_exceeded:
+            conclusion_str.append("Counter Metric exceeded threshold value. Aborting experiment.")
 
         return {
             request_parameters.METRIC_NAME_STR: self.criterion.metric_name,
-            responses.CONCLUSIONS_STR: [conclusion_str],
+            responses.CONCLUSIONS_STR: conclusion_str,
             responses.SUCCESS_CRITERION_MET_STR: test_result[SUCCESS_STR],
-            responses.ABORT_EXPERIMENT_STR: self.criterion.stop_on_failure and test_result[SAMPLE_SIZE_SUFFICIENT_STR] and not test_result[SUCCESS_STR],
+            responses.ABORT_EXPERIMENT_STR: (self.criterion.stop_on_failure and test_result[SAMPLE_SIZE_SUFFICIENT_STR] and not test_result[SUCCESS_STR]) or (counter_exceeded),
             SAMPLE_SIZE_SUFFICIENT_STR: test_result[SAMPLE_SIZE_SUFFICIENT_STR]
         }
 

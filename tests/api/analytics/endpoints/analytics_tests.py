@@ -75,8 +75,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                 "traffic_control": {
                     "success_criteria": [
                         {
-                            "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -120,8 +121,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                 "traffic_control": {
                     "success_criteria": [
                         {
-                            "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -180,7 +182,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "is_counter": True,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -253,7 +256,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "is_counter": True,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -299,7 +303,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "is_counter": True,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -320,11 +325,11 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             assert b'\'value\' is a required property' in resp.data
 
             ###################
-            # Test request with unknown type in success_criteria
+            # Test request with Unknown type in is_counter
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-            log.info("Test request with unknown type in success_criteria")
+            log.info("Test request with Unknown type in is_counter")
 
             parameters = {
                 "baseline": {
@@ -345,7 +350,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "normal",
+                            "is_counter": "No",
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "normal",
@@ -362,7 +368,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
 
-            self.assertEqual(resp.status_code, 400, 'Unknown type in success_criteria')
+            self.assertEqual(resp.status_code, 400, 'Unknown type in is_counter')
+
+            assert b"\'No\' is not of type \'boolean\'" in resp.data
             assert b'\'normal\' is not one of [\'delta\', \'threshold\']' in resp.data
 
             ##################
@@ -370,7 +378,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-            log.info("Test request with metric_type missing in payload")
+            log.info("Test request with is_counter missing in payload")
 
             parameters = {
                 "baseline": {
@@ -406,16 +414,17 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400, 'success_criteria missing in payload')
+            self.assertEqual(resp.status_code, 400, 'is_counter missing in payload')
 
-            assert b'\'metric_type\' is a required property' in resp.data
+            assert b'\'is_counter\' is a required property' in resp.data
+            #assert b'\'absent_value\' is a required property' in resp.data
 
             ##################
-            # Test request with new metric type in payload
+            # Test request with absent value of type float in payload
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-            log.info("Test request with new metric_type in payload")
+            log.info("Test request with absent value of type float in payload")
 
             parameters = {
                 "baseline": {
@@ -436,7 +445,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "random",
+                            "is_counter": True,
+                            "absent_value": 0,
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
@@ -452,11 +462,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             # Call the REST API via the test client
             resp = self.flask_test.post(endpoint, json=parameters)
             # We should get a BAD REQUEST HTTP error
-            self.assertEqual(resp.status_code, 400, 'new metric_type in payload')
-            log.info("\n\n")
-            log.info(resp.data)
-            log.info("\n\n")
-            assert b'\'random\' is not one of [\'Correctness\', \'Performance\']' in resp.data
+            self.assertEqual(resp.status_code, 400, 'new absent_value type in payload')
+            assert b'0 is not of type \'string\'' in resp.data
 
             ##################
             # Test request with metric_query_template missing in payload
@@ -484,7 +491,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "is_counter": True,
+                            "absent_value": "0.0",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
                             "value": 0.02,
@@ -530,7 +538,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "is_counter": True,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
                             "value": 0.02,
@@ -548,6 +557,94 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             self.assertEqual(resp.status_code, 400, 'metric_query_template missing in payload')
 
             assert b'\'metric_sample_size_query_template\' is a required property' in resp.data
+
+            ##################
+            # Test request threshold crossing in a counter metric
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with metric_sample_size_query_template missing in payload")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_count",
+                            "is_counter": True,
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "threshold",
+                            "value": 18,
+                            "sample_size": 0,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {}
+            }
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            assert resp.get_json()["assessment"]["summary"]["abort_experiment"]
+            assert not resp.get_json()["assessment"]["summary"]["all_success_criteria_met"]
+
+
+            ##################
+            # Test request delta criterion with counter metric
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with metric_sample_size_query_template missing in payload")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_count",
+                            "is_counter": True,
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "delta",
+                            "value": 0.5,
+                            "sample_size": 0,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {}
+            }
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            assert b'Delta criterion cannot be used with counter metric.' in resp.data
 
 
     def test_baseline_failing_success_criteria(self):
@@ -583,8 +680,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                 "traffic_control": {
                     "success_criteria": [
                         {
-                            "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
@@ -594,8 +692,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "confidence": 0
                         },
                         {
-                            "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -635,7 +734,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_no_data_response.json")))
 
             ###################
-            # Test request with no data from prometheus
+            # Test request with no data from prometheus- iter8_error_count
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
@@ -659,8 +758,56 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                 "traffic_control": {
                     "success_criteria": [
                         {
-                            "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0.0",
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "delta",
+                            "value": 0.02,
+                            "sample_size": 0,
+                            "stop_on_failure": False,
+                            "confidence": 0
+                        }
+                    ]
+                },
+                "_last_state": {}
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+
+            self.assertEqual(resp.status_code, 200, resp.data)
+
+
+            ###################
+            # Test request with no data from prometheus- iter8_latency
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with no data from prometheus")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_latency",
+                            "is_counter": False,
+                            "absent_value": "None",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -713,8 +860,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                 "traffic_control": {
                     "success_criteria": [
                         {
-                            "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -728,9 +876,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                 "_last_state": {}
             }
 
-            # Call the REST API via the test client
-            # resp = self.flask_test.post(endpoint, json=parameters)
-            # self.assertEqual(resp.status_code, 200, resp.data)
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
 
             ##################
             # Test request with pre filled last state in payload on iteration 4
@@ -760,8 +908,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "max_traffic_percent": 100,
                     "success_criteria": [
                         {
-                            "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -827,8 +976,9 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                 "traffic_control": {
                     "success_criteria": [
                         {
-                            "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
@@ -897,7 +1047,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "is_counter": True,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
@@ -958,7 +1109,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                     "success_criteria": [
                         {
                             "metric_name": "iter8_error_count",
-                            "metric_type": "Correctness",
+                            "is_counter": True,
+                            "absent_value": "0.0",
                             "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "threshold",
@@ -1031,8 +1183,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                  "success_criteria": [
                  {
                      "metric_name": "iter8_error_count",
-                     "metric_type": "Correctness",
-                     "metric_nature": "Cumulative",
+                     "is_counter": True,
+                     "absent_value": "0.0",
                      "min, max": {
                          "min": 0,
                          "max": 0
