@@ -10,10 +10,13 @@ import flask_restplus
 from flask import request
 from datetime import datetime, timezone, timedelta
 import dateutil.parser as parser
+import numpy as np
+from collections import namedtuple
 
 import copy
 import json
 import os
+import sys
 import logging
 log = logging.getLogger(__name__)
 
@@ -22,7 +25,7 @@ class Response():
     def __init__(self, experiment, prom_url):
         """Create response object corresponding to payload. This has everything and more."""
         self.experiment = experiment
-        log.info(f"First Iteration: {experiment.first_iteration}")
+
         self.response = {
             responses.METRIC_BACKEND_URL_STR: prom_url,
             request_parameters.CANDIDATE_STR: {
@@ -55,6 +58,8 @@ class Response():
                 criterion, self.experiment.baseline))
             self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR].append(self.get_results(
                 criterion, self.experiment.candidate))
+            # instead of using i we could use a unique success criterion ID
+            # created by the controller to compare success criterion between two iterations
             self.change_observed(request_parameters.BASELINE_STR, i)
             self.change_observed(request_parameters.CANDIDATE_STR, i)
             i = i + 1
@@ -81,11 +86,13 @@ class Response():
     def change_observed(self, service_version, success_criterion_number):
         """
         Checks if any change was observed between the metrics collected in the previous iteration and the current iteration
+
         (i.e. between last state and current response)
             Arguments:
                 `service_version`: Str; Baseline or canary
                 `success_criterion_number`: int; Denotes the number of succes criteria the function is observing changes in
         """
+        # Check and Increment and Epsilon t greedy require this method. PBR and OBR do not require the information captured here
         #if condition when there is no last state information- assumes that change was observed in this case
         #The next line checks if there was any last state information for 'success_criterion_number' success criteria, if not it appends current metric values to current iteration's last state
         if len(self.experiment.last_state.last_state[service_version]["success_criterion_information"]) == success_criterion_number:
@@ -227,7 +234,7 @@ class EpsilonTGreedyResponse(Response):
         super().__init__(experiment, prom_url)
 
     def append_traffic_decision(self):
-        last_state = self.experiment.last_state.last_state
+        last_state = self.experiment.last_state.last_state # to be cleaned up
         # If there was no change observed in this iteration then do not increment traffic percentage
         if not self.experiment.last_state.last_state[iter8experiment.CHANGE_OBSERVED_STR]:
             new_candidate_traffic_percentage = last_state[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR]
@@ -272,121 +279,212 @@ class EpsilonTGreedyResponse(Response):
         self.response[request_parameters.BASELINE_STR][responses.TRAFFIC_PERCENTAGE_STR] = new_baseline_traffic_percentage
         self.response[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR] = new_candidate_traffic_percentage
 
-
-class PosteriorBayesianRoutingResponse(Response):
+class BayesianRoutingResponse(Response):
     def __init__(self, experiment, prom_url):
         super().__init__(experiment, prom_url)
+        self.max_trials = 1000 # =this should be higher, say 10000
+        self.baseline_beliefs = {}
+        self.candidate_beliefs = {}
+        for criterion in self.experiment.traffic_control.success_criteria:
+            if not criterion.is_counter:
+                self.baseline_beliefs[criterion.metric_name] = {
+                request_parameters.MIN_MAX_STR: criterion.min_max,
+                "params": None
+                }
+                self.candidate_beliefs[criterion.metric_name] = {
+                request_parameters.MIN_MAX_STR: criterion.min_max,
+                "params": None
+                }
 
-    def beta_sample(self, alpha_beta, min_max):
-        # return sampled (de-normalised) value from Beta Distribution
-        # x = sampled value from beta distribution
-        # return min + (max-min)x
-        raise NotImplementedError()
 
-    def gaussian_sample(self, gamme_sigma):
-        # return sampled value from Gaussian Distribution
-        # x = sampled value from distribution
-        # return x
-        raise NotImplementedError()
+    def append_metrics_and_success_criteria(self):
+        """Overriding Base class method.
+        Appends the response object with results from Prometheus for the current iteration"""
+        for criterion in self.experiment.traffic_control.success_criteria:
+            self.response[request_parameters.BASELINE_STR][responses.METRICS_STR].append(self.get_results(
+                criterion, self.experiment.baseline))
+            self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR].append(self.get_results(
+                criterion, self.experiment.candidate))
+            log.info(f"Appended metric: {criterion.metric_name}")
+            self.append_success_criteria(criterion)
 
-    def update_beliefs(self, version):
+
+    def append_success_criteria(self, criterion):
+        """Overriding Base Class method.
+        Appends the response object with success/failure
+        of the results from the current iteration"""
+        if criterion.type == request_parameters.DELTA_CRITERION_STR:
+            self.response[responses.ASSESSMENT_STR][responses.SUCCESS_CRITERIA_STR].append(DeltaCriterion(
+                criterion, self.response[request_parameters.BASELINE_STR][responses.METRICS_STR][-1], self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR][-1]).test_bayesian())
+        elif criterion.type == request_parameters.THRESHOLD_CRITERION_STR:
+            self.response[responses.ASSESSMENT_STR][responses.SUCCESS_CRITERIA_STR].append(
+                ThresholdCriterion(criterion, self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR][-1]).test_bayesian())
+        else:
+            raise ValueError("Criterion type can either be Threshold or Delta")
+        log.info("Appended Success Criteria")
+
+
+    def append_assessment_summary(self):
+        """Overriding Base Class method.
+        Updates response object with overrall assessment summary for the current iteration"""
+        self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.ALL_SUCCESS_CRITERIA_MET_STR] = all(
+            criterion[responses.SUCCESS_CRITERION_MET_STR] for criterion in self.response[responses.ASSESSMENT_STR][request_parameters.SUCCESS_CRITERIA_STR])
+        self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.ABORT_EXPERIMENT_STR] = any(
+            criterion[responses.ABORT_EXPERIMENT_STR] for criterion in self.response[responses.ASSESSMENT_STR][request_parameters.SUCCESS_CRITERIA_STR])
+
+        self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR] = []
+        if ((datetime.now(timezone.utc) - parser.parse(self.experiment.baseline.end_time)).total_seconds() >= 1800) or ((datetime.now(timezone.utc) - parser.parse(self.experiment.candidate.end_time)).total_seconds() >= 10800):
+            self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append("The experiment end time is more than 30 mins ago")
+
+        success_criteria_met_str = "not" if not(self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.ALL_SUCCESS_CRITERIA_MET_STR]) else ""
+        if self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.ABORT_EXPERIMENT_STR]:
+            self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append(f"The experiment needs to be aborted")
+        self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append(f"All success criteria were {success_criteria_met_str} met")
+
+
+    def append_traffic_decision(self):
+        """Will serve as a version of the meta algorithm """
+        # Update belief for baseline and candidate version, for every metric which is not a counter.
+        for criterion in self.response[request_parameters.BASELINE_STR][responses.METRICS_STR]:
+            if not criterion[request_parameters.IS_COUNTER_STR]:
+                self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
+        for criterion in self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR]:
+            if not criterion[request_parameters.IS_COUNTER_STR]:
+                self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
+
+        routing_pmf = self.routing_pmf() # we got back the traffic split of the format {"candidate": x, "baseline": 100 - x}
+
+        self.response[request_parameters.BASELINE_STR][responses.TRAFFIC_PERCENTAGE_STR] = routing_pmf[request_parameters.BASELINE_STR]
+        self.response[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR] = routing_pmf[request_parameters.CANDIDATE_STR]
+
+        #Append confidence string to the assessment summary
+        confidence_str = "not " if self.response[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR] < self.experiment.traffic_control.confidence*100 else ""
+        confidence_str = "Required confidence of " + str(self.experiment.traffic_control.confidence) + " was "+ confidence_str + "reached"
+        self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append(confidence_str)
+
+    def update_beliefs(self, metric_response, min_max = None):
         """Update belief distribution for each metric
-        Use Beta Distribution if user provided min, max values for a metric
-        Else use a Gaussian Distribution"""
-        # for each success criteria in self.response["_last_state"][version]["alpha_beta"]:
-        # also iterate through each success criteria value for this Iteration
-        # if min_max is given:
-            # alpha = (sample_size for this SC) * (mean_of_distr - a_of_distribution)
-            # beta = (sample_size for this SC) * (b_of_distribution - mean_of_distr)
-        # else: (when user did not provide min and max values for the metric)
-            # if sample_size is greater than 0:
-                # gamma = mean of distribution
-            # sigma = variance of the distribution
-        # update alpha, beta, gamma and sigma values in last state/self.experiment
-        raise NotImplementedError()
+        Update beta distribution if user provided min, max values for a metric.
+        Else update a normal distribution. Return the tuple (alpha, beta, gamma, sigma) -- two of these entries will be None."""
+        alpha = beta = gamma = sigma = None
+        params = namedtuple('params', 'alpha beta gamma sigma')
+        Z = 0.0
+        try:
+            Z = metric_response[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR] * metric_response[responses.STATISTICS_STR][responses.VALUE_STR]
+        except:
+            log.warning("ERROR: %s", sys.exc_info()[0])
+        log.info(Z)
+        W = metric_response[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR]
+        # what happens if the above value is none... ?
+        if min_max:
+            alpha = 1 + (Z - (min_max[request_parameters.MIN_STR]*W))/(min_max[request_parameters.MAX_STR] - min_max[request_parameters.MIN_STR])
+            beta = 1 + ((min_max[request_parameters.MAX_STR]*W) - Z)/(min_max[request_parameters.MAX_STR] - min_max[request_parameters.MIN_STR])
+        else:
+            if metric_response[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR] > 0:
+                gamma = metric_response[responses.STATISTICS_STR][responses.VALUE_STR]
+            else:
+                gamma = 0
+            sigma = np.sqrt(1/(W+1))
+        return params(alpha, beta, gamma, sigma)
+
 
     def routing_pmf(self):
         """Calculates the traffic split for each version
         by counting the number of times a service version satisfies all success criteria
-        out of n trials"""
-        # success_count = {"candidate": 0, "baseline": 0}
-        # for each trial:
-            # for each version:
-                # satisfied = True
-                # sample beta distribution for reward attribute
-                # for each Success Criteria
-                    # if not cumulative metric:
-                        # if min_max are given:
-                            # X = sample from Beta distribution
-                        # else: (min max is not given)
-                            # X = sample from Gaussian Distribution
-                    # else: (metric is cumulative)
-                        # X = value observed in the current iteration
-
-                    # if threshold criterion is used:
-                        # if threshold is not satisfied
-                            # satisfied = False
-                            # break
-                        # else: (delta criterion is used)
-                            # if version is not baseline:
-                                # if observed value does not satisfy delta criterion
-                                    # satisfied = False
-                                    # break
-                # if satisfied is true:
-                    # reward is updated accordingly
-                # else (version did not satisfy one of the SC)
-                    # reward = 0
-            # if maximum(reward for each version) is 0:
-                # reward of baseline = 0.001 (Baseline gets a minimum reward)
-            # V_star = version with max reward
-            # success_count[V_star]+=1
-        # update traffic split according to the count values
-        raise NotImplementedError()
-
-    def append_traffic_decision(self):
-        """Will serve as a version of the meta algorithm """
-        raise NotImplementedError()
-        last_state = self.experiment.last_state.last_state
-        baseline_alpha_beta = self.experiment.last_state.last_state[request_parameters.BASELINE_STR][responses.ALPHA_BETA_STR]
-        candidate_alpha_beta = self.experiment.last_state.last_state[request_parameters.CANDIDATE_STR][responses.ALPHA_BETA_STR]
-        # If there was no change observed in this iteration then do not increment traffic percentage
-        if not self.experiment.last_state.last_state[iter8experiment.CHANGE_OBSERVED_STR]:
-             new_candidate_traffic_percentage = last_state[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR]
-        elif self.experiment.first_iteration:
-            new_candidate_traffic_percentage = 50
-            last_state["effective_iteration_count"] = last_state["effective_iteration_count"] + 1
-
-        # elif sample_size criteria is not met by candidate (####or baseline too?):
-            # stagnate traffic_split
-            # same as last state
-        # else:
-            # both candidate and baseline could be feasible versions
-            # self.update_beliefs(candidate)
-            # self.update_beliefs(baseline)
-            # P = routing_pmf("candidate")
-            new_candidate_traffic_percentage = P
-
-            #new_candidate_traffic_percentage = 100.0 - self.routing_pmf("baseline")
-        #new_baseline_traffic_percentage = 100.0 - new_candidate_traffic_percentage
-
-        self.response[request_parameters.LAST_STATE_STR] = {
-            request_parameters.BASELINE_STR: {
-                responses.TRAFFIC_PERCENTAGE_STR: new_baseline_traffic_percentage,
-                "success_criterion_information": last_state[request_parameters.BASELINE_STR]["success_criterion_information"],
-                responses.ALPHA_BETA_STR: baseline_alpha_beta
-            },
-            request_parameters.CANDIDATE_STR: {
-                responses.TRAFFIC_PERCENTAGE_STR: new_candidate_traffic_percentage,
-                "success_criterion_information": last_state[request_parameters.CANDIDATE_STR]["success_criterion_information"],
-                responses.ALPHA_BETA_STR: candidate_alpha_beta
-            },
-            "effective_iteration_count": last_state["effective_iteration_count"]
+        out of n trials. Returns an object of the form... {"candidate": x, "baseline": 100 - x}"""
+        success_count = {
+            request_parameters.BASELINE_STR: 0,
+            request_parameters.CANDIDATE_STR: 0
         }
-        self.response[request_parameters.BASELINE_STR][responses.TRAFFIC_PERCENTAGE_STR] = new_baseline_traffic_percentage
-        self.response[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR] = new_candidate_traffic_percentage
-        # If first iteration then send 50/50 traffic with 0.1 alpha beta
-        # Check if both versions satisfy all the constraints
-        # If they do then find best reward
-        # For the version with the best reward do everything under compute_traffic_split
-        # 100-that for the other service
-        # return with an updated alpha, beta value and traffic split
+        for t in range(self.max_trials):
+            reward = {}
+            for version in [request_parameters.BASELINE_STR, request_parameters.CANDIDATE_STR]:
+                successful = True
+
+                num_reqs = self.response[version][responses.METRICS_STR][0][responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR]
+                alpha = (num_reqs + 2)/3 if version == request_parameters.BASELINE_STR else (num_reqs + 2)*2/3
+                beta = (num_reqs + 2) - alpha
+                # above maintains the invariant that alpha + beta = num_reqs for both versions at all times
+                reward[version] = np.random.beta(a = alpha, b = beta)
+                #log.info("Reached here 3")
+                for criterion in self.experiment.traffic_control.success_criteria:
+                    i = 0 # to keep track of the criterion number we are measuring
+                    if not criterion.is_counter: #the metric is not cumulative
+                        beliefs = self.baseline_beliefs if version == request_parameters.BASELINE_STR else self.candidate_beliefs
+                        if beliefs[criterion.metric_name][request_parameters.MIN_MAX_STR]: #if min max values are defined for the metric
+                            X = self.beta_sample(beliefs[criterion.metric_name]["params"].alpha, beliefs[criterion.metric_name]["params"].beta, beliefs[criterion.metric_name][request_parameters.MIN_MAX_STR][request_parameters.MIN_STR], beliefs[criterion.metric_name][request_parameters.MIN_MAX_STR][request_parameters.MAX_STR])
+                        else: # if min max values are not defined for the metric
+                            X = self.normal_sample(beliefs[criterion.metric_name]["params"].gamma, beliefs[criterion.metric_name]["params"].sigma)
+                    else: #metric is cumulative
+                        X = self.response[version][responses.METRICS_STR][i][responses.STATISTICS_STR][responses.VALUE_STR]
+                    if criterion.type == request_parameters.THRESHOLD_CRITERION_STR: #feasibility constraint is Threshold
+                        if X > criterion.value:
+                            successful = False
+                            break
+                    else: #feasibility constraint is Delta
+                        if not version == request_parameters.BASELINE_STR:
+                            #if delta criterion is not satisfied:
+                            if X > (criterion.value + 1) * self.response[request_parameters.BASELINE_STR][responses.METRICS_STR][i][responses.STATISTICS_STR][responses.VALUE_STR]:
+                                successful = False
+                                break
+                    i+=1
+                if not successful:
+                    reward[version] = 0 #when the version did not meet all success criteria
+            if max(reward.values()) == 0: #when neither of the versions have met the success criteria
+                reward[request_parameters.BASELINE_STR] = 0.0001 #baseline gets minimum reward
+            v_star = request_parameters.BASELINE_STR if reward[request_parameters.BASELINE_STR] > reward[request_parameters.CANDIDATE_STR] else request_parameters.CANDIDATE_STR # V_star = version with max reward
+            success_count[v_star]+=1
+        new_baseline_traffic_percentage = (success_count[request_parameters.BASELINE_STR]/self.max_trials)*100
+        return {
+            request_parameters.BASELINE_STR: new_baseline_traffic_percentage,
+            request_parameters.CANDIDATE_STR: 100-new_baseline_traffic_percentage
+        }
+
+    def change_observed(self, service_version, success_criterion_number):
+        """
+        This function is not used in Bayesian Routing Algorithms.
+        It should not be called
+        """
+        raise NotImplementedError()
+
+    def has_baseline_met_all_criteria(self):
+        """
+        This function is not used in Bayesian Routing Algorithms.
+        It should not be called
+        """
+        raise NotImplementedError()
+
+class PosteriorBayesianRoutingResponse(BayesianRoutingResponse):
+    def __init__(self, experiment, prom_url):
+        super().__init__(experiment, prom_url)
+
+    @classmethod
+    def beta_sample(cls, alpha, beta, min_val, max_val):
+        """return a value between min and max based on beta sample"""
+        x = np.random.beta(a = alpha, b = beta)
+        return min_val + (max_val - min_val)*x
+
+    @classmethod
+    def normal_sample(cls, gamma, sigma):
+        """return a value based on normal sample"""
+        return np.random.normal(loc = gamma, scale = sigma)
+
+
+class OptimisticBayesianRoutingResponse(BayesianRoutingResponse):
+    def __init__(self, experiment, prom_url):
+        super().__init__(experiment, prom_url)
+
+    @classmethod
+    def beta_sample(cls, alpha, beta, min_val, max_val):
+        """return a value between min and max based on beta sample"""
+        x = np.random.beta(a = alpha, b = beta)
+        y = alpha / (alpha + beta)
+        x = min(x, y)
+        return min_val + (max_val - min_val)*x
+
+    @classmethod
+    def normal_sample(cls, gamma, sigma):
+        """return a value based on normal sample"""
+        x = np.random.normal(loc = gamma, scale = sigma)
+        y = gamma
+        return min(x, y)

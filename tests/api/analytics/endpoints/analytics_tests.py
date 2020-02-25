@@ -83,8 +83,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -129,8 +128,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -189,8 +187,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -263,8 +260,8 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
+
                         }
                     ]
                 },
@@ -309,8 +306,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
                             "type": "delta",
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -357,8 +353,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "normal",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -404,8 +399,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "threshold",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -452,8 +446,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "threshold",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -497,8 +490,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "threshold",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -544,8 +536,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "threshold",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -590,8 +581,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "threshold",
                             "value": 18,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -635,8 +625,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.5,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -688,8 +677,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "threshold",
                             "value": 2,
                             "sample_size": 2,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         },
                         {
                             "metric_name": "iter8_error_rate",
@@ -700,8 +688,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.1,
                             "sample_size": 2,
-                            "stop_on_failure": True,
-                            "confidence": 0
+                            "stop_on_failure": True
                         }
                     ]
                 },
@@ -766,8 +753,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -813,8 +799,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -868,8 +853,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -916,8 +900,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -984,8 +967,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "delta",
                             "value": 0.02,
                             "sample_size": 0,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -1054,8 +1036,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "threshold",
                             "value": 2,
                             "sample_size": 1,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -1116,8 +1097,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                             "type": "threshold",
                             "value": 2,
                             "sample_size": 10,
-                            "stop_on_failure": False,
-                            "confidence": 0
+                            "stop_on_failure": False
                         }
                     ]
                 },
@@ -1144,64 +1124,512 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             correct_response = {'baseline': {'traffic_percentage': 90.0, 'success_criterion_information': [[4, 4.0]]}, 'candidate': {'traffic_percentage': 10, 'success_criterion_information': [[5, 5.0]]}, 'effective_iteration_count': 3}
             self.assertEqual(correct_response, resp.get_json()["_last_state"])
 
-
+    #All tests after this involve the /analytics/canary/posterior_bayesian_routing endpoint
     def test_payload_posterior_bayesian_routing(self):
-         """Tests the REST endpoint /analytics/canary/posterior_bayesian_routing."""
+        """Tests the REST endpoint /analytics/canary/posterior_bayesian_routing."""
 
-         endpoint = f'http://localhost:5555/api/v1/analytics/canary/posterior_bayesian_routing'
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/posterior_bayesian_routing'
 
-         with requests_mock.mock() as m:
-             m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
 
-             ###################
-             # Test request with some required parameters
-             ###################
-             log.info("\n\n\n")
-             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-             log.info("Test request with some required parameters")
+            ###################
+            # Test request with some required parameters
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
 
-             parameters = {
-                 "baseline": {
-                 "start_time": "2019-05-01T19:00:02.389Z",
-                 "end_time": "2019-05-01T19:30:02.389Z",
-                 "tags": {
-                     "destination_service_name": "reviews-v2"
-                     }
-                 },
-                 "candidate": {
-                 "start_time": "2019-05-01T19:00:02.389Z",
-                 "end_time": "2019-05-01T19:30:02.389Z",
-                 "tags": {
-                     "destination_service_name": "reviews-v2"
-                     }
-                 },
-                 "traffic_control": {
-                 "warmup_request_count": 100,
-                 "posterior_sample_size": 100,
-                 "max_traffic_percent": 50,
-                 "no_of_trials": 50,
-                 "success_criteria": [
-                 {
-                     "metric_name": "iter8_error_count",
-                     "is_counter": True,
-                     "absent_value": "0.0",
-                     "min, max": {
-                         "min": 0,
-                         "max": 0
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "confidence": 0.9,
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                       "absent_value": "0",
+                       "min_max": {
+                           "min": 0,
+                           "max": 1
+                        },
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 0.02,
+                        "stop_on_failure": False
+                        }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+
+
+            ###################
+            # Test request to check for default parameters
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 0.02
+                        }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+
+            ###################
+            # Test request to with stop on failure=True
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_service_namespace": "default",
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_service_namespace": "default",
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 19,
+                        "stop_on_failure": True
+                        }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            correct_response = ["The experiment needs to be aborted", "All success criteria were not met", "Required confidence of 0.95 was not reached"]
+            self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
+            self.assertEqual(resp.status_code, 200, resp.data)
+
+
+    def test_payload_bayesian_routing_high_sample_size(self):
+        """Tests the REST endpoint /analytics/canary/posterior_bayesian_routing."""
+
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/posterior_bayesian_routing'
+
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response_br.json")))
+
+            ###################
+            # Test request with high sample size for high confidence results
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "confidence": 0.5,
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                       "absent_value": "0",
+                       "min_max": {
+                           "min": 0,
+                           "max": 1
+                        },
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 200000,
+                        "stop_on_failure": False
+                        }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            correct_response = ["All success criteria were  met", "Required confidence of 0.5 was reached"]
+            self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
+
+
+            ###################
+            # Test request with high sample size for high confidence results + multiple metrics
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "confidence": 0.5,
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                       "absent_value": "0",
+                       "min_max": {
+                           "min": 0,
+                           "max": 1
+                        },
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 200000,
+                        "stop_on_failure": False
+                        },
+                    {
+                        "metric_name": "iter8_error_count",
+                        "is_counter": True,
+                        "absent_value": "0",
+                        "min_max": {
+                            "min": 0,
+                            "max": 1
                          },
-                     "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
-                     "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
-                     "type": "delta",
-                     "value": 0.02,
-                     "sample_size": 0,
-                     "stop_on_failure": False,
-                     "confidence": 0
-                     }
-                     ]
-                 },
-                 "_last_state": {}
-                 }
+                         "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                         "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                         "type": "threshold",
+                         "value": 200000,
+                         "stop_on_failure": False
+                         }
+                    ]
+                }
+                }
 
-             # Call the REST API via the test client
-             resp = self.flask_test.post(endpoint, json=parameters)
-             self.assertEqual(resp.status_code, 200, resp.data)
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            correct_response = ["All success criteria were  met", "Required confidence of 0.5 was reached"]
+            self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
+
+
+
+    #All tests after this involve the /analytics/canary/optimistic_bayesian_routing endpoint
+    def test_payload_posterior_optimistic_bayesian_routing(self):
+        """Tests the REST endpoint /analytics/canary/optimistic_bayesian_routing."""
+
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/optimistic_bayesian_routing'
+
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+
+            ###################
+            # Test request with some required parameters
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "confidence": 0.9,
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                       "absent_value": "0",
+                       "min_max": {
+                           "min": 0,
+                           "max": 1
+                        },
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 0.02,
+                        "stop_on_failure": False
+                        }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+
+
+            ###################
+            # Test request to check for default parameters
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 0.02
+                        }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+
+            ###################
+            # Test request to with stop on failure=True
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_service_namespace": "default",
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_service_namespace": "default",
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 19,
+                        "stop_on_failure": True
+                        }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            correct_response = ["The experiment needs to be aborted", "All success criteria were not met", "Required confidence of 0.95 was not reached"]
+            self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
+            self.assertEqual(resp.status_code, 200, resp.data)
+
+
+    def test_payload_optimistic_bayesian_routing_high_sample_size(self):
+        """Tests the REST endpoint /analytics/canary/optimistic_bayesian_routing."""
+
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/optimistic_bayesian_routing'
+
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response_br.json")))
+
+            ###################
+            # Test request with high sample size for high confidence results
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "confidence": 0.5,
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                       "absent_value": "0",
+                       "min_max": {
+                           "min": 0,
+                           "max": 1
+                        },
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 200000,
+                        "stop_on_failure": False
+                        }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            correct_response = ["All success criteria were  met", "Required confidence of 0.5 was reached"]
+            self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
+
+
+            ###################
+            # Test request with high sample size for high confidence results + multiple metrics
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                "start_time": "2019-05-01T19:00:02.389Z",
+                "tags": {
+                    "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                   "confidence": 0.5,
+                   "success_criteria": [
+                   {
+                       "metric_name": "iter8_error_rate",
+                       "is_counter": False,
+                       "absent_value": "0",
+                       "min_max": {
+                           "min": 0,
+                           "max": 1
+                        },
+                        "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                        "type": "threshold",
+                        "value": 200000,
+                        "stop_on_failure": False
+                        },
+                    {
+                        "metric_name": "iter8_error_count",
+                        "is_counter": True,
+                        "absent_value": "0",
+                        "min_max": {
+                            "min": 0,
+                            "max": 1
+                         },
+                         "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                         "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
+                         "type": "threshold",
+                         "value": 200000,
+                         "stop_on_failure": False
+                         }
+                    ]
+                }
+                }
+
+            #Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+            correct_response = ["All success criteria were  met", "Required confidence of 0.5 was reached"]
+            self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
