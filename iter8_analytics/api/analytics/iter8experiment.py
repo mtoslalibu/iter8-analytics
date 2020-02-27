@@ -176,6 +176,29 @@ class BayesianRoutingExperiment():
          self.candidate = candidate_payload
          self.traffic_control = traffic_control
 
+class CheckAndIncrementABExperiment():
+    def __init__(self, payload):
+        self.experiment = {}
+        if not payload[request_parameters.LAST_STATE_STR]:  # if it is empty
+            last_state = CheckAndIncrementLastState(100, 0, [], [])
+            first_iteration = True
+        else:
+            last_state = CheckAndIncrementLastState(payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][responses.TRAFFIC_PERCENTAGE_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][SUCCESS_CRITERION_INFORMATION_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][SUCCESS_CRITERION_INFORMATION_STR])
+            first_iteration = False
+
+        baseline_payload = ServicePayload(payload[request_parameters.BASELINE_STR])
+        candidate_payload = ServicePayload(payload[request_parameters.CANDIDATE_STR])
+
+        traffic_control = TrafficControlDefault(payload[request_parameters.TRAFFIC_CONTROL_STR])
+        reward = Reward(payload[request_parameters.REWARD_STR])
+
+        self.last_state = last_state
+        self.first_iteration = first_iteration
+        self.baseline = baseline_payload
+        self.candidate = candidate_payload
+        self.reward = reward
+        self.traffic_control = traffic_control
+
 class EpsilonTGreedyABExperiment():
     def __init__(self, payload):
         self.experiment = {}

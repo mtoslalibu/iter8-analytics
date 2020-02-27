@@ -278,8 +278,29 @@ bayesian_routing_parameters = api.model('bayesian_routing_parameters', {
          description='Parameters controlling the behavior of the analytics')
  })
 
+check_and_increment_ab_parameters = api.model('check_and_increment_ab_parameters', {
+    BASELINE_STR: fields.Nested(
+        version_definition, required=True,
+        description='Specifies a time interval and key-value pairs for '
+        'retrieving and processing data pertaining to the baseline '
+        'version'),
+    CANDIDATE_STR: fields.Nested(
+        version_definition, required=True,
+        description='Specifies a time interval and key-value pairs for '
+        'retrieving and processing data pertaining to the candidate '
+        'version'),
+    TRAFFIC_CONTROL_STR: fields.Nested(
+        traffic_control_check_and_increment, required=True,
+        description='Parameters controlling the behavior of the analytics'),
+    REWARD_STR: fields.Nested(
+        reward, required=True,
+        description='Reward attribute to minimize in the A/B test'),
+    LAST_STATE_STR: fields.Raw(
+        required=True,
+        description='State returned by the server on the previous call')
+})
 
-epsilon_t_greedy_ab_parameters = api.model('epsilon_t_greedy_parameters', {
+epsilon_t_greedy_ab_parameters = api.model('epsilon_t_greedy_ab_parameters', {
    BASELINE_STR: fields.Nested(
        version_definition, required=True,
        description='Specifies a time interval and key-value pairs for '
@@ -302,7 +323,7 @@ epsilon_t_greedy_ab_parameters = api.model('epsilon_t_greedy_parameters', {
 })
 
 
-bayesian_routing_ab_parameters = api.model('bayesian_routing_parameters', {
+bayesian_routing_ab_parameters = api.model('bayesian_routing_ab_parameters', {
      BASELINE_STR: fields.Nested(
          version_definition, required=True,
          description='Specifies a time interval and key-value pairs for '

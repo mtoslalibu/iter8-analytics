@@ -1634,6 +1634,66 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             correct_response = ["All success criteria were  met", "Required confidence of 0.5 was reached"]
             self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
 
+    ##All tests after this involve the /analytics/ab/check_and_increment endpoint (until mentioned otherwise)
+    def test_payload_ab_check_and_increment(self):
+        """Tests the REST endpoint /analytics/ab/check_and_increment."""
+
+        endpoint = f'http://localhost:5555/api/v1/analytics/ab/check_and_increment'
+
+        with requests_mock.mock() as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+
+            ###################
+            # Test request with some required parameters
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request with some required parameters")
+
+            parameters = {
+                "baseline": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v1"
+                    }
+                },
+                "candidate": {
+                    "start_time": "2019-04-24T19:40:32.017Z",
+                    "tags": {
+                        "destination_service_namespace": "default",
+                        "destination_workload": "reviews-v3"
+                    }
+                },
+                "traffic_control": {
+                    "success_criteria": [
+                        {
+                            "metric_name": "iter8_error_rate",
+                            "is_counter": False,
+                            "absent_value": "0.0",
+                            "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "metric_sample_size_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                            "type": "delta",
+                            "value": 0.02,
+                            "sample_size": 0,
+                            "stop_on_failure": False
+                        }
+                    ]
+                },
+                "reward": {
+                    "metric_name": "iter8_error_rate",
+                    "is_counter": False,
+                    "absent_value": "0.0",
+                    "metric_query_template": "sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',response_code=~'5..',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                    "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)"
+                },
+                "_last_state": {}
+            }
+
+            # Call the REST API via the test client
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+
     #All tests after this involve the /analytics/ab/epsilon_t_greedy endpoint
     def test_payload_ab_epsilon_t_greedy(self):
         """Tests the REST endpoint /analytics/ab/epsilon_t_greedy."""

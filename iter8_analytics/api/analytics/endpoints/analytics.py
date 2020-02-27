@@ -154,6 +154,36 @@ class CanaryOptimisticBayesianRouting(flask_restplus.Resource):
         return self.response_object.jsonify()
 
 
+@analytics_namespace.route('/ab/check_and_increment')
+class ABCheckAndIncrement(flask_restplus.Resource):
+
+    @api.expect(request_parameters.check_and_increment_ab_parameters,
+                validate=True)
+    @api.marshal_with(responses.default_response)
+    def post(self):
+        """Assess the candidate version and recommend traffic-control actions."""
+        log.info('Started processing request to assess the candidate using the '
+                 '"check_and_increment" strategy')
+        log.info(f"Data Capture Mode: {DataCapture.data_capture_mode}")
+        ######################
+
+        try:
+            payload = request.get_json()
+            log.info("Extracted payload")
+            DataCapture.fill_value("request_payload", copy.deepcopy(payload))
+            self.experiment = CheckAndIncrementExperiment(payload)
+            log.info("Fixed experiment")
+            self.response_object = CheckAndIncrementResponse(self.experiment, prom_url)
+            log.info("Created response object")
+        #     self.response_object.compute_test_results_and_summary()
+        #
+        #     DataCapture.fill_value("service_response", self.response_object.response)
+        #     DataCapture.save_data()
+        except Exception as e:
+            flask_restplus.errors.abort(code=400, message=str(e))
+        # return self.response_object.jsonify()
+        return {}
+
 @analytics_namespace.route('/ab/epsilon_t_greedy')
 class ABEpsilonTGreedy(flask_restplus.Resource):
 
