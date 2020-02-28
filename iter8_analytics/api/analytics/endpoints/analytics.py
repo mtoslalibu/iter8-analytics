@@ -7,7 +7,7 @@ import iter8_analytics.api.analytics.responses as responses
 from iter8_analytics.api.restplus import api
 from iter8_analytics.metrics_backend.datacapture import DataCapture
 from iter8_analytics.api.analytics.iter8response import CheckAndIncrementResponse, EpsilonTGreedyResponse, PosteriorBayesianRoutingResponse, OptimisticBayesianRoutingResponse
-from iter8_analytics.api.analytics.iter8experiment import CheckAndIncrementExperiment, EpsilonTGreedyExperiment, BayesianRoutingExperiment, EpsilonTGreedyABExperiment, BayesianRoutingABExperiment
+from iter8_analytics.api.analytics.iter8experiment import CheckAndIncrementExperiment, EpsilonTGreedyExperiment, BayesianRoutingExperiment
 import iter8_analytics.constants as constants
 import flask_restplus
 from flask import request
@@ -157,7 +157,7 @@ class CanaryOptimisticBayesianRouting(flask_restplus.Resource):
 @analytics_namespace.route('/ab/check_and_increment')
 class ABCheckAndIncrement(flask_restplus.Resource):
 
-    @api.expect(request_parameters.check_and_increment_ab_parameters,
+    @api.expect(request_parameters.check_and_increment_parameters,
                 validate=True)
     @api.marshal_with(responses.default_response)
     def post(self):
@@ -187,7 +187,7 @@ class ABCheckAndIncrement(flask_restplus.Resource):
 @analytics_namespace.route('/ab/epsilon_t_greedy')
 class ABEpsilonTGreedy(flask_restplus.Resource):
 
-    @api.expect(request_parameters.epsilon_t_greedy_ab_parameters,
+    @api.expect(request_parameters.epsilon_t_greedy_parameters,
                 validate=True)
     @api.marshal_with(responses.default_response)
     def post(self):
@@ -201,7 +201,7 @@ class ABEpsilonTGreedy(flask_restplus.Resource):
             payload = request.get_json()
             log.info("Extracted payload")
             DataCapture.fill_value("request_payload", copy.deepcopy(payload))
-            self.experiment = EpsilonTGreedyABExperiment(payload)
+            self.experiment = EpsilonTGreedyExperiment(payload)
             log.info("Fixed experiment")
             self.response_object = EpsilonTGreedyResponse(self.experiment, prom_url)
             log.info("Created response object")
@@ -218,7 +218,7 @@ class ABEpsilonTGreedy(flask_restplus.Resource):
 @analytics_namespace.route('/ab/posterior_bayesian_routing')
 class ABPosteriorBayesianRouting(flask_restplus.Resource):
 
-    @api.expect(request_parameters.bayesian_routing_ab_parameters,
+    @api.expect(request_parameters.bayesian_routing_parameters,
                 validate=True)
     @api.marshal_with(responses.br_response)
     def post(self):
@@ -232,7 +232,7 @@ class ABPosteriorBayesianRouting(flask_restplus.Resource):
             payload = request.get_json()
             log.info("Extracted payload")
             DataCapture.fill_value("request_payload", copy.deepcopy(payload))
-            self.experiment = BayesianRoutingABExperiment(payload)
+            self.experiment = BayesianRoutingExperiment(payload)
             log.info("Fixed experiment")
             self.response_object = PosteriorBayesianRoutingResponse(self.experiment, prom_url)
             log.info("Created response object")
@@ -249,7 +249,7 @@ class ABPosteriorBayesianRouting(flask_restplus.Resource):
 @analytics_namespace.route('/ab/optimistic_bayesian_routing')
 class ABOptimisticBayesianRouting(flask_restplus.Resource):
 
-    @api.expect(request_parameters.bayesian_routing_ab_parameters,
+    @api.expect(request_parameters.bayesian_routing_parameters,
                 validate=True)
     @api.marshal_with(responses.br_response)
     def post(self):
@@ -263,7 +263,7 @@ class ABOptimisticBayesianRouting(flask_restplus.Resource):
             payload = request.get_json()
             log.info("Extracted payload")
             DataCapture.fill_value("request_payload", copy.deepcopy(payload))
-            self.experiment = BayesianRoutingABExperiment(payload)
+            self.experiment = BayesianRoutingExperiment(payload)
             log.info("Fixed experiment")
             self.response_object = OptimisticBayesianRoutingResponse(self.experiment, prom_url)
             log.info("Created response object")

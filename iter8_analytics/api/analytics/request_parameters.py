@@ -146,56 +146,6 @@ BASELINE_STR = 'baseline'
 CANDIDATE_STR = 'candidate'
 BOTH_STR = 'both'
 SUCCESS_CRITERIA_STR = 'success_criteria'
-
-traffic_control_check_and_increment = api.model('traffic_control_check_and_increment', {
-    MAX_TRAFFIC_PERCENT_STR: fields.Float(
-        required=False, example=50.0, min=0.0, default=50.0,
-        description='Maximum percentage of traffic that the candidate version '
-        'will receive during the experiment; defaults to 50%'),
-    STEP_SIZE_STR: fields.Float(
-        required=False, example=2.0, min=0.1, default=1.0,
-        description='Increment (in percent points) to be applied to the '
-        'traffic received by the candidate version each time it passes the '
-        'success criteria; defaults to 1 percent point'),
-    SUCCESS_CRITERIA_STR: fields.List(
-        fields.Nested(success_criterion_default),
-        required=True,
-        description='List of criteria for assessing the candidate version')
-})
-
-traffic_control_epsilon_t_greedy = api.model('traffic_control_epsilon_t_greedy', {
-    MAX_TRAFFIC_PERCENT_STR: fields.Float(
-        required=False, example=50.0, min=0.0, default=50.0,
-        description='Maximum percentage of traffic that the candidate version '
-        'will receive during the experiment; defaults to 50%'),
-    SUCCESS_CRITERIA_STR: fields.List(
-        fields.Nested(success_criterion_default),
-        required=True,
-        description='List of criteria for assessing the candidate version')
-})
-
-
-NO_OF_TRIALS_STR="no_of_trials"
-CONFIDENCE_STR = "confidence"
-#br = Bayesian Routing
-traffic_control_br = api.model('traffic_control_br', {
-    MAX_TRAFFIC_PERCENT_STR: fields.Float(
-        required=False, example=50.0, min=0.0, default=50.0,
-        description='Maximum percentage of traffic that the candidate version '
-        'will receive during the experiment; defaults to 50%'),
-    CONFIDENCE_STR: fields.Float(
-        required=False, default=0.95,
-        description='Posterior probability that all '
-        'success criteria is met'),
-    SUCCESS_CRITERIA_STR: fields.List(
-        fields.Nested(success_criterion_br),
-        required=True,
-        description='List of criteria for assessing the candidate version')})
-
-
-TRAFFIC_CONTROL_STR = 'traffic_control'
-
-LAST_STATE_STR = '_last_state'
 REWARD_STR = "reward"
 
 reward = api.model('reward', {
@@ -221,7 +171,70 @@ reward = api.model('reward', {
         required=True,
         description='Sample Size Query for the metric to which the criterion applies',
         example='sum(increase(istio_requests_total{reporter="source"}'
-        '[$interval]$offset_str)) by ($entity_labels)')})
+        '[$interval]$offset_str)) by ($entity_labels)'),
+    MIN_MAX_STR: fields.Nested(
+        min_max, required=False,
+        description='Minimum and Maximum value of the metric')})
+
+
+traffic_control_check_and_increment = api.model('traffic_control_check_and_increment', {
+    MAX_TRAFFIC_PERCENT_STR: fields.Float(
+        required=False, example=50.0, min=0.0, default=50.0,
+        description='Maximum percentage of traffic that the candidate version '
+        'will receive during the experiment; defaults to 50%'),
+    STEP_SIZE_STR: fields.Float(
+        required=False, example=2.0, min=0.1, default=1.0,
+        description='Increment (in percent points) to be applied to the '
+        'traffic received by the candidate version each time it passes the '
+        'success criteria; defaults to 1 percent point'),
+    SUCCESS_CRITERIA_STR: fields.List(
+        fields.Nested(success_criterion_default),
+        required=True,
+        description='List of criteria for assessing the candidate version'),
+    REWARD_STR: fields.Nested(
+        reward, required=False,
+        description='Reward attribute to minimize in the A/B test')
+})
+
+traffic_control_epsilon_t_greedy = api.model('traffic_control_epsilon_t_greedy', {
+    MAX_TRAFFIC_PERCENT_STR: fields.Float(
+        required=False, example=50.0, min=0.0, default=50.0,
+        description='Maximum percentage of traffic that the candidate version '
+        'will receive during the experiment; defaults to 50%'),
+    SUCCESS_CRITERIA_STR: fields.List(
+        fields.Nested(success_criterion_default),
+        required=True,
+        description='List of criteria for assessing the candidate version'),
+    REWARD_STR: fields.Nested(
+        reward, required=False,
+        description='Reward attribute to minimize in the A/B test')
+})
+
+
+NO_OF_TRIALS_STR="no_of_trials"
+CONFIDENCE_STR = "confidence"
+#br = Bayesian Routing
+traffic_control_br = api.model('traffic_control_br', {
+    MAX_TRAFFIC_PERCENT_STR: fields.Float(
+        required=False, example=50.0, min=0.0, default=50.0,
+        description='Maximum percentage of traffic that the candidate version '
+        'will receive during the experiment; defaults to 50%'),
+    CONFIDENCE_STR: fields.Float(
+        required=False, default=0.95,
+        description='Posterior probability that all '
+        'success criteria is met'),
+    SUCCESS_CRITERIA_STR: fields.List(
+        fields.Nested(success_criterion_br),
+        required=True,
+        description='List of criteria for assessing the candidate version'),
+    REWARD_STR: fields.Nested(
+        reward, required=False,
+        description='Reward attribute to minimize in the A/B test')})
+
+
+TRAFFIC_CONTROL_STR = 'traffic_control'
+
+LAST_STATE_STR = '_last_state'
 
 check_and_increment_parameters = api.model('check_and_increment_parameters', {
     BASELINE_STR: fields.Nested(
@@ -276,68 +289,4 @@ bayesian_routing_parameters = api.model('bayesian_routing_parameters', {
      TRAFFIC_CONTROL_STR: fields.Nested(
          traffic_control_br, required=True,
          description='Parameters controlling the behavior of the analytics')
- })
-
-check_and_increment_ab_parameters = api.model('check_and_increment_ab_parameters', {
-    BASELINE_STR: fields.Nested(
-        version_definition, required=True,
-        description='Specifies a time interval and key-value pairs for '
-        'retrieving and processing data pertaining to the baseline '
-        'version'),
-    CANDIDATE_STR: fields.Nested(
-        version_definition, required=True,
-        description='Specifies a time interval and key-value pairs for '
-        'retrieving and processing data pertaining to the candidate '
-        'version'),
-    TRAFFIC_CONTROL_STR: fields.Nested(
-        traffic_control_check_and_increment, required=True,
-        description='Parameters controlling the behavior of the analytics'),
-    REWARD_STR: fields.Nested(
-        reward, required=True,
-        description='Reward attribute to minimize in the A/B test'),
-    LAST_STATE_STR: fields.Raw(
-        required=True,
-        description='State returned by the server on the previous call')
-})
-
-epsilon_t_greedy_ab_parameters = api.model('epsilon_t_greedy_ab_parameters', {
-   BASELINE_STR: fields.Nested(
-       version_definition, required=True,
-       description='Specifies a time interval and key-value pairs for '
-       'retrieving and processing data pertaining to the baseline '
-       'version'),
-   CANDIDATE_STR: fields.Nested(
-       version_definition, required=True,
-       description='Specifies a time interval and key-value pairs for '
-       'retrieving and processing data pertaining to the candidate '
-       'version'),
-   TRAFFIC_CONTROL_STR: fields.Nested(
-       traffic_control_epsilon_t_greedy, required=True,
-       description='Parameters controlling the behavior of the analytics'),
-   REWARD_STR: fields.Nested(
-       reward, required=True,
-       description='Reward attribute to minimize in the A/B test'),
-   LAST_STATE_STR: fields.Raw(
-       required=True,
-       description='State returned by the server on the previous call')
-})
-
-
-bayesian_routing_ab_parameters = api.model('bayesian_routing_ab_parameters', {
-     BASELINE_STR: fields.Nested(
-         version_definition, required=True,
-         description='Specifies a time interval and key-value pairs for '
-         'retrieving and processing data pertaining to the baseline '
-         'version'),
-     CANDIDATE_STR: fields.Nested(
-         version_definition, required=True,
-         description='Specifies a time interval and key-value pairs for '
-         'retrieving and processing data pertaining to the candidate '
-         'version'),
-     TRAFFIC_CONTROL_STR: fields.Nested(
-         traffic_control_br, required=True,
-         description='Parameters controlling the behavior of the analytics'),
-     REWARD_STR: fields.Nested(
-        reward, required=True,
-        description='Reward attribute to minimize in the A/B test')
  })
