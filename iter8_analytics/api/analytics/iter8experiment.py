@@ -102,7 +102,7 @@ class TrafficControlDefault():
             self.success_criteria.append(SuccessCriterionDefault(each_criteria))
         self.step_size = 2 if request_parameters.STEP_SIZE_STR not in traffic_control else traffic_control[request_parameters.STEP_SIZE_STR]
         self.max_traffic_percent = 50 if request_parameters.MAX_TRAFFIC_PERCENT_STR not in traffic_control else traffic_control[request_parameters.MAX_TRAFFIC_PERCENT_STR]
-        reward = None if request_parameters.REWARD_STR not in traffic_control else Reward(traffic_control[request_parameters.REWARD_STR])
+        self.reward = None if request_parameters.REWARD_STR not in traffic_control else Reward(traffic_control[request_parameters.REWARD_STR])
 
 class TrafficControlBR():
     def __init__(self, traffic_control):
@@ -111,7 +111,7 @@ class TrafficControlBR():
             self.success_criteria.append(SuccessCriterionBR(each_criteria))
         self.confidence = 0.95 if request_parameters.CONFIDENCE_STR not in traffic_control else traffic_control[request_parameters.CONFIDENCE_STR]
         self.max_traffic_percent = 50 if request_parameters.MAX_TRAFFIC_PERCENT_STR not in traffic_control else [request_parameters.MAX_TRAFFIC_PERCENT_STR]
-        reward = None if request_parameters.REWARD_STR not in traffic_control else Reward(traffic_control[request_parameters.REWARD_STR])
+        self.reward = None if request_parameters.REWARD_STR not in traffic_control else Reward(traffic_control[request_parameters.REWARD_STR])
 
 
 class Reward():
