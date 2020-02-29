@@ -1634,11 +1634,11 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             correct_response = ["All success criteria were  met", "Required confidence of 0.5 was reached"]
             self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
 
-    ##All tests after this involve the /analytics/ab/check_and_increment endpoint (until mentioned otherwise)
+    ##All tests after this involve the /analytics/canary/check_and_increment endpoint for A/B experiments
     def test_payload_ab_check_and_increment(self):
         """Tests the REST endpoint /analytics/ab/check_and_increment."""
 
-        endpoint = f'http://localhost:5555/api/v1/analytics/ab/check_and_increment'
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/check_and_increment'
 
         with requests_mock.mock() as m:
             m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
@@ -1694,11 +1694,11 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             resp = self.flask_test.post(endpoint, json=parameters)
             self.assertEqual(resp.status_code, 200, resp.data)
 
-    #All tests after this involve the /analytics/ab/epsilon_t_greedy endpoint
+    #All tests after this involve the /analytics/canary/epsilon_t_greedy endpoint for A/B experiments
     def test_payload_ab_epsilon_t_greedy(self):
         """Tests the REST endpoint /analytics/ab/epsilon_t_greedy."""
 
-        endpoint = f'http://localhost:5555/api/v1/analytics/ab/epsilon_t_greedy'
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/epsilon_t_greedy'
 
         with requests_mock.mock() as m:
             m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
@@ -1754,11 +1754,11 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             resp = self.flask_test.post(endpoint, json=parameters)
             self.assertEqual(resp.status_code, 200, resp.data)
 
-    #All tests after this involve the /analytics/ab/posterior_bayesian_routing endpoint
+    #All tests after this involve the /analytics/canary/posterior_bayesian_routing endpoint for A/B experiments
     def test_payload_ab_posterior_bayesian_routing(self):
         """Tests the REST endpoint /analytics/ab/posterior_bayesian_routing."""
 
-        endpoint = f'http://localhost:5555/api/v1/analytics/ab/posterior_bayesian_routing'
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/posterior_bayesian_routing'
 
         with requests_mock.mock() as m:
             m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
@@ -1816,11 +1816,11 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             self.assertEqual(resp.status_code, 200, resp.data)
 
 
-    #All tests after this involve the /analytics/ab/optimistic_bayesian_routing endpoint
+    #All tests after this involve the /analytics/canary/optimistic_bayesian_routing endpoint for A/B experiments
     def test_payload_ab_optimistic_bayesian_routing(self):
         """Tests the REST endpoint /analytics/ab/optimistic_bayesian_routing."""
 
-        endpoint = f'http://localhost:5555/api/v1/analytics/ab/optimistic_bayesian_routing'
+        endpoint = f'http://localhost:5555/api/v1/analytics/canary/optimistic_bayesian_routing'
 
         with requests_mock.mock() as m:
             m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
