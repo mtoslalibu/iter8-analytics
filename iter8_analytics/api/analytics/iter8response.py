@@ -60,8 +60,8 @@ class Response():
                 criterion, self.experiment.candidate))
             # instead of using i we could use a unique success criterion ID
             # created by the controller to compare success criterion between two iterations
-            self.change_observed(request_parameters.BASELINE_STR, i)
-            self.change_observed(request_parameters.CANDIDATE_STR, i)
+            self.append_if_metrics_changed_in_this_iteration(request_parameters.BASELINE_STR, i)
+            self.append_if_metrics_changed_in_this_iteration(request_parameters.CANDIDATE_STR, i)
             i = i + 1
             log.info(f"Appended metric: {criterion.metric_name}")
             self.append_success_criteria(criterion)
@@ -83,14 +83,14 @@ class Response():
             responses.STATISTICS_STR: prometheus_results_per_success_criteria[responses.STATISTICS_STR]
         }
 
-    def change_observed(self, service_version, success_criterion_number):
+    def append_if_metrics_changed_in_this_iteration(self, service_version, success_criterion_number):
         """
-        Checks if any change was observed between the metrics collected in the previous iteration and the current iteration
+        Record any changes observed between the metrics collected in the previous iteration and the current iteration
 
         (i.e. between last state and current response)
             Arguments:
                 `service_version`: Str; Baseline or canary
-                `success_criterion_number`: int; Denotes the number of succes criteria the function is observing changes in
+                `success_criterion_number`: int; Denotes the number of succes criterion the function is observing changes in
         """
         # Check and Increment and Epsilon t greedy require this method. PBR and OBR do not require the information captured here
         #if condition when there is no last state information- assumes that change was observed in this case
@@ -131,7 +131,9 @@ class Response():
         self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR] = []
         if ((datetime.now(timezone.utc) - parser.parse(self.experiment.baseline.end_time)).total_seconds() >= 1800) or ((datetime.now(timezone.utc) - parser.parse(self.experiment.candidate.end_time)).total_seconds() >= 10800):
             self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append("The experiment end time is more than 30 mins ago")
+        self.append_partial_assessment_summary()
 
+    def append_partial_assessment_summary(self):
         if self.experiment.first_iteration:
             self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append(f"Experiment started")
         else:
@@ -144,8 +146,6 @@ class Response():
 
         self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR]["sample_size_sufficient"] = all(
             criterion["sample_size_sufficient"] for criterion in self.response[responses.ASSESSMENT_STR][request_parameters.SUCCESS_CRITERIA_STR])
-
-        #log.info(f'CANDIDATE SAMPLE SIZE SUFFICIENT: {self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR]["sample_size_sufficient"]}')
 
 
     def has_baseline_met_all_criteria(self):
@@ -295,47 +295,7 @@ class BayesianRoutingResponse(Response):
                 request_parameters.MIN_MAX_STR: criterion.min_max,
                 "params": None
                 }
-
-
-    def append_metrics_and_success_criteria(self):
-        """Overriding Base class method.
-        Appends the response object with results from Prometheus for the current iteration"""
-        for criterion in self.experiment.traffic_control.success_criteria:
-            self.response[request_parameters.BASELINE_STR][responses.METRICS_STR].append(self.get_results(
-                criterion, self.experiment.baseline))
-            self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR].append(self.get_results(
-                criterion, self.experiment.candidate))
-            log.info(f"Appended metric: {criterion.metric_name}")
-            self.append_success_criteria(criterion)
-
-
-    def append_success_criteria(self, criterion):
-        """Overriding Base Class method.
-        Appends the response object with success/failure
-        of the results from the current iteration"""
-        if criterion.type == request_parameters.DELTA_CRITERION_STR:
-            self.response[responses.ASSESSMENT_STR][responses.SUCCESS_CRITERIA_STR].append(DeltaCriterion(
-                criterion, self.response[request_parameters.BASELINE_STR][responses.METRICS_STR][-1], self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR][-1]).test_bayesian())
-        elif criterion.type == request_parameters.THRESHOLD_CRITERION_STR:
-            self.response[responses.ASSESSMENT_STR][responses.SUCCESS_CRITERIA_STR].append(
-                ThresholdCriterion(criterion, self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR][-1]).test_bayesian())
-        else:
-            raise ValueError("Criterion type can either be Threshold or Delta")
-        log.info("Appended Success Criteria")
-
-
-    def append_assessment_summary(self):
-        """Overriding Base Class method.
-        Updates response object with overrall assessment summary for the current iteration"""
-        self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.ALL_SUCCESS_CRITERIA_MET_STR] = all(
-            criterion[responses.SUCCESS_CRITERION_MET_STR] for criterion in self.response[responses.ASSESSMENT_STR][request_parameters.SUCCESS_CRITERIA_STR])
-        self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.ABORT_EXPERIMENT_STR] = any(
-            criterion[responses.ABORT_EXPERIMENT_STR] for criterion in self.response[responses.ASSESSMENT_STR][request_parameters.SUCCESS_CRITERIA_STR])
-
-        self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR] = []
-        if ((datetime.now(timezone.utc) - parser.parse(self.experiment.baseline.end_time)).total_seconds() >= 1800) or ((datetime.now(timezone.utc) - parser.parse(self.experiment.candidate.end_time)).total_seconds() >= 10800):
-            self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append("The experiment end time is more than 30 mins ago")
-
+    def append_partial_assessment_summary(self):
         success_criteria_met_str = "not" if not(self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.ALL_SUCCESS_CRITERIA_MET_STR]) else ""
         if self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.ABORT_EXPERIMENT_STR]:
             self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append(f"The experiment needs to be aborted")
@@ -440,12 +400,11 @@ class BayesianRoutingResponse(Response):
             request_parameters.CANDIDATE_STR: 100-new_baseline_traffic_percentage
         }
 
-    def change_observed(self, service_version, success_criterion_number):
+    def append_if_metrics_changed_in_this_iteration(self, service_version, success_criterion_number):
         """
         This function is not used in Bayesian Routing Algorithms.
-        It should not be called
         """
-        raise NotImplementedError()
+        pass
 
     def has_baseline_met_all_criteria(self):
         """
