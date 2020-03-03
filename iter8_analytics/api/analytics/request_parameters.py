@@ -251,6 +251,6 @@ bayesian_routing_parameters = api.model('bayesian_routing_parameters', {
          traffic_control_br, required=True,
          description='Parameters controlling the behavior of the analytics'),
      LAST_STATE_STR: fields.Raw(
-         required=True,
+         required=False,
          description='State returned by the server on the previous call')
  })
