@@ -138,16 +138,16 @@ class Experiment():
         self.experiment_type = "a/b" if request_parameters.REWARD_STR in payload[request_parameters.TRAFFIC_CONTROL_STR] else "canary"
         self.baseline = baseline_payload
         self.candidate = candidate_payload
-        self.get_traffic_controll_and_last_state(payload)
+        self.get_traffic_control_and_last_state(payload)
 
-    def get_traffic_controll_and_last_state(self):
+    def get_traffic_control_and_last_state(self):
         raise NotImplementedError()
 
 class CheckAndIncrementExperiment(Experiment):
     def __init__(self, payload):
         super().__init__(payload)
 
-    def get_traffic_controll_and_last_state(self, payload):
+    def get_traffic_control_and_last_state(self, payload):
         if not payload[request_parameters.LAST_STATE_STR]:  # if it is empty
             last_state = CheckAndIncrementLastState(100, 0, [], [])
             first_iteration = True
@@ -163,7 +163,7 @@ class EpsilonTGreedyExperiment(Experiment):
     def __init__(self, payload):
         super().__init__(payload)
 
-    def get_traffic_controll_and_last_state(self, payload):
+    def get_traffic_control_and_last_state(self, payload):
         if not payload[request_parameters.LAST_STATE_STR]:  # if it is empty
             last_state = EpsilonTGreedyLastState(100, 0, [], [], 0)
             first_iteration = True
@@ -179,7 +179,7 @@ class BayesianRoutingExperiment(Experiment):
      def __init__(self, payload):
          super().__init__(payload)
 
-     def get_traffic_controll_and_last_state(self, payload):
+     def get_traffic_control_and_last_state(self, payload):
          traffic_control = TrafficControlBR(payload[request_parameters.TRAFFIC_CONTROL_STR])
          if not payload[request_parameters.LAST_STATE_STR]:  # if it is empty
              last_state = BayesianRoutingLastState(True)
