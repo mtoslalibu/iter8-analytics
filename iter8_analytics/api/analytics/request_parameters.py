@@ -146,6 +146,36 @@ BASELINE_STR = 'baseline'
 CANDIDATE_STR = 'candidate'
 BOTH_STR = 'both'
 SUCCESS_CRITERIA_STR = 'success_criteria'
+REWARD_STR = "reward"
+
+reward = api.model('reward', {
+    METRIC_NAME_STR: fields.String(
+        required=True,
+        description='Name of the metric to which is used to calculate the reward value',
+        example='iter8_error_count'),
+    IS_COUNTER_STR: fields.Boolean(
+        required=True, description='Describles the type of metric. '
+        'Options: "True": Metrics which are cumulative in nature '
+        'and represent monotonically increasing values ; '
+        '"False": Metrics which are not cumulative'),
+    ABSENT_VALUE_STR: fields.String(
+        required=False, example="2.0", default="0.0",
+        description='Describes what value should be returned '
+        'if Prometheus did not find any data corresponding to the metric'),
+    METRIC_QUERY_TEMPLATE_STR: fields.String(
+        required=True,
+        description='Prometheus Query of the metric to which the criterion applies',
+        example='sum(increase(istio_requests_total{response_code=~"5..",'
+        'reporter="source"}[$interval]$offset_str)) by ($entity_labels)'),
+    METRIC_SAMPLE_SIZE_QUERY_TEMPLATE: fields.String(
+        required=True,
+        description='Sample Size Query for the metric to which the criterion applies',
+        example='sum(increase(istio_requests_total{reporter="source"}'
+        '[$interval]$offset_str)) by ($entity_labels)'),
+    MIN_MAX_STR: fields.Nested(
+        min_max, required=False,
+        description='Minimum and Maximum value of the metric')})
+
 
 traffic_control_check_and_increment = api.model('traffic_control_check_and_increment', {
     MAX_TRAFFIC_PERCENT_STR: fields.Float(
@@ -160,7 +190,10 @@ traffic_control_check_and_increment = api.model('traffic_control_check_and_incre
     SUCCESS_CRITERIA_STR: fields.List(
         fields.Nested(success_criterion_default),
         required=True,
-        description='List of criteria for assessing the candidate version')
+        description='List of criteria for assessing the candidate version'),
+    REWARD_STR: fields.Nested(
+        reward, required=False,
+        description='Reward attribute to maximize in the A/B test')
 })
 
 traffic_control_epsilon_t_greedy = api.model('traffic_control_epsilon_t_greedy', {
@@ -171,7 +204,10 @@ traffic_control_epsilon_t_greedy = api.model('traffic_control_epsilon_t_greedy',
     SUCCESS_CRITERIA_STR: fields.List(
         fields.Nested(success_criterion_default),
         required=True,
-        description='List of criteria for assessing the candidate version')
+        description='List of criteria for assessing the candidate version'),
+    REWARD_STR: fields.Nested(
+        reward, required=False,
+        description='Reward attribute to maximize in the A/B test')
 })
 
 
@@ -190,7 +226,10 @@ traffic_control_br = api.model('traffic_control_br', {
     SUCCESS_CRITERIA_STR: fields.List(
         fields.Nested(success_criterion_br),
         required=True,
-        description='List of criteria for assessing the candidate version')})
+        description='List of criteria for assessing the candidate version'),
+    REWARD_STR: fields.Nested(
+        reward, required=False,
+        description='Reward attribute to maximize in the A/B test')})
 
 
 TRAFFIC_CONTROL_STR = 'traffic_control'

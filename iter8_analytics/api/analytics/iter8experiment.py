@@ -102,6 +102,7 @@ class TrafficControlDefault():
             self.success_criteria.append(SuccessCriterionDefault(each_criteria))
         self.step_size = 2 if request_parameters.STEP_SIZE_STR not in traffic_control else traffic_control[request_parameters.STEP_SIZE_STR]
         self.max_traffic_percent = 50 if request_parameters.MAX_TRAFFIC_PERCENT_STR not in traffic_control else traffic_control[request_parameters.MAX_TRAFFIC_PERCENT_STR]
+        self.reward = None if request_parameters.REWARD_STR not in traffic_control else Reward(traffic_control[request_parameters.REWARD_STR])
 
 class TrafficControlBR():
     def __init__(self, traffic_control):
@@ -110,6 +111,18 @@ class TrafficControlBR():
             self.success_criteria.append(SuccessCriterionBR(each_criteria))
         self.confidence = 0.95 if request_parameters.CONFIDENCE_STR not in traffic_control else traffic_control[request_parameters.CONFIDENCE_STR]
         self.max_traffic_percent = 50 if request_parameters.MAX_TRAFFIC_PERCENT_STR not in traffic_control else [request_parameters.MAX_TRAFFIC_PERCENT_STR]
+        self.reward = None if request_parameters.REWARD_STR not in traffic_control else Reward(traffic_control[request_parameters.REWARD_STR])
+
+
+class Reward():
+    def __init__(self, reward):
+        self.metric_name = reward[request_parameters.METRIC_NAME_STR]
+        self.is_counter = reward[request_parameters.IS_COUNTER_STR]
+        self.absent_value = "0.0" if request_parameters.ABSENT_VALUE_STR not in reward else reward[request_parameters.ABSENT_VALUE_STR]
+        self.metric_query_template = reward[request_parameters.METRIC_QUERY_TEMPLATE_STR]
+        self.metric_sample_size_query_template = reward[request_parameters.METRIC_SAMPLE_SIZE_QUERY_TEMPLATE]
+        self.min_max = None if request_parameters.MIN_MAX_STR not in reward else reward[request_parameters.MIN_MAX_STR]
+
 
 class CheckAndIncrementExperiment():
     def __init__(self, payload):
@@ -125,7 +138,7 @@ class CheckAndIncrementExperiment():
         candidate_payload = ServicePayload(payload[request_parameters.CANDIDATE_STR])
 
         traffic_control = TrafficControlDefault(payload[request_parameters.TRAFFIC_CONTROL_STR])
-
+        self.experiment_type = "a/b" if request_parameters.REWARD_STR in payload[request_parameters.TRAFFIC_CONTROL_STR] else "canary"
         self.last_state = last_state
         self.first_iteration = first_iteration
         self.baseline = baseline_payload
@@ -147,6 +160,7 @@ class EpsilonTGreedyExperiment():
 
         traffic_control = TrafficControlDefault(payload[request_parameters.TRAFFIC_CONTROL_STR])
 
+        self.experiment_type = "a/b" if request_parameters.REWARD_STR in payload[request_parameters.TRAFFIC_CONTROL_STR] else "canary"
         self.last_state = last_state
         self.first_iteration = first_iteration
         self.baseline = baseline_payload
@@ -161,7 +175,7 @@ class BayesianRoutingExperiment():
          candidate_payload = ServicePayload(payload[request_parameters.CANDIDATE_STR])
 
          traffic_control = TrafficControlBR(payload[request_parameters.TRAFFIC_CONTROL_STR])
-
+         self.experiment_type = "a/b" if request_parameters.REWARD_STR in payload[request_parameters.TRAFFIC_CONTROL_STR] else "canary"
          self.first_iteration = True
          self.baseline = baseline_payload
          self.candidate = candidate_payload
