@@ -193,7 +193,7 @@ traffic_control_check_and_increment = api.model('traffic_control_check_and_incre
         description='List of criteria for assessing the candidate version'),
     REWARD_STR: fields.Nested(
         reward, required=False,
-        description='Reward attribute to minimize in the A/B test')
+        description='Reward attribute to maximize in the A/B test')
 })
 
 traffic_control_epsilon_t_greedy = api.model('traffic_control_epsilon_t_greedy', {
@@ -207,7 +207,7 @@ traffic_control_epsilon_t_greedy = api.model('traffic_control_epsilon_t_greedy',
         description='List of criteria for assessing the candidate version'),
     REWARD_STR: fields.Nested(
         reward, required=False,
-        description='Reward attribute to minimize in the A/B test')
+        description='Reward attribute to maximize in the A/B test')
 })
 
 
@@ -229,7 +229,7 @@ traffic_control_br = api.model('traffic_control_br', {
         description='List of criteria for assessing the candidate version'),
     REWARD_STR: fields.Nested(
         reward, required=False,
-        description='Reward attribute to minimize in the A/B test')})
+        description='Reward attribute to maximize in the A/B test')})
 
 
 TRAFFIC_CONTROL_STR = 'traffic_control'
