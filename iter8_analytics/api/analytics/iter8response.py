@@ -60,8 +60,8 @@ class Response():
                 criterion, self.experiment.candidate))
             # instead of using i we could use a unique success criterion ID
             # created by the controller to compare success criterion between two iterations
-            self.change_observed(request_parameters.BASELINE_STR, i)
-            self.change_observed(request_parameters.CANDIDATE_STR, i)
+            self.append_if_metrics_changed_in_this_iteration(request_parameters.BASELINE_STR, i)
+            self.append_if_metrics_changed_in_this_iteration(request_parameters.CANDIDATE_STR, i)
             i = i + 1
             log.info(f"Appended metric: {criterion.metric_name}")
             self.append_success_criteria(criterion)
@@ -83,14 +83,14 @@ class Response():
             responses.STATISTICS_STR: prometheus_results_per_success_criteria[responses.STATISTICS_STR]
         }
 
-    def change_observed(self, service_version, success_criterion_number):
+    def append_if_metrics_changed_in_this_iteration(self, service_version, success_criterion_number):
         """
-        Checks if any change was observed between the metrics collected in the previous iteration and the current iteration
+        Record any changes observed between the metrics collected in the previous iteration and the current iteration
 
         (i.e. between last state and current response)
             Arguments:
                 `service_version`: Str; Baseline or canary
-                `success_criterion_number`: int; Denotes the number of succes criteria the function is observing changes in
+                `success_criterion_number`: int; Denotes the number of succes criterion the function is observing changes in
         """
         # Check and Increment and Epsilon t greedy require this method. PBR and OBR do not require the information captured here
         #if condition when there is no last state information- assumes that change was observed in this case
@@ -400,7 +400,7 @@ class BayesianRoutingResponse(Response):
             request_parameters.CANDIDATE_STR: 100-new_baseline_traffic_percentage
         }
 
-    def change_observed(self, service_version, success_criterion_number):
+    def append_if_metrics_changed_in_this_iteration(self, service_version, success_criterion_number):
         """
         This function is not used in Bayesian Routing Algorithms.
         """
