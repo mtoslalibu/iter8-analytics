@@ -5,6 +5,7 @@ from iter8_analytics.metrics_backend.iter8metric import Iter8MetricFactory
 from iter8_analytics.metrics_backend.datacapture import DataCapture
 from iter8_analytics.api.analytics.successcriteria import DeltaCriterion, ThresholdCriterion
 from iter8_analytics.api.analytics import iter8experiment
+from iter8_analytics.api.analytics.iter8experiment import BayesianRoutingLastState
 import iter8_analytics.constants as constants
 import flask_restplus
 from flask import request
@@ -305,7 +306,7 @@ class BayesianRoutingResponse(Response):
         """Will serve as a version of the meta algorithm """
         # Update belief for baseline and candidate version, for every metric which is not a counter.
         params = namedtuple('params', 'alpha beta gamma sigma')
-        self.response[request_parameters.LAST_STATE_STR] = iter8experiment.BayesianRoutingLastState([],[], params(None, None, None, None), params(None, None, None, None)).last_state
+        self.response[request_parameters.LAST_STATE_STR] = BayesianRoutingLastState([],[], params(None, None, None, None), params(None, None, None, None)).last_state
         for criterion in self.response[request_parameters.BASELINE_STR][responses.METRICS_STR]:
             if not criterion[request_parameters.IS_COUNTER_STR]:
                 self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
