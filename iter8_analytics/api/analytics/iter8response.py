@@ -301,16 +301,25 @@ class BayesianRoutingResponse(Response):
             self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append(f"The experiment needs to be aborted")
         self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append(f"All success criteria were {success_criteria_met_str} met")
 
-
     def append_traffic_decision(self):
         """Will serve as a version of the meta algorithm """
         # Update belief for baseline and candidate version, for every metric which is not a counter.
+        self.response[request_parameters.LAST_STATE_STR] = iter8experiment.BayesianRoutingLastState([],[]).last_state
         for criterion in self.response[request_parameters.BASELINE_STR][responses.METRICS_STR]:
             if not criterion[request_parameters.IS_COUNTER_STR]:
                 self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
+                self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_INFORMATION_STR].append(self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
+            else:
+                params = namedtuple('params', 'alpha beta gamma sigma')
+                self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_INFORMATION_STR].append(params(None, None, None, None))
         for criterion in self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR]:
             if not criterion[request_parameters.IS_COUNTER_STR]:
                 self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
+                self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_INFORMATION_STR].append(self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
+            else:
+                params = namedtuple('params', 'alpha beta gamma sigma')
+                self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_INFORMATION_STR].append(params(None, None, None, None))
+
 
         routing_pmf = self.routing_pmf() # we got back the traffic split of the format {"candidate": x, "baseline": 100 - x}
 
@@ -321,6 +330,7 @@ class BayesianRoutingResponse(Response):
         confidence_str = "not " if self.response[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR] < self.experiment.traffic_control.confidence*100 else ""
         confidence_str = "Required confidence of " + str(self.experiment.traffic_control.confidence) + " was "+ confidence_str + "reached"
         self.response[responses.ASSESSMENT_STR][responses.SUMMARY_STR][responses.CONCLUSIONS_STR].append(confidence_str)
+
 
     def update_beliefs(self, metric_response, min_max = None):
         """Update belief distribution for each metric

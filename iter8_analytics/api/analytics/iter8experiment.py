@@ -37,9 +37,14 @@ class EpsilonTGreedyLastState():
 
 FIRST_ITERATION_STR = "first_iteration"
 class BayesianRoutingLastState():
-    def __init__(self, first_iteration):
+    def __init__(self, baseline_success_criterion_information, candidate_success_criterion_information):
         self.last_state = {
-            FIRST_ITERATION_STR: first_iteration
+            request_parameters.BASELINE_STR: {
+             SUCCESS_CRITERION_INFORMATION_STR: baseline_success_criterion_information
+             },
+            request_parameters.CANDIDATE_STR: {
+                SUCCESS_CRITERION_INFORMATION_STR: candidate_success_criterion_information
+            }
         }
 
 
@@ -182,10 +187,10 @@ class BayesianRoutingExperiment(Experiment):
      def set_traffic_control_and_last_state(self, payload):
          traffic_control = TrafficControlBR(payload[request_parameters.TRAFFIC_CONTROL_STR])
          if not payload[request_parameters.LAST_STATE_STR]:  # if it is empty
-             last_state = BayesianRoutingLastState(True)
+             last_state = BayesianRoutingLastState([], [])
              first_iteration = True
          else:
-             last_state = BayesianRoutingLastState(False)
+             last_state = BayesianRoutingLastState(payload[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][SUCCESS_CRITERION_INFORMATION_STR], payload[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][SUCCESS_CRITERION_INFORMATION_STR])
              first_iteration = False
          self.traffic_control = traffic_control
          self.last_state = last_state
