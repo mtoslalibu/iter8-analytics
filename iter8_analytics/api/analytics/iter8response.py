@@ -304,21 +304,20 @@ class BayesianRoutingResponse(Response):
     def append_traffic_decision(self):
         """Will serve as a version of the meta algorithm """
         # Update belief for baseline and candidate version, for every metric which is not a counter.
-        self.response[request_parameters.LAST_STATE_STR] = iter8experiment.BayesianRoutingLastState([],[]).last_state
+        params = namedtuple('params', 'alpha beta gamma sigma')
+        self.response[request_parameters.LAST_STATE_STR] = iter8experiment.BayesianRoutingLastState([],[], params(None, None, None, None), params(None, None, None, None)).last_state
         for criterion in self.response[request_parameters.BASELINE_STR][responses.METRICS_STR]:
             if not criterion[request_parameters.IS_COUNTER_STR]:
                 self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
-                self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_INFORMATION_STR].append(self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
+                self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
             else:
-                params = namedtuple('params', 'alpha beta gamma sigma')
-                self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_INFORMATION_STR].append(params(None, None, None, None))
+                self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(params(None, None, None, None))
         for criterion in self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR]:
             if not criterion[request_parameters.IS_COUNTER_STR]:
                 self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
-                self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_INFORMATION_STR].append(self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
+                self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
             else:
-                params = namedtuple('params', 'alpha beta gamma sigma')
-                self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_INFORMATION_STR].append(params(None, None, None, None))
+                self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(params(None, None, None, None))
 
 
         routing_pmf = self.routing_pmf() # we got back the traffic split of the format {"candidate": x, "baseline": 100 - x}
