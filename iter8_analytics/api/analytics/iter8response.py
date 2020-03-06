@@ -48,9 +48,9 @@ class Response():
         self.append_metrics_and_success_criteria()
         log.info("Appended metrics and success criteria")
         self.append_assessment_summary()
-        log.info("Append assessment summary")
+        log.info("Appended assessment summary")
         self.append_traffic_decision()
-        log.info("Append traffic decision")
+        log.info("Appended traffic decision")
 
     def append_metrics_and_success_criteria(self):
         i = 0
@@ -181,7 +181,6 @@ class Response():
             i+=1
         sample_size = all(baseline_sample_sizes)
         success = all(baseline_successes)
-        #log.info(f"BASELINE SAMPLE SIZE SUFFICIENT: {sample} SUCCESS CRITERIA: {success}")
         return sample_size, success
 
     def append_traffic_decision(self):
@@ -319,7 +318,8 @@ class BayesianRoutingResponse(Response):
                         self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = params(None, None, 0, 1)
                     else:
                         log.error("Prometheus query did not find usable metric value. Using previous iteration metric details")
-                        self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.experiment.last_state.last_state[request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i]
+                        last_state_beliefs = params(self.experiment.last_state.last_state[request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i][0], self.experiment.last_state.last_state[request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i][1], self.experiment.last_state.last_state[request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i][2], self.experiment.last_state.last_state[request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i][3])
+                        self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = last_state_beliefs
                 self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
             else:
                 self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(params(None, None, None, None))
@@ -336,15 +336,13 @@ class BayesianRoutingResponse(Response):
                         self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = params(None, None, 0, 1)
                     else:
                         log.error("Prometheus query did not find usable metric value. Using previous iteration metric details")
-                        self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.experiment.last_state.last_state[request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i]
+                        last_state_beliefs = params(self.experiment.last_state.last_state[request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i][0], self.experiment.last_state.last_state[request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i][1], self.experiment.last_state.last_state[request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i][2], self.experiment.last_state.last_state[request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i][3])
+                        self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = last_state_beliefs
                 self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
             else:
                 self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(params(None, None, None, None))
             i+=1
-
-
         routing_pmf = self.routing_pmf() # we got back the traffic split of the format {"candidate": x, "baseline": 100 - x}
-
         self.response[request_parameters.BASELINE_STR][responses.TRAFFIC_PERCENTAGE_STR] = routing_pmf[request_parameters.BASELINE_STR]
         self.response[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR] = routing_pmf[request_parameters.CANDIDATE_STR]
 
@@ -397,7 +395,6 @@ class BayesianRoutingResponse(Response):
                 beta = (num_reqs + 2) - alpha
                 # above maintains the invariant that alpha + beta = num_reqs for both versions at all times
                 reward[version] = np.random.beta(a = alpha, b = beta)
-                #log.info("Reached here 3")
                 for criterion in self.experiment.traffic_control.success_criteria:
                     i = 0 # to keep track of the criterion number we are measuring
                     if not criterion.is_counter: #the metric is not cumulative

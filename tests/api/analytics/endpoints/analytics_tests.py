@@ -1704,7 +1704,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-            log.info("Test request with some required parameters")
+            log.info("Test request with no data for obr (not first iteration + min-max available)")
 
             params = namedtuple('params', 'alpha beta gamma sigma')
             parameters = {
@@ -1726,7 +1726,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                    {
                        "metric_name": "iter8_error_rate",
                        "is_counter": False,
-                       "absent_value": "0",
+                       "absent_value": "None",
                        "min_max": {
                            "min": 0,
                            "max": 1
@@ -1760,7 +1760,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
             ###################
             log.info("\n\n\n")
             log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
-            log.info("Test request with some required parameters")
+            log.info("Test request with no data for obr (not first iteration + min-max not available)")
 
             params = namedtuple('params', 'alpha beta gamma sigma')
             parameters = {
@@ -1782,7 +1782,7 @@ class TestAnalyticsCheckAndIncrementAPI(unittest.TestCase):
                    {
                        "metric_name": "iter8_error_rate",
                        "is_counter": False,
-                       "absent_value": "0",
+                       "absent_value": "None",
                         "metric_query_template": "sum(increase(istio_requests_total{response_code=~\"5..\",reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
                         "metric_sample_size_query_template": "sum(increase(istio_requests_total{reporter=\"source\"}[$interval]$offset_str)) by ($entity_labels)",
                         "type": "threshold",
