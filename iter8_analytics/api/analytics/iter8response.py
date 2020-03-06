@@ -341,7 +341,7 @@ class BayesianRoutingResponse(Response):
         try:
             Z = metric_response[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR] * metric_response[responses.STATISTICS_STR][responses.VALUE_STR]
         except Exception as e:
-            log.warning("WARNING: Prometheus returned NaN for metric value")
+            log.warning("WARNING: Prometheus query did not find usable metric value")
             raise e
         W = metric_response[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR]
         # what happens if the above value is none... ?
