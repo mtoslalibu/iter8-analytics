@@ -338,12 +338,11 @@ class BayesianRoutingResponse(Response):
         Else update a normal distribution. Return the tuple (alpha, beta, gamma, sigma) -- two of these entries will be None."""
         alpha = beta = gamma = sigma = None
         params = namedtuple('params', 'alpha beta gamma sigma')
-        Z = 0.0
         try:
             Z = metric_response[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR] * metric_response[responses.STATISTICS_STR][responses.VALUE_STR]
-        except:
-            log.warning("ERROR: %s", sys.exc_info()[0])
-        log.info(Z)
+        except Exception as e:
+            log.warning("WARNING: Prometheus returned NaN for metric value")
+            raise e
         W = metric_response[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR]
         # what happens if the above value is none... ?
         if min_max:
