@@ -199,3 +199,4 @@ class BayesianRoutingExperiment(Experiment):
              first_iteration = False
          self.traffic_control = traffic_control
          self.last_state = last_state
+         self.first_iteration = first_iteration
