@@ -307,18 +307,40 @@ class BayesianRoutingResponse(Response):
         # Update belief for baseline and candidate version, for every metric which is not a counter.
         params = namedtuple('params', 'alpha beta gamma sigma')
         self.response[request_parameters.LAST_STATE_STR] = BayesianRoutingLastState([],[], params(None, None, None, None), params(None, None, None, None)).last_state
+        i = 0
         for criterion in self.response[request_parameters.BASELINE_STR][responses.METRICS_STR]:
             if not criterion[request_parameters.IS_COUNTER_STR]:
-                self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
+                try:
+                    self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
+                except Exception as e:
+                    if self.experiment.first_iteration and criterion.min_max:
+                        self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = params(1, 1, None, None)
+                    elif self.experiment.first_iteration and not criterion.min_max:
+                        self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = params(None, None, 0, 1)
+                    else:
+                        log.error("Prometheus query did not find usable metric value. Using previous iteration metric details")
+                        self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.experiment.last_state.last_state[request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i]
                 self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
             else:
                 self.response[request_parameters.LAST_STATE_STR][request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(params(None, None, None, None))
+            i+=1
+        i = 0
         for criterion in self.response[request_parameters.CANDIDATE_STR][responses.METRICS_STR]:
             if not criterion[request_parameters.IS_COUNTER_STR]:
-                self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
+                try:
+                    self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.update_beliefs(criterion, self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]][request_parameters.MIN_MAX_STR])
+                except Exception as e:
+                    if self.experiment.first_iteration and criterion.min_max:
+                        self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = params(1, 1, None, None)
+                    elif self.experiment.first_iteration and not criterion.min_max:
+                        self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = params(None, None, 0, 1)
+                    else:
+                        log.error("Prometheus query did not find usable metric value. Using previous iteration metric details")
+                        self.baseline_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"] = self.experiment.last_state.last_state[request_parameters.BASELINE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR][i]
                 self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(self.candidate_beliefs[criterion[request_parameters.METRIC_NAME_STR]]["params"])
             else:
                 self.response[request_parameters.LAST_STATE_STR][request_parameters.CANDIDATE_STR][iter8experiment.SUCCESS_CRITERION_BELIEF_STR].append(params(None, None, None, None))
+            i+=1
 
 
         routing_pmf = self.routing_pmf() # we got back the traffic split of the format {"candidate": x, "baseline": 100 - x}
