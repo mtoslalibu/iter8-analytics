@@ -66,6 +66,10 @@ class Criterion():
         self.metric_query_template = criterion[request_parameters.METRIC_QUERY_TEMPLATE_STR]
         self.metric_sample_size_query_template = criterion[request_parameters.METRIC_SAMPLE_SIZE_QUERY_TEMPLATE]
 
+    def generate_id(self, criterion):
+        self.criterion_id = hash(frozenset(criterion.items()))
+        return self.criterion_id
+
 
 class MetricCriterion(Criterion):
     def __init__(self, criterion):
