@@ -71,7 +71,7 @@ class Criterion():
         return self.criterion_id
 
 
-class MetricCriterion(Criterion):
+class FeasibilityCriterion(Criterion):
     def __init__(self, criterion):
         """
         criterion:  {
@@ -92,7 +92,7 @@ class MetricCriterion(Criterion):
         self.stop_on_failure = False if request_parameters.CRITERION_STOP_ON_FAILURE_STR not in criterion else criterion[request_parameters.CRITERION_STOP_ON_FAILURE_STR]
 
 
-class MetricCriterionDefault(MetricCriterion):
+class FeasibilityCriterionDefault(FeasibilityCriterion):
     def __init__(self, criterion):
         """
         criterion:  {
@@ -110,7 +110,7 @@ class MetricCriterionDefault(MetricCriterion):
         super().__init__(criterion)
         self.sample_size = 10 if request_parameters.CRITERION_SAMPLE_SIZE_STR not in criterion else criterion[request_parameters.CRITERION_SAMPLE_SIZE_STR]
 
-class MetricCriterionBR(MetricCriterion):
+class FeasibilityCriterionBR(FeasibilityCriterion):
     def __init__(self, criterion):
         """
         criterion:  {
@@ -141,7 +141,7 @@ class TrafficControlDefault():
     def __init__(self, traffic_control):
         self.success_criteria = []
         for each_criteria in traffic_control[request_parameters.SUCCESS_CRITERIA_STR]:
-            self.success_criteria.append(MetricCriterionDefault(each_criteria))
+            self.success_criteria.append(FeasibilityCriterionDefault(each_criteria))
         self.step_size = 2 if request_parameters.STEP_SIZE_STR not in traffic_control else traffic_control[request_parameters.STEP_SIZE_STR]
         self.max_traffic_percent = 50 if request_parameters.MAX_TRAFFIC_PERCENT_STR not in traffic_control else traffic_control[request_parameters.MAX_TRAFFIC_PERCENT_STR]
         self.reward = None if request_parameters.REWARD_STR not in traffic_control else RewardCriterion(traffic_control[request_parameters.REWARD_STR])
@@ -150,7 +150,7 @@ class TrafficControlBR():
     def __init__(self, traffic_control):
         self.success_criteria = []
         for each_criteria in traffic_control[request_parameters.SUCCESS_CRITERIA_STR]:
-            self.success_criteria.append(MetricCriterionBR(each_criteria))
+            self.success_criteria.append(FeasibilityCriterionBR(each_criteria))
         self.confidence = 0.95 if request_parameters.CONFIDENCE_STR not in traffic_control else traffic_control[request_parameters.CONFIDENCE_STR]
         self.max_traffic_percent = 50 if request_parameters.MAX_TRAFFIC_PERCENT_STR not in traffic_control else [request_parameters.MAX_TRAFFIC_PERCENT_STR]
         self.reward = None if request_parameters.REWARD_STR not in traffic_control else RewardCriterion(traffic_control[request_parameters.REWARD_STR])
