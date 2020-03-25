@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 class Response():
-    def __init__(self, experiment, prom_url):
+    def __init__(self, experiment, prom_url, authentication=None):
         """Create response object corresponding to payload. This has everything and more."""
         self.experiment = experiment
 
@@ -42,7 +42,7 @@ class Response():
                 responses.SUCCESS_CRITERIA_STR: []
             }
         }
-        self.metric_factory = Iter8MetricFactory(prom_url)
+        self.metric_factory = Iter8MetricFactory(prom_url, authentication)
 
     def compute_test_results_and_summary(self):
         self.append_metrics_and_success_criteria()
@@ -190,8 +190,8 @@ class Response():
         return self.response
 
 class CheckAndIncrementResponse(Response):
-    def __init__(self, experiment, prom_url):
-        super().__init__(experiment, prom_url)
+    def __init__(self, experiment, prom_url, authentication=None):
+        super().__init__(experiment, prom_url, authentication)
 
     def append_traffic_decision(self):
         last_state = self.experiment.last_state.last_state
@@ -230,8 +230,8 @@ class CheckAndIncrementResponse(Response):
         self.response[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR] = new_candidate_traffic_percentage
 
 class EpsilonTGreedyResponse(Response):
-    def __init__(self, experiment, prom_url):
-        super().__init__(experiment, prom_url)
+    def __init__(self, experiment, prom_url, authentication=None):
+        super().__init__(experiment, prom_url, authentication)
 
     def append_traffic_decision(self):
         last_state = self.experiment.last_state.last_state # to be cleaned up
@@ -280,8 +280,8 @@ class EpsilonTGreedyResponse(Response):
         self.response[request_parameters.CANDIDATE_STR][responses.TRAFFIC_PERCENTAGE_STR] = new_candidate_traffic_percentage
 
 class BayesianRoutingResponse(Response):
-    def __init__(self, experiment, prom_url):
-        super().__init__(experiment, prom_url)
+    def __init__(self, experiment, prom_url, authentication=None):
+        super().__init__(experiment, prom_url, authentication)
         self.max_trials = 1000 # =this should be higher, say 10000
         self.baseline_beliefs = {}
         self.candidate_beliefs = {}
@@ -443,8 +443,8 @@ class BayesianRoutingResponse(Response):
         raise NotImplementedError()
 
 class PosteriorBayesianRoutingResponse(BayesianRoutingResponse):
-    def __init__(self, experiment, prom_url):
-        super().__init__(experiment, prom_url)
+    def __init__(self, experiment, prom_url, authentication=None):
+        super().__init__(experiment, prom_url, authentication)
 
     @classmethod
     def beta_sample(cls, alpha, beta, min_val, max_val):
@@ -459,8 +459,8 @@ class PosteriorBayesianRoutingResponse(BayesianRoutingResponse):
 
 
 class OptimisticBayesianRoutingResponse(BayesianRoutingResponse):
-    def __init__(self, experiment, prom_url):
-        super().__init__(experiment, prom_url)
+    def __init__(self, experiment, prom_url, authentication=None):
+        super().__init__(experiment, prom_url, authentication)
 
     @classmethod
     def beta_sample(cls, alpha, beta, min_val, max_val):

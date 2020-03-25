@@ -6,6 +6,30 @@ kind: Namespace
 metadata:
   name: iter8
 ---
+# Source: iter8-analytics/templates/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iter8-analytics
+  namespace: iter8
+  labels:
+    app.kubernetes.io/name: iter8-analytics
+    helm.sh/chart: iter8-analytics-0.1.0
+    app.kubernetes.io/instance: iter8-analytics
+    app.kubernetes.io/managed-by: Tiller
+data: 
+  config.yaml: |
+    port: 8080
+    prometheus:
+      auth:
+        ca_file: 
+        insecure_skip_verify: false
+        password: passw0rd
+        token: 
+        type: none
+        username: kalantar
+      url: http://prometheus.istio-system:9090
+---
 # Source: iter8-analytics/templates/service.yaml
 apiVersion: v1
 kind: Service
@@ -20,8 +44,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 80
-      targetPort: 80
+    - port: 8080
+      targetPort: 8080
       protocol: TCP
       name: http
   selector:
@@ -58,14 +82,21 @@ spec:
           imagePullPolicy: Always
           env:
             - name: ITER8_ANALYTICS_SERVER_PORT
-              value: "80"
+              value: "8080"
             - name: ITER8_ANALYTICS_METRICS_BACKEND_URL
               value: "http://prometheus.istio-system:9090"
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8080
               protocol: TCP
           resources:
             {}
             
-
+          volumeMounts:
+            - name: config-volume
+              mountPath: /python_code/src/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: config-volume
+          configMap: 
+            name: iter8-analytics

@@ -17,14 +17,22 @@ iter8Config:
   metricsBackendURL: "http://prometheus.istio-system:9090"
 
   # Port used by the iter8-analytics API server
-  iter8Port: 80
+  iter8Port: 8080
+
+  authentication:
+    ca_file: ""
+    insecure_skip_verify: false
+    password: "passw0rd"
+    token: ""
+    type: "none"
+    username: "kalantar"
 
 nameOverride: "iter8-analytics"
 fullnameOverride: "iter8-analytics"
 
 service:
   type: ClusterIP
-  port: 80
+  port: 8080
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
