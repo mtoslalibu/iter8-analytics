@@ -28,11 +28,14 @@ DataCapture.data_capture_mode = os.getenv(constants.ITER8_DATA_CAPTURE_MODE_ENV)
 
 
 config = None
-with open("config.yaml", 'r') as stream:
-    try:
-        config = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        log.warning("Unable to read configuration file")
+try:
+    with open("config.yaml", 'r') as stream:
+        try:
+            config = yaml.safe_load(stream)
+        except yaml.YAMLError:
+            log.warning("Unable to read configuration file")
+except IOError:
+    log.warning("No configuration file")
 authentication = None
 if config:
     authentication = config['prometheus']['auth']
