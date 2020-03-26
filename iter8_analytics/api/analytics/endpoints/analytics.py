@@ -26,7 +26,23 @@ log = logging.getLogger(__name__)
 prom_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
 DataCapture.data_capture_mode = os.getenv(constants.ITER8_DATA_CAPTURE_MODE_ENV)
 
-
+# Attempt to read configuration file for analytics service. 
+# If the configuration file is not present, default values will be used.
+# When an environment variable option exists, the value of the environment variable
+# takes precedence.
+# The following code focuses on the configuration of the connection to a backend
+# Prometheus server used for metrics. The logic isL
+#     If no configuration file is present, it is assumed
+#     If a configuration file is present, the field prometheus.auth defines the 
+#     authentication to use. 
+# This code merely identifies the set of authentication options in the field 'authentication'
+# This is passed to the PrometheusQuery which processes it further.
+# Within the authenticatiom block, the scheme is identiied by the 'type' field
+#     valid values for 'type' are  "none" (no authentication), 
+#     and "basic" (basic authentication)
+# If the type field is not set, it defaults to "none"
+# TODO this should probably be refactored into a PrometheusConnection that gets 
+# passed to (or used by) a PrometheusQuery. 
 config = None
 try:
     with open("config.yaml", 'r') as stream:
