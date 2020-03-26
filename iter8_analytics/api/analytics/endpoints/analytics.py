@@ -56,6 +56,19 @@ authentication = None
 if config:
     authentication = config['prometheus']['auth']
 
+config = None
+try:
+    with open("config.yaml", 'r') as stream:
+        try:
+            config = yaml.safe_load(stream)
+        except yaml.YAMLError:
+            log.warning("Unable to read configuration file")
+except IOError:
+    log.warning("No configuration file")
+authentication = None
+if config:
+    authentication = config['prometheus']['auth']
+
 analytics_namespace = api.namespace(
     'analytics',
     description='Operations to support canary releases and A/B tests')
