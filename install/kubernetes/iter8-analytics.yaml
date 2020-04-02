@@ -54,7 +54,7 @@ spec:
     spec:
       containers:
         - name: iter8-analytics
-          image: "iter8/iter8-analytics:stable"
+          image: "iter8/iter8-analytics:v0.0.1"
           imagePullPolicy: Always
           env:
             - name: ITER8_ANALYTICS_SERVER_PORT
