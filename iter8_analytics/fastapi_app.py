@@ -4,7 +4,6 @@ from fastapi import FastAPI, Body
 # iter8 stuff
 from iter8_analytics.api.analytics.experiment_iteration_response import *
 from iter8_analytics.api.analytics.experiment_iteration_request import *
-from iter8_analytics.api.health.health_check_response import Iter8HealthCheck
 from iter8_analytics.api.analytics.endpoints.examples import *
 
 
@@ -19,10 +18,9 @@ def provide_assessment_for_this_experiment_iteration(eip: ExperimentIterationPar
 
 
 
-@app.get("/health_check", response_model=Iter8HealthCheck)
+@app.get("/health_check")
 def provide_iter8_analytics_health():
     """
       Get iter8 analytics health status
       """
-    health_ok = {"status": "Ok"}
-    return Iter8HealthCheck(** health_ok)
+    return {"status": "Ok"}
