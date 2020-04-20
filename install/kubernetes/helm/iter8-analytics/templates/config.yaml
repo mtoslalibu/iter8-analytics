@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 data: 
   config.yaml: |
-    port: {{ .Values.iter8Config.iter8Port }}
+    port: {{ .Values.service.port }}
     prometheus:
       auth:
         ca_file: {{ .Values.iter8Config.authentication.ca_file }}

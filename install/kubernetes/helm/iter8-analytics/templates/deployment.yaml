@@ -26,12 +26,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: ITER8_ANALYTICS_SERVER_PORT
-              value: "{{ .Values.iter8Config.iter8Port }}"
+              value: "{{ .Values.service.port }}"
             - name: ITER8_ANALYTICS_METRICS_BACKEND_URL
               value: "{{ .Values.iter8Config.metricsBackendURL }}"
           ports:
             - name: http
-              containerPort: {{ .Values.iter8Config.iter8Port }}
+              containerPort: {{ .Values.service.port }}
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

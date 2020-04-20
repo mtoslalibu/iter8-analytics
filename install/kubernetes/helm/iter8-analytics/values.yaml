@@ -16,16 +16,13 @@ iter8Config:
   # Prometheus URL that iter8-analytics will use for querying it
   metricsBackendURL: "http://prometheus.istio-system:9090"
 
-  # Port used by the iter8-analytics API server
-  iter8Port: 8080
-
   authentication:
     ca_file: ""
     insecure_skip_verify: false
     password: "passw0rd"
     token: ""
     type: "none"
-    username: "kalantar"
+    username: "user"
 
 nameOverride: "iter8-analytics"
 fullnameOverride: "iter8-analytics"

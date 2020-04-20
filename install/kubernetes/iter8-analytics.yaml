@@ -27,7 +27,7 @@ data:
         password: passw0rd
         token: 
         type: none
-        username: kalantar
+        username: user
       url: http://prometheus.istio-system:9090
 ---
 # Source: iter8-analytics/templates/service.yaml
