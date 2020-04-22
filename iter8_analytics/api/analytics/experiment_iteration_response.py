@@ -15,9 +15,8 @@ class Interval(BaseModel):
     upper: float = Field(..., description="Upper endpoint of the interval")
 
 class RatioStatistics(BaseModel):
-    sample_size: int = Field(..., description="Number of data points over which the value of metric has been measured")
-    improvement_over_baseline: Interval = Field(..., description = "Credible interval for percentage improvement over baseline. Defined only non-baseline versions. This is currently computed based on Bayesian estimation")
-    probability_of_beating_baseline: float = Field(..., le = 1.0, ge = 0.0, description = "Probability of beating baseline with respect to this metric. Defined only for non-baseline versions. This is currently computed based on Bayesian estimation")
+    improvement_over_baseline: Interval = Field(None, description = "Credible interval for percentage improvement over baseline. Defined only for non-baseline versions. This is currently computed based on Bayesian estimation")
+    probability_of_beating_baseline: float = Field(None, le = 1.0, ge = 0.0, description = "Probability of beating baseline with respect to this metric. Defined only for non-baseline versions. This is currently computed based on Bayesian estimation")
     probability_of_being_best_version: float = Field(..., le = 1.0, ge = 0.0, description = "Probability of being the best version with respect to this metric. This is currently computed based on Bayesian estimation")
     credible_interval: Interval = Field(..., description = "Credible interval for the value of this metric. This is currently computed based on Bayesian estimation")
 
@@ -46,21 +45,23 @@ class VersionAssessment(BaseModel): # assessment per version
     request_count: int = Field(..., ge = 0, description = "Number of requests sent to this version until now")
     criterion_assessments: List[CriterionAssessment] = Field(..., description="Metric assessments for this version")
     win_probability: float = Field(..., description = "Probability that this version is the winner. This is currently computed based on Bayesian estimation")
-    rollback: bool = Field(False, description = "Rollback this version. Currently candidates can be rolled back if they violate criteria for which rollback_on_violation is True")
 
 class CandidateVersionAssessment(VersionAssessment): # assessment per candidate
     rollback: bool = Field(False, description = "Rollback this version. Currently candidates can be rolled back if they violate criteria for which rollback_on_violation is True")
-
+ 
 class WinnerAssessment(BaseModel):
     winning_version_found: bool = Field(False, description = "Indicates whether or not a clear winner has emerged. This is currently computed based on Bayesian estimation and uses posterior_probability_for_winner from the iteration parameters")
     current_winner: str = Field(None, description = "ID of the current winner with the maximum probability of winning. This is currently computed based on Bayesian estimation")
     winning_probability: float = Field(None, description = "Posterior probability of the version declared as the current winner. This is None if winner is None. This is currently computed based on Bayesian estimation")
-    version_to_rollforward: str = Field(None, description = "ID of the version to rollforward to. This is None unless this is the final iteration of the experiment")
+   ## coming soon
+    # safe_to_rollforward: bool = Field(False, description = "True if it is now safe to terminate the experiment early and rollforward to the winner")
 
 class StatusEnum(str, Enum):
-    no_prom_data = "no_prom_data"
     all_ok = "all_ok"
     no_last_state = "no_last_state"
+    no_prom_server = "no_prom_server"
+    no_prom_data = "no_prom_data"
+    insufficient_data_for_assessment = "insufficient_data_for_assessment" # needs to be refined
     invalid_experiment_spec = "invalid_experiment_spec" # needs to be refined
 
 class Iter8AssessmentAndRecommendation(BaseModel):
@@ -73,9 +74,11 @@ class Iter8AssessmentAndRecommendation(BaseModel):
     winner_assessment: WinnerAssessment = Field(..., description="Assessment summary for winning candidate. This is currently computed based on Bayesian estimation")
     status: List[StatusEnum] = Field([StatusEnum.all_ok], description="List of status codes for this iteration -- did this iteration run without exceptions and if not, what went wrong?")
     status_interpretations: Dict[str, str] = Field({
-        StatusEnum.no_prom_data: "Incomplete Prometheus data during this iteration", 
         StatusEnum.all_ok: "Data from Prometheus available and was utilized without a glitch during this iteration", 
         StatusEnum.no_last_state: "No last state available during this iteration", 
+        StatusEnum.no_prom_server: "Prometheus server unavailable", 
+        StatusEnum.no_prom_data: "Incomplete Prometheus data during this iteration", 
+        StatusEnum.insufficient_data_for_assessment: "Insufficient data available to create an assessment",
         StatusEnum.invalid_experiment_spec: "Invalid experiment specification"
         }, 
         description="Human-friendly interpretations of the status codes returned by the analytics service") # the index of an interpretation corresponds to the corresponding status enum
