@@ -101,5 +101,5 @@ class ExperimentIterationParameters(BaseModel):
     advanced_parameters: AdvancedParameters = Field(
         None, description = "Advanced parameters")
     current_traffic_split: Dict[Union[int, str, UUID], float] = Field(None, description="Current traffic split across versions")
-    last_state: Any = Field(
+    last_state: Dict[str, Any] = Field(
         None, description="Last recorded state from analytics service")

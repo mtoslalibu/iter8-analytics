@@ -29,7 +29,10 @@ class Experiment():
 
     def update_metrics(self):
         """Query prometheus to update sufficient stats and metrics. Prometheus instance creation, and all prometheus related errors are detected and the relevant status codes are populated here..."""
-        old_sufficient_stats = self.eip.last_state.sufficient_stats if self.eip.last_state else None
+        old_sufficient_stats = None
+        if self.eip.last_state:
+            if "sufficient_stats" in self.eip.last_state:
+                old_sufficient_stats = self.eip.last_state["sufficient_stats"]
         new_sufficient_stats = get_sufficient_stats(self.eip)
         self.sufficient_stats = aggregate_sufficient_stats(old_sufficient_stats, new_sufficient_stats)
         self.metrics = get_metrics_from_stats(self.sufficient_stats)

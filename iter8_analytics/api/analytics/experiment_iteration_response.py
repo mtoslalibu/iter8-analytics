@@ -82,5 +82,5 @@ class Iter8AssessmentAndRecommendation(BaseModel):
         StatusEnum.invalid_experiment_spec: "Invalid experiment specification"
         }, 
         description="Human-friendly interpretations of the status codes returned by the analytics service") # the index of an interpretation corresponds to the corresponding status enum
-    last_state: Any = Field(
+    last_state: Dict[str, Any] = Field(
         None, description="Last recorded state from analytics service")
