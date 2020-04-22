@@ -1,6 +1,7 @@
 """
 Class and methods to run an iteration of an iter8 eperiment, and return assessment and recommendations
 """
+import logging
 
 from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters, RatioMetricSpec
 
@@ -10,11 +11,15 @@ from iter8_analytics.api.analytics.endpoints.examples import ar_example
 
 from iter8_analytics.api.analytics.metrics import *
 
+logger = logging.getLogger(__name__)
+
 class Experiment():
     """The main experiment class"""
 
     def __init__(self, eip: ExperimentIterationParameters):  
         self.eip = eip
+        self.versions = [self.eip.baseline] + self.eip.candidates
+        self.traffic_split = {}
 
     def run(self) -> Iter8AssessmentAndRecommendation:
         """Perform a single iteration of the experiment and output assessment and recommendation"""  
@@ -76,6 +81,7 @@ class Experiment():
         self.create_epsilon_greedy_recommendation()
         self.create_pbr_recommendation() # PBR  = posterior Bayesian sampling
         self.create_top_2_pbr_recommendation()
+        self.create_uniform_recommendation()
         self.mix_recommendations() # after taking into account step size and current split
 
     def create_epsilon_greedy_recommendation(self):
@@ -87,11 +93,20 @@ class Experiment():
     def create_top_2_pbr_recommendation(self):
         pass
 
+    def create_uniform_recommendation(self):
+        """Split the traffic uniformly across versions"""
+        self.traffic_split["unif"] = {}
+        for version in self.versions:
+            logger.debug(version)
+            self.traffic_split["unif"][str(version.id)] = 100.0 / len(self.versions)
+
     def mix_recommendations(self):
         """Create the final traffic recommendation"""
         pass
 
     def assemble_assessment_and_recommendations(self):
         """Create and return the final assessment and recommendation"""
-        return Iter8AssessmentAndRecommendation(** ar_example)
+        it8ar = Iter8AssessmentAndRecommendation(** ar_example)
+        it8ar.traffic_split_recommendation = self.traffic_split
+        return it8ar
 

@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
 
 class Version(BaseModel):
-    _id: Union[int, str, UUID] = Field(..., alias = "id", description="ID of the version")
+    id: Union[int, str, UUID] = Field(..., description="ID of the version")
     version_labels: dict = Field(..., description="Key-value pairs used in prometheus queries to achieve version level grouping")
 
 class DirectionEnum(str, Enum): # directions for metric values
@@ -22,7 +22,7 @@ class DirectionEnum(str, Enum): # directions for metric values
     higher = "higher"
 
 class MetricSpec(BaseModel):
-    _id: Union[int, str, UUID] = Field(..., alias = "id", description="ID of the metric")
+    id: Union[int, str, UUID] = Field(..., description="ID of the metric")
     preferred_direction: DirectionEnum = Field(None, description="Indicates preference for metric values -- lower, higher, or None (default)")
 
 # counter metric defined in iter8 configmaps
@@ -51,7 +51,7 @@ class Threshold(BaseModel):
     value: float = Field(..., description="Value of threshold")
 
 class Criterion(BaseModel):
-    _id: Union[int, str, UUID] = Field(..., alias = "id", description = "ID of the criterion")
+    id: Union[int, str, UUID] = Field(..., description = "ID of the criterion")
     metric_id: Union[int, str, UUID] = Field(
         ..., description="ID of the metric. This matches the unique ID of the metric in the metric spec")
     reward: bool = Field(
