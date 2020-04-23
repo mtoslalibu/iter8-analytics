@@ -2,11 +2,11 @@
 Data structures and functions for manipulating metrics
 """
 
-def get_sufficient_stats(epi):
+def get_counter_metrics(epi):
     return None
 
-def aggregate_sufficient_stats(old_sufficient_stats, new_sufficient_stats):
+def aggregate_counter_metrics(old_counter_metrics, new_counter_metrics):
     return None
 
-def get_metrics_from_stats(sufficient_stats):
+def get_metrics(counter_metrics):
     return None

@@ -33,14 +33,14 @@ class Experiment():
         return self.assemble_assessment_and_recommendations()
 
     def update_metrics(self):
-        """Query prometheus to update sufficient stats and metrics. Prometheus instance creation, and all prometheus related errors are detected and the relevant status codes are populated here..."""
-        old_sufficient_stats = None
+        """Query prometheus to update metrics. Prometheus instance creation, and all prometheus related errors are detected and the relevant status codes are populated here..."""
+        old_counter_metrics = None
         if self.eip.last_state:
-            if "sufficient_stats" in self.eip.last_state:
-                old_sufficient_stats = self.eip.last_state["sufficient_stats"]
-        new_sufficient_stats = get_sufficient_stats(self.eip)
-        self.sufficient_stats = aggregate_sufficient_stats(old_sufficient_stats, new_sufficient_stats)
-        self.metrics = get_metrics_from_stats(self.sufficient_stats)
+            if "counter_metrics" in self.eip.last_state:
+                old_counter_metrics = self.eip.last_state["counter_metrics"]
+        new_counter_metrics = get_counter_metrics(self.eip)
+        self.counter_metrics = aggregate_counter_metrics(old_counter_metrics, new_counter_metrics)
+        self.metrics = get_metrics(self.counter_metrics)
 
     def update_beliefs(self):
         """Update beliefs for ratio metrics. This will internally use sufficient stats. If belief update is not possible due to insufficient data, then the relevant status codes are populated here"""
