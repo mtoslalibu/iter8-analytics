@@ -20,7 +20,6 @@ def provide_assessment_for_this_experiment_iteration(eip: ExperimentIterationPar
     """
       POST iter8 experiment iteration data and obtain assessment of how the versions are performing and recommendations on how to split traffic based on multiple strategies.
       """
-    logging.getLogger(__name__).debug(eip)
     return Experiment(eip).run()
 
 

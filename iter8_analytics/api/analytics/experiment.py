@@ -97,7 +97,6 @@ class Experiment():
         """Split the traffic uniformly across versions"""
         self.traffic_split["unif"] = {}
         for version in self.versions:
-            logger.debug(version)
             self.traffic_split["unif"][str(version.id)] = 100.0 / len(self.versions)
 
     def mix_recommendations(self):
