@@ -2,7 +2,6 @@
 Class and methods to run an iteration of an iter8 eperiment, and return assessment and recommendations
 """
 import logging
-import numpy as np
 
 from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters, RatioMetricSpec
 
@@ -150,7 +149,7 @@ class Experiment():
         self.traffic_split["unif"] = {}
         integral_split_gen = gen_round([100/len(self.detailed_versions)]*len(self.detailed_versions), 100) # round the uniform split so that it sums up to 100
         # assign one of the rounded splits to a detailed_version
-        for i, key in enumerate(self.detailed_versions):
+        for key in self.detailed_versions:
             self.traffic_split["unif"][key] = next(integral_split_gen)
 
     def mix_recommendations(self):
