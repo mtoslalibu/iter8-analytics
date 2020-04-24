@@ -55,16 +55,48 @@ class Experiment():
 
     def __init__(self, eip: ExperimentIterationParameters):  
         self.eip = eip
-            # if counter metric...
-            # else if ratio metric...
-              # find numerator counter metric ... else raise exception
-              # find denominator counter metric... else raise exception
-            # else raise exception
+
+        # Initialize detailed versions
         self.detailed_versions = {}
         self.detailed_versions[self.eip.baseline.id] = DetailedVersion(self.eip.baseline, True)
         for vspec in self.eip.candidates:
             self.detailed_versions[vspec.id] = DetailedVersion(vspec, False)
+
+        # Declare traffic split dictionary
         self.traffic_split = {}
+
+        # Get all counter and ratio metric specs into dictionaries
+        self.all_counter_metric_specs = {}
+        for cms in self.eip.metric_specs.counter_metrics:
+            self.all_counter_metric_specs[cms.id] = cms
+        self.all_ratio_metric_specs = {}
+        for rms in self.eip.metric_specs.ratio_metrics:
+            self.all_ratio_metric_specs[rms.id] = rms
+
+        # Initialize relevant counter and ratio metric ids
+        self.relevant_counter_metric_ids = set()
+        self.relevant_ratio_metric_ids = set()
+        for cri in self.eip.criteria:
+            if cri.metric_id in self.all_counter_metric_specs:
+                self.relevant_counter_metric_ids.add(cri.metric_id)
+            elif cri.metric_id in self.all_ratio_metric_specs:
+                self.relevant_ratio_metric_ids.add(cri.metric_id)
+                rms = self.all_ratio_metric_specs[cri.metric_id]
+                num = rms.numerator
+                den = rms.denominator
+                if num in self.all_counter_metric_specs:
+                    self.relevant_counter_metric_ids.add(num)
+                else:
+                    logger.error(f"Unknown numerator `{num}` found in ratio metric `{cri.metric_id}`")
+                    raise Exception(f"Unknown numerator `{num}` found in ratio metric `{cri.metric_id}`")
+                if den in self.all_counter_metric_specs:
+                    self.relevant_counter_metric_ids.add(den)
+                else:
+                    logger.error(f"Unknown denominator `{den}` found in ratio metric `{cri.metric_id}`")
+                    raise Exception(f"Unknown denominator `{den}` found in ratio metric `{cri.metric_id}`")
+            else: # unknown metric id
+                logger.error(f"Unknown metric id found in criteria: {cri.metric_id}")
+                raise Exception(f"Unknown metric id found in criteria: {cri.metric_id}")
 
     def run(self) -> Iter8AssessmentAndRecommendation:
         """Perform a single iteration of the experiment and output assessment and recommendation"""  
