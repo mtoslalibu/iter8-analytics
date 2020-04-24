@@ -12,9 +12,9 @@ from iter8_analytics.api.analytics.endpoints.examples import ar_example
 
 from iter8_analytics.api.analytics.metrics import *
 
+from iter8_analytics.api.analytics.utils import *
+
 logger = logging.getLogger(__name__)
-
-
 
 class DetailedVersion():
     """A version class which yields version assessments"""
@@ -148,37 +148,10 @@ class Experiment():
     def create_uniform_recommendation(self):
         """Split the traffic uniformly across versions"""
         self.traffic_split["unif"] = {}
-        fractional_split = [(version_id, 100 / len(self.detailed_versions)) for version_id in self.detailed_versions.keys()]
-        # # dependent randomized rounding to produce integers
-        # integral_split = Experiment.dependent_round(fractional_split, 100) 
-        # each pair is a (version, split) combination. Each split is integral. Splits add up to 100. These properties are guaranteed by depenendent randomized rounding method
-        for pair in fractional_split:
-            self.traffic_split["unif"][pair[0]] = pair[1]
-
-    # @classmethod
-    # def dependent_round(cls, pairs, total):
-    #     """
-    #         pairs: (version, weight) pairs
-    #         total: how much (non-negative integer) total needs to be split
-    #         """
-    #     assert(isinstance(total, int))
-    #     assert(total >= 0) # total is a non-negative integer
-    #     all(pair[1] >= 0 for pair in pairs) # all weights are non-negative
-    #     if len(pairs) == 0: # no pairs
-    #         return [] 
-    #     if len(pairs) == 1: # single pair; this version gets all the total
-    #         return [(pairs[0][0], total)]
-    #     else: # there is more than one version
-    #         # If sum of weights = 0, then total = 0. There is nothing to split.
-    #         if (sum((pair[1] for pair in pairs))) == 0:
-    #             assert(total == 0)
-    #             return [(pair[0], 0) for pair in pairs] # nothing left to split
-    #         else: # at least two pairs with something left to split
-    #             pair_a = pairs[0]
-    #             pair_b = pairs[1]
-
-
-        
+        integral_split_gen = gen_round([100/len(self.detailed_versions)]*len(self.detailed_versions), 100) # round the uniform split so that it sums up to 100
+        # assign one of the rounded splits to a detailed_version
+        for i, key in enumerate(self.detailed_versions):
+            self.traffic_split["unif"][key] = next(integral_split_gen)
 
     def mix_recommendations(self):
         """Create the final traffic recommendation"""
