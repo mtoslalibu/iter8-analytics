@@ -22,8 +22,11 @@ class DirectionEnum(str, Enum): # directions for metric values
     higher = "higher"
 
 class MetricSpec(BaseModel):
-    id: Union[int, str, UUID] = Field(..., description="ID of the metric")
+    id: Union[int, str, UUID] = Field(..., alias = "name", description="ID of the metric")
     preferred_direction: DirectionEnum = Field(None, description="Indicates preference for metric values -- lower, higher, or None (default)")
+
+    class Config:
+        allow_population_by_field_name = True
 
 # counter metric defined in iter8 configmaps
 class CounterMetricSpec(MetricSpec):
@@ -49,6 +52,9 @@ class ThresholdEnum(str, Enum):
 class Threshold(BaseModel):
     threshold_type: ThresholdEnum = Field(..., alias = "type", description="Type of threshold")
     value: float = Field(..., description="Value of threshold")
+
+    class Config:
+        allow_population_by_field_name = True
 
 class Criterion(BaseModel):
     id: Union[int, str, UUID] = Field(..., description = "ID of the criterion")

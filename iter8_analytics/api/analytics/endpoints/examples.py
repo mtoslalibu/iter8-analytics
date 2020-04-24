@@ -49,7 +49,7 @@ eip_example = {
         {
             "id": "0",
             "metric_id": "iter8_mean_latency",
-            "reward": False,
+            "is_reward": False,
             "threshold": {
                 "type": "absolute",
                 "value": 25
