@@ -5,7 +5,7 @@ import logging
 
 from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters, RatioMetricSpec
 
-from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
+from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation, VersionAssessment, CandidateVersionAssessment, WinnerAssessment
 
 from iter8_analytics.api.analytics.endpoints.examples import ar_example
 
@@ -20,8 +20,9 @@ class DetailedVersion():
     def __init__(self, spec, is_baseline):
         self.spec = spec
         self.is_baseline = is_baseline
+        # self.aggregated_counter_metric_data = {}
 
-    def set_aggregated_counter_metric_data(self, acmdpv):
+    def set_aggregated_counter_metric_data(self, metric_id, data):
         """acmdpv: aggregated counter metric data per version"""
         pass
 
@@ -73,27 +74,22 @@ class Experiment():
         for rms in self.eip.metric_specs.ratio_metrics:
             self.all_ratio_metric_specs[rms.id] = rms
 
-        # Initialize relevant counter and ratio metric ids
-        self.relevant_counter_metric_ids = set()
-        self.relevant_ratio_metric_ids = set()
+        # Initialize counter and ratio metric specs relevant to this experiment
+        self.experiment_counter_metric_specs = {}
+        self.experiment_ratio_metric_specs = {}
         for cri in self.eip.criteria:
             if cri.metric_id in self.all_counter_metric_specs:
-                self.relevant_counter_metric_ids.add(cri.metric_id)
+                self.experiment_counter_metric_specs[cri.metric_id] = self.all_counter_metric_specs[cri.metric_id]
             elif cri.metric_id in self.all_ratio_metric_specs:
-                self.relevant_ratio_metric_ids.add(cri.metric_id)
-                rms = self.all_ratio_metric_specs[cri.metric_id]
-                num = rms.numerator
-                den = rms.denominator
-                if num in self.all_counter_metric_specs:
-                    self.relevant_counter_metric_ids.add(num)
-                else:
-                    logger.error(f"Unknown numerator `{num}` found in ratio metric `{cri.metric_id}`")
-                    raise Exception(f"Unknown numerator `{num}` found in ratio metric `{cri.metric_id}`")
-                if den in self.all_counter_metric_specs:
-                    self.relevant_counter_metric_ids.add(den)
-                else:
-                    logger.error(f"Unknown denominator `{den}` found in ratio metric `{cri.metric_id}`")
-                    raise Exception(f"Unknown denominator `{den}` found in ratio metric `{cri.metric_id}`")
+                self.experiment_ratio_metric_specs[cri.metric_id] = self.all_ratio_metric_specs[cri.metric_id]
+                num = self.experiment_ratio_metric_specs[cri.metric_id].numerator
+                den = self.experiment_ratio_metric_specs[cri.metric_id].denominator
+                try:
+                    self.experiment_counter_metric_specs[num] = self.all_counter_metric_specs[num]
+                    self.experiment_counter_metric_specs[den] = self.all_counter_metric_specs[den]
+                except KeyError as ke: # unknown numerator or denominator
+                    logger.error(ke)
+                    raise(ke)
             else: # unknown metric id
                 logger.error(f"Unknown metric id found in criteria: {cri.metric_id}")
                 raise Exception(f"Unknown metric id found in criteria: {cri.metric_id}")
@@ -113,47 +109,22 @@ class Experiment():
     def update_counter_metric_data(self):
         """Query prometheus to update counter metric data. Prometheus instance creation, and all prometheus related errors are detected and the relevant status codes are populated here..."""
         # Fix old counter metrics
-        ocmd = None # old counter metric data
+        self.old_counter_metric_data = None
         if self.eip.last_state:
             if "counter_metric_data" in self.eip.last_state:
-                ocmd = self.eip.last_state["counter_metric_data"]
-
-        # Lineup inputs needed to query relevant counter metrics
-        #   Convert all counter and ratio metrics into dictionaries... 
-        cspec_dict = {}
-        for cs in self.eip.metric_specs.counter_metrics:
-            cspec_dict[cs.id] = cs
-        rspec_dict = {}
-        for rs in self.eip.metric_specs.ratio_metrics:
-            rspec_dict[rs.id] = rs
-        
-        #   Go through all criteria and pick up relevant counter metric specs
-        rcms = {} # relevant counter metric specs
-        for criterion in self.eip.criteria:
-            if criterion.metric_id in cspec_dict:
-                rcms[criterion.metric_id] = cspec_dict[criterion.metric_id]
-            else:
-                try:
-                    # get the relevant ratio metric spec
-                    rms = rspec_dict[criterion.metric_id]
-                    rcms[rms.numerator] = cspec_dict[rms.numerator]
-                    rcms[rms.denominator] = cspec_dict[rms.denominator]
-                except KeyError as ke:
-                    logger.error(ke)
-                    logger.error("RSpec dict")
-                    logger.error(rspec_dict)
-                    logger.error("CSpec dict")
-                    logger.error(cspec_dict)
-                    raise(ke)
+                self.old_counter_metric_data = self.eip.last_state["counter_metric_data"]
 
         # Pick up version ids
         version_ids = self.detailed_versions.keys()
 
-        ncmd = get_counter_metric_data(rcms, version_ids)
-        acmd = aggregate_counter_metric_data(ocmd, ncmd) # aggregated data
-        for cm in acmd: # for each counter metric in acmd
-            for ver in acmd[cm]: # for each version for with aggregated counter metric data
-                self.detailed_versions[ver].set_aggregated_counter_metric_data(acmd[cm][ver])
+        self.new_counter_metric_data = get_counter_metric_data(self.experiment_counter_metric_specs, version_ids)
+
+        aggregated_counter_metric_data = aggregate_counter_metric_data(self.old_counter_metric_data, self.new_counter_metric_data) # aggregated data
+        for acm in aggregated_counter_metric_data: # for each aggregated counter metric data point
+            for ver in aggregated_counter_metric_data[acm]: # for each version with aggregated counter metric data
+                self.detailed_versions[ver].set_aggregated_counter_metric_data(acm, aggregated_counter_metric_data[acm][ver])
+        logger.debug("Aggregated counter metric data")
+        logger.debug(aggregated_counter_metric_data)
 
     def create_winner_assessments(self):
         """Create winner assessment. If winner cannot be created due to insufficient data, then the relevant status codes are populated"""
@@ -190,7 +161,33 @@ class Experiment():
 
     def assemble_assessment_and_recommendations(self):
         """Create and return the final assessment and recommendation"""
-        it8ar = Iter8AssessmentAndRecommendation(** ar_example)
-        it8ar.traffic_split_recommendation = self.traffic_split
+        
+        baseline_assessment = None
+        candidate_assessments = []
+        for version in self.detailed_versions.values():
+            if version.is_baseline:
+                baseline_assessment = VersionAssessment(
+                    id = version.spec.id,
+                    request_count = 0,
+                    criterion_assessments = [],
+                    win_probability = 1/len(self.detailed_versions)
+                )
+            else:
+                candidate_assessments.append(CandidateVersionAssessment(
+                    id = version.spec.id,
+                    request_count = 0,
+                    criterion_assessments = [],
+                    win_probability = 1/len(self.detailed_versions)
+                ))
+        it8ar = Iter8AssessmentAndRecommendation(** {
+            "timestamp": datetime.now(),
+            "baseline_assessment": baseline_assessment,
+            "candidate_assessments": candidate_assessments,
+            "traffic_split_recommendation": self.traffic_split,
+            "winner_assessment": WinnerAssessment(
+                winning_version_found = False
+            ),
+            "status": []
+        })
         return it8ar
 

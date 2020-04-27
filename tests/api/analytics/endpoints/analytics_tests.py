@@ -26,11 +26,15 @@ import logging
 import os
 import requests_mock
 import requests
-log = logging.getLogger(__name__)
 
 import re
 
 from urllib.parse import urlencode
+
+
+env_config = fastapi_app.get_env_config()
+fastapi_app.config_logger(env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
+log = logging.getLogger(__name__)
 
 class TestAnalyticsNamespaceAPI(unittest.TestCase):
     @classmethod
