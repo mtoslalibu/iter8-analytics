@@ -4,11 +4,20 @@ Data structures and functions for manipulating metrics
 from datetime import datetime, timedelta
 from typing import Dict, Sequence, Union
 from uuid import UUID
+import os
+import logging
+import requests
+from string import Template
+import math
 
 from iter8_analytics.api.analytics.experiment_iteration_request import CounterMetricSpec
 
+import iter8_analytics.constants as constants
+
 # Module dependencies
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 class CounterDataPoint(BaseModel):
     value: float = Field(None, description = "Value of the counter metric")
@@ -27,74 +36,78 @@ class AggregatedRatioDataPoint(BaseModel):
     maximum: float = Field(None, description = "Known maximum value of the ratio metric")
 
 # valid for live experiments...  notice absence of end_time
-def get_counter_metric_data(counter_metric_specs: Dict[Union[int, str, UUID], CounterMetricSpec], version_ids: Sequence[Union[int, str, UUID]], start_time):
+def get_counter_metric_data(counter_metric_specs: Dict[Union[int, str, UUID], CounterMetricSpec], version_ids: Sequence[Union[int, str, UUID]], start_time, version_labels):
     cmd = {} #  initialize cmd
     for version_id in version_ids:
         cmd[version_id] = {}
     # populate cmd
-    for metric_id in counter_metric_specs:
-        # populate the cmd_from_prom through prometheus queries
+    for counter_metric_spec in counter_metric_specs.values():
+        query_spec = {
+            "version_labels": version_labels, 
+            "query_template": counter_metric_spec.query_template
+        }
+        pcmq = PrometheusCounterMetricQuery(query_spec)
         cmd_from_prom = {}
         for version_id in version_ids:
             if version_id in cmd_from_prom:
-                cmd[version_id][metric_id] = cmd_from_prom[version_id]
+                cmd[version_id][counter_metric_spec.id] = cmd_from_prom[version_id]
             else:
-                cmd[version_id][metric_id] = CounterDataPoint()
+                cmd[version_id][counter_metric_spec.id] = CounterDataPoint()
     return cmd
 
-# class Iter8MetricFactory:
-#     def __init__(self, metrics_backend_url):
-#         self.metrics_backend_url = metrics_backend_url
+class PrometheusCounterMetricQuery():
+    def __init__(self, query_spec):
+        prometheus_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
+        self.prometheus_url = prometheus_url + "/api/v1/query"
+        self.query_spec = query_spec
 
-#     def get_iter8_counter_metric(self, counter_metric_spec):
-#         return Iter8CounterMetric(counter_metric_spec, self.metrics_backend_url)
+    def query_from_spec(self):
+        kwargs = {
+            "interval": "5m", # hard coded for now...
+            "version_labels": ",".join(self.query_spec["version_labels"]) # also hard coded
+        }
+        query_template = Template(self.query_spec["query_template"])
+        query = query_template.substitute(**kwargs)
+        return self.query(query)
 
-#     @staticmethod
-#     def create_metric_spec(criterion, entity_tag):
-#         metric_spec = {}
-#         metric_spec["name"] = criterion.metric_name
-#         metric_spec[request_parameters.IS_COUNTER_STR] = criterion.is_counter
-#         metric_spec[request_parameters.ABSENT_VALUE_STR] = criterion.absent_value
-#         metric_spec["query_specs"] = [{"query_name": "value", "query_template": criterion.metric_query_template, request_parameters.IS_COUNTER_STR: criterion.is_counter, request_parameters.ABSENT_VALUE_STR: criterion.absent_value, "entity_tags": entity_tag},
-#         {"query_name": "sample_size", "query_template": criterion.metric_sample_size_query_template, request_parameters.IS_COUNTER_STR: True, request_parameters.ABSENT_VALUE_STR: "0", "entity_tags": entity_tag}]
-#         return metric_spec
+    def query(self, query):
+        params = {'query': query}
+        logger.debug("Query params")
+        logger.debug(params)
+        try:
+            query_result = requests.get(self.prometheus_url, params=params).json()
+            logger.debug("Query results")
+            logger.debug(query_result)
+        except Exception as e:
+            logger.error("Error while attempting to connect to prometheus")
+            raise(e)
+        return self.post_process(query_result)
 
-#     @staticmethod
-#     def get_interval(start_time, end_time):
-#         start = parser.parse(start_time)
-#         end = parser.parse(end_time)
-#         now = datetime.now(timezone.utc)
-#         offset_str = ""
-#         if start <= end:
-#             interval = max(end - start, timedelta(seconds = 1))
-#             interval_str = str(int(interval.total_seconds())) + "s"
-#             if end < now:
-#                 offset = now-end
-#                 if offset.total_seconds() >= 1.0:
-#                     offset_str = str(int(offset.total_seconds())) + "s"
-#         else:
-#             raise ValueError("Start time cannot exceed end time")
-#         return interval_str,offset_str
+    @classmethod
+    def get_version_id(cls, version_dict):
+        return version_dict['destination_workload'] # hardcoded for now
 
-# class Iter8Metric:
-#     def __init__(self, metric_spec, metrics_backend_url):
-#         self.name = metric_spec["name"]
-#         self.is_counter = metric_spec[request_parameters.IS_COUNTER_STR]
-#         self.absent_value = metric_spec[request_parameters.ABSENT_VALUE_STR]
-#         self.query_specs = metric_spec["query_specs"]
-#         self.metrics_backend_url = metrics_backend_url
-#         self.prom_queries = [PrometheusQuery(self.metrics_backend_url, query_spec) for query_spec in self.query_specs]
+    def post_process(self, query_result):
+        ts = datetime.now()
+        prom_result = {}
+        if query_result["status"] != "success":
+            prom_result["message"] = "Query did not succeed. Check your query template."
+            raise ValueError("Query did not succeed. Check your query template.")
+        elif "data" not in query_result:
+            return prom_result
+        else:
+            results = query_result["data"]["result"]
+            if results == []:
+                return prom_result
+            else:
+                logger.debug("detailed prom results")
+                logger.debug(results)
 
-#     def get_stats(self, interval_str, offset_str):
-#         results = {responses.STATISTICS_STR: {}, "messages": []}
-#         for query in self.prom_queries:
-#             prom_result = query.query_from_template(interval_str, offset_str)
-#             results[responses.STATISTICS_STR][query.query_spec["query_name"]] = prom_result["value"]
-#             results["messages"].append(str(query.query_spec["query_name"]+": "+ prom_result["message"]))
-
-#         log.debug(results)
-#         """
-#         Format of results:
-#         results = {'statistics': {'sample_size': '12', 'value': 13}, 'messages': ["sample_size: Query success, result found", "value: Query success, result found"]}
-#         """
-#         return results
+                for result in results:
+                    result_float = float(result["value"][1])
+                    assert(not math.isnan(result_float))
+                    prom_result[self.get_version_id(result['metric'])] = CounterDataPoint(
+                        value = result_float,
+                        timestamp = ts
+                    )
+        return prom_result

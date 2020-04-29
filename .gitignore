@@ -115,3 +115,6 @@ tests/.DS_Store
 
 # Virtual environment
 .venv
+
+# local dev
+.local

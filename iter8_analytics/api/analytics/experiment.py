@@ -194,7 +194,7 @@ class Experiment():
         version_ids = self.detailed_versions.keys()
 
         # version id -> dictionary(metric id -> counter data point)
-        self.new_counter_metric_data: Dict[Union[str, int, UUID],  Dict[Union[str, int, UUID], CounterDataPoint]] = get_counter_metric_data(self.experiment_counter_metric_specs, version_ids, self.eip.start_time)
+        self.new_counter_metric_data: Dict[Union[str, int, UUID],  Dict[Union[str, int, UUID], CounterDataPoint]] = get_counter_metric_data(self.experiment_counter_metric_specs, version_ids, self.eip.start_time, self.eip.baseline.version_labels.keys())
 
     def create_winner_assessments(self):
         """Create winner assessment. If winner cannot be created due to insufficient data, then the relevant status codes are populated"""
