@@ -70,7 +70,7 @@ class Iter8AssessmentAndRecommendation(BaseModel):
                                  description="Timestamp at which the current assessment and recommendation is created")
     baseline_assessment: VersionAssessment = Field(..., description = "Baseline's assessment")
     candidate_assessments: List[CandidateVersionAssessment] = Field(..., min_items = 1, description="Assessment  of candidate versions")
-    traffic_split_recommendation: Dict[str, Dict[Union[int, str, UUID], float]] = Field(..., description = "Traffic split recommendation on a per algorithm basis. Each recommendation contains the percentage of traffic on a per-version basis")
+    traffic_split_recommendation: Dict[str, Dict[Union[int, str, UUID], int]] = Field(..., description = "Traffic split recommendation on a per algorithm basis. Each recommendation contains the percentage of traffic on a per-version basis")
     # this is a dictionary which maps version ids to percentage of traffic allocated to them. The percentages need to add up to 100
     winner_assessment: WinnerAssessment = Field(..., description="Assessment summary for winning candidate. This is currently computed based on Bayesian estimation")
     status: List[StatusEnum] = Field([StatusEnum.all_ok], description="List of status codes for this iteration -- did this iteration run without exceptions and if not, what went wrong?")

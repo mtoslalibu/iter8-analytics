@@ -28,11 +28,18 @@ class AggregatedRatioDataPoint(BaseModel):
 
 # valid for live experiments...  notice absence of end_time
 def get_counter_metric_data(counter_metric_specs: Dict[Union[int, str, UUID], CounterMetricSpec], version_ids: Sequence[Union[int, str, UUID]], start_time):
-    cmd = {}
+    cmd = {} #  initialize cmd
     for version_id in version_ids:
         cmd[version_id] = {}
-        for metric_id in counter_metric_specs:
-            cmd[version_id][metric_id] = CounterDataPoint()
+    # populate cmd
+    for metric_id in counter_metric_specs:
+        # populate the cmd_from_prom through prometheus queries
+        cmd_from_prom = {}
+        for version_id in version_ids:
+            if version_id in cmd_from_prom:
+                cmd[version_id][metric_id] = cmd_from_prom[version_id]
+            else:
+                cmd[version_id][metric_id] = CounterDataPoint()
     return cmd
 
 # class Iter8MetricFactory:
