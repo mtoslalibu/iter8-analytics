@@ -22,7 +22,7 @@ class RatioStatistics(BaseModel):
     credible_interval: Interval = Field(..., description = "Credible interval for the value of this metric. This is currently computed based on Bayesian estimation")
 
 class Statistics(BaseModel):
-    value: float = Field(..., description="Current value of this metric")
+    value: float = Field(None, description="Current value of this metric")
     ratio_statistics: RatioStatistics = Field(None, description="Additional statistics. Defined only for ratio metrics")
 
 class ThresholdAssessment(BaseModel):
