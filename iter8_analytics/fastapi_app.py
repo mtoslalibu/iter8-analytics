@@ -29,7 +29,7 @@ def provide_iter8_analytics_health():
     return {"status": "Ok"}
 
 
-def config_logger(log_level = "info"):
+def config_logger(log_level = "debug"):
     """Configures the global logger"""
     logger = logging.getLogger('')
     handler = logging.StreamHandler()
