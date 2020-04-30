@@ -68,9 +68,11 @@ class DetailedVersion():
             current_ratio = None
             # values are available for numerator and denominator and they were computed in times close to each other
             self.aggregated_ratio_metric_data[ms.id] = self.old_aggregated_ratio_metric_data[ms.id]
-            
+            logger.debug(ms)
             if self.aggregated_counter_metric_data[den].value:
+                logger.debug(f"denominator: {self.aggregated_counter_metric_data[den]}")
                 if self.aggregated_counter_metric_data[num].value is not None: 
+                    logger.debug(f"numerator: {self.aggregated_counter_metric_data[num]}")
                     delta_timestamp = self.aggregated_counter_metric_data[num].timestamp - self.aggregated_counter_metric_data[den].timestamp
                     # num and den timestamps are 100 msec apart
                     if delta_timestamp.total_seconds() < 0.1: 
