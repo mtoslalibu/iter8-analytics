@@ -51,6 +51,7 @@ def get_counter_metric_data(counter_metric_specs: Dict[Union[int, str, UUID], Co
         pcmq = PrometheusCounterMetricQuery(query_spec)
         current_time = datetime.now(timezone.utc)
         cmd_from_prom = pcmq.query_from_spec(current_time)
+        status = StatusEnum.zeroed_counter if cmd_from_prom else StatusEnum.no_versions_in_prom_response
         for version_id in version_ids:
             if version_id in cmd_from_prom:
                 cmd[version_id][counter_metric_spec.id] = cmd_from_prom[version_id]
@@ -58,7 +59,7 @@ def get_counter_metric_data(counter_metric_specs: Dict[Union[int, str, UUID], Co
                 cmd[version_id][counter_metric_spec.id] = CounterDataPoint(
                     value = 0,
                     timestamp = current_time,
-                    status = StatusEnum.zeroed_counter
+                    status = status
                 )
     return cmd
 
@@ -80,8 +81,6 @@ class PrometheusCounterMetricQuery():
 
     def query(self, query, current_time):
         params = {'query': query}
-        logger.debug("Query params")
-        logger.debug(params)
         try:
             query_result = requests.get(self.prometheus_url, params=params).json()
         except Exception as e:
@@ -99,16 +98,10 @@ class PrometheusCounterMetricQuery():
             prom_result["message"] = "Query did not succeed. Check your query template."
             raise ValueError("Query did not succeed. Check your query template.")
         elif "data" not in query_result:
-            logger.debug("No data in query_result")
-            logger.debug(query_result)
             return ValueError("Query did not succeed. Prometheus returned without data.")
         elif query_result["data"]['resultType'] != 'vector':
-            logger.debug("Vector type data expected")
-            logger.debug(query_result)
             return ValueError("Query succeeded but returned a non-vector result")
         else:
-            logger.debug("Data in query_result")
-            logger.debug(query_result)
             results = query_result["data"]["result"]
             if results == []:
                 return prom_result
