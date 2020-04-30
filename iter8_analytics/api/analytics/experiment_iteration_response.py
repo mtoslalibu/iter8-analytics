@@ -64,6 +64,10 @@ class StatusEnum(str, Enum):
     no_prom_data = "no_prom_data"
     insufficient_data_for_assessment = "insufficient_data_for_assessment" # needs to be refined
     invalid_experiment_spec = "invalid_experiment_spec" # needs to be refined
+    invalid_query_template = "invalid prometheus query template"
+    absent_version_in_prom_response = "absent version in prometheus response"
+    no_versions_in_prom_response = "no versions in prometheus response"
+    zeroed_counter = "zeroed counter"
 
 class Iter8AssessmentAndRecommendation(BaseModel):
     timestamp: datetime = Field(...,
@@ -80,7 +84,11 @@ class Iter8AssessmentAndRecommendation(BaseModel):
         StatusEnum.no_prom_server: "Prometheus server unavailable", 
         StatusEnum.no_prom_data: "Incomplete Prometheus data during this iteration", 
         StatusEnum.insufficient_data_for_assessment: "Insufficient data available to create an assessment",
-        StatusEnum.invalid_experiment_spec: "Invalid experiment specification"
+        StatusEnum.invalid_experiment_spec: "Invalid experiment specification",
+        StatusEnum.invalid_query_template: "Invalid query template",
+        StatusEnum.absent_version_in_prom_response: "This version is absent in prom response",
+        StatusEnum.no_versions_in_prom_response: "No versions are present in prom response",
+        StatusEnum.zeroed_counter: "Using the default zero value for counter"
         }, 
         description="Human-friendly interpretations of the status codes returned by the analytics service") # the index of an interpretation corresponds to the corresponding status enum
     last_state: Dict[str, Any] = Field(

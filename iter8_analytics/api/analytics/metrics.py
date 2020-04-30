@@ -11,7 +11,7 @@ from string import Template
 import math
 
 from iter8_analytics.api.analytics.experiment_iteration_request import CounterMetricSpec
-
+from iter8_analytics.api.analytics.experiment_iteration_response import StatusEnum
 import iter8_analytics.constants as constants
 
 # Module dependencies
@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 class CounterDataPoint(BaseModel):
     value: float = Field(None, description = "Value of the counter metric")
     timestamp: datetime = Field(None, description = "Time at which this counter metric was last queries and updated")
+    status: StatusEnum = Field(StatusEnum.all_ok, description = "Status of the prometheus response")
 
 class AggregatedCounterDataPoint(BaseModel):
     value: float = Field(None, description = "Value of the counter metric")
@@ -48,12 +49,17 @@ def get_counter_metric_data(counter_metric_specs: Dict[Union[int, str, UUID], Co
             "start_time": start_time
         }
         pcmq = PrometheusCounterMetricQuery(query_spec)
-        cmd_from_prom = pcmq.query_from_spec()
+        current_time = datetime.now(timezone.utc)
+        cmd_from_prom = pcmq.query_from_spec(current_time)
         for version_id in version_ids:
             if version_id in cmd_from_prom:
                 cmd[version_id][counter_metric_spec.id] = cmd_from_prom[version_id]
             else:
-                cmd[version_id][counter_metric_spec.id] = CounterDataPoint()
+                cmd[version_id][counter_metric_spec.id] = CounterDataPoint(
+                    value = 0,
+                    timestamp = current_time,
+                    status = StatusEnum.zeroed_counter
+                )
     return cmd
 
 class PrometheusCounterMetricQuery():
@@ -62,38 +68,47 @@ class PrometheusCounterMetricQuery():
         self.prometheus_url = prometheus_url + "/api/v1/query"
         self.query_spec = query_spec
 
-    def query_from_spec(self):
-        interval = int((datetime.now(timezone.utc) - self.query_spec['start_time']).total_seconds())
+    def query_from_spec(self, current_time):
+        interval = int((current_time - self.query_spec['start_time']).total_seconds())
         kwargs = {
             "interval": f"{interval}s",
             "version_labels": ",".join(self.query_spec["version_labels"]) # also hard coded
         }
         query_template = Template(self.query_spec["query_template"])
         query = query_template.substitute(**kwargs)
-        return self.query(query)
+        return self.query(query, current_time)
 
-    def query(self, query):
+    def query(self, query, current_time):
         params = {'query': query}
+        logger.debug("Query params")
+        logger.debug(params)
         try:
             query_result = requests.get(self.prometheus_url, params=params).json()
         except Exception as e:
             logger.error("Error while attempting to connect to prometheus")
             raise(e)
-        return self.post_process(query_result)
+        return self.post_process(query_result, current_time)
 
     @classmethod
     def get_version_id(cls, version_dict):
         return version_dict['destination_workload'] # hardcoded for now
 
-    def post_process(self, query_result):
-        ts = datetime.now()
+    def post_process(self, query_result,  ts):
         prom_result = {}
         if query_result["status"] != "success":
             prom_result["message"] = "Query did not succeed. Check your query template."
             raise ValueError("Query did not succeed. Check your query template.")
         elif "data" not in query_result:
-            return prom_result
+            logger.debug("No data in query_result")
+            logger.debug(query_result)
+            return ValueError("Query did not succeed. Prometheus returned without data.")
+        elif query_result["data"]['resultType'] != 'vector':
+            logger.debug("Vector type data expected")
+            logger.debug(query_result)
+            return ValueError("Query succeeded but returned a non-vector result")
         else:
+            logger.debug("Data in query_result")
+            logger.debug(query_result)
             results = query_result["data"]["result"]
             if results == []:
                 return prom_result
