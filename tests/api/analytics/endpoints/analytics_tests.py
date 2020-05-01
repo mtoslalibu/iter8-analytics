@@ -4,11 +4,19 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 from requests.models import Response
+from fastapi.testclient import TestClient
 
 import json
 from iter8_analytics import app as flask_app
-from iter8_analytics.api.analytics import responses as responses
-from iter8_analytics.api.analytics import request_parameters as request_parameters
+from iter8_analytics import fastapi_app
+
+from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters
+from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
+from iter8_analytics.api.analytics.endpoints.examples import eip_example
+
+from iter8_analytics.api.analytics import responses
+from iter8_analytics.api.analytics import request_parameters
+
 import iter8_analytics.constants as constants
 from iter8_analytics.api.analytics.successcriteria import StatisticalTests, SuccessCriterion
 import dateutil.parser as parser
@@ -50,7 +58,6 @@ class TestAnalyticsNamespaceAPI(unittest.TestCase):
 
         with requests_mock.mock() as m:
             m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
-
             ###################
             # Test request with some required parameters
             ###################
@@ -3550,6 +3557,42 @@ class TestAnalyticsNamespaceAPI(unittest.TestCase):
             self.assertEqual(correct_response, resp.get_json()["assessment"]["summary"]["conclusions"])
             self.assertEqual(resp.status_code, 200, resp.data)
 
+            ###################
+            # Test request payload with no last state and no min max value
+            ###################
+            log.info("\n\n\n")
+            log.info('===TESTING ENDPOINT {endpoint}'.format(endpoint=endpoint))
+            log.info("Test request to with stop on failure=True")
+
+
+            params = namedtuple('params', 'alpha beta gamma sigma')
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+            parameters = {
+            "name":"reviews-e479be4",
+            "baseline":{"start_time":"2020-03-30T14:33:38Z","end_time":"2020-03-30T14:33:38Z","tags":{"destination_service_namespace":"br","destination_workload":"reviews-509c700"}},
+            "candidate":{"start_time":"2020-03-30T14:33:38Z","end_time":"2020-03-30T14:33:38Z","tags":{"destination_service_namespace":"br","destination_workload":"reviews-e479be4"}},
+            "_last_state":{},
+            "traffic_control":{
+            "confidence":0.98,
+            "max_traffic_percent":95,
+            "success_criteria":[
+            {
+                  "absent_value":"None",
+                  "is_counter":False,
+                  "metric_name":"iter8_latency",
+                  "metric_query_template":"(sum(increase(istio_request_duration_seconds_sum{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)) / (sum(increase(istio_request_duration_seconds_count{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels))",
+                  "metric_sample_size_query_template":"sum(increase(istio_requests_total{source_workload_namespace!='knative-serving',reporter='source'}[$interval]$offset_str)) by ($entity_labels)",
+                  "stop_on_failure":False,
+                  "type":"threshold",
+                  "value":0.2
+                  }
+                ]
+              }
+            }
+            resp = self.flask_test.post(endpoint, json=parameters)
+            self.assertEqual(resp.status_code, 200, resp.data)
+
+
 
     def test_experiment_payload_canary_optimistic_bayesian_routing_high_sample_size(self):
         """Tests the REST endpoint /experiment/optimistic_bayesian_routing."""
@@ -4019,7 +4062,7 @@ class TestAnalyticsNamespaceAPI(unittest.TestCase):
 
 
     #All tests after this involve the /experiment/optimistic_bayesian_routing endpoint for A/B experiments
-    def test_experimentp_ayload_ab_optimistic_bayesian_routing(self):
+    def test_experiment_payload_ab_optimistic_bayesian_routing(self):
         """Tests the REST endpoint /experiment/optimistic_bayesian_routing."""
 
         endpoint = f'http://localhost:5555/api/v1/experiment/optimistic_bayesian_routing'
@@ -4110,3 +4153,27 @@ class TestAnalyticsNamespaceAPI(unittest.TestCase):
             }
         self.assertEqual(resp.status_code, 200, resp.data)
         self.assertEqual(correct_response, resp.get_json())
+
+class TestUnifiedAnalyticsAPI(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """Setup common to all tests in this class"""
+
+        cls.client = TestClient(fastapi_app.app)
+        log.info('Completed initialization for FastAPI based  REST API tests')
+
+    def test_fastapi(self):
+        # fastapi endpoint
+        endpoint = "/assessment"
+
+        # fastapi post data
+        eip = ExperimentIterationParameters(** eip_example)
+
+        log.info("\n\n\n")
+        log.info('===TESTING FASTAPI ENDPOINT')
+        log.info("Test request with some required parameters")
+
+        # Call the FastAPI endpoint via the test client
+        resp = self.client.post(endpoint, json = eip_example)
+        it8_ar_example = Iter8AssessmentAndRecommendation(** resp.json())
+        self.assertEqual(resp.status_code, 200, msg = "Successful request")
