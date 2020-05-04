@@ -2,10 +2,9 @@
 Class and methods to run an iteration of an iter8 eperiment, and return assessment and recommendations
 """
 import logging
-from uuid import UUID
-from typing import Union, Dict
+from typing import Dict
 
-from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters, RatioMetricSpec, Version
+from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters, RatioMetricSpec, Version, iter8id
 
 from iter8_analytics.api.analytics.experiment_iteration_response import *
 
@@ -19,14 +18,14 @@ logger = logging.getLogger(__name__)
 
 class DetailedVersion():
     def __init__(self, spec, is_baseline, experiment):
+        self.spec = spec
         self.id = spec.id
-        self.labels = spec.version_labels
         self.is_baseline = is_baseline
         self.experiment = experiment # parent experiment to which this version belongs
         # dictionary(metric id -> aggregated counter metric data point)
 
         # get stuff from last state here and set old here... 
-        self.old_aggregated_counter_metric_data: Dict[[str, int, UUID], AggregatedCounterDataPoint] = {}
+        self.old_aggregated_counter_metric_data: Dict[iter8id, AggregatedCounterDataPoint] = {}
             
         if experiment.eip.last_state:
             self.old_aggregated_counter_metric_data = experiment.eip.last_state['version_data'][self.id]['aggregated_counter_metric_data']
@@ -34,7 +33,7 @@ class DetailedVersion():
             for metric_id in self.experiment.experiment_counter_metric_specs:
                 self.old_aggregated_counter_metric_data[metric_id] = AggregatedCounterDataPoint()
 
-        self.old_aggregated_ratio_metric_data: Dict[[str, int, UUID], AggregatedRatioDataPoint] = {}
+        self.old_aggregated_ratio_metric_data: Dict[iter8id, AggregatedRatioDataPoint] = {}
             
         if experiment.eip.last_state:
             self.old_aggregated_ratio_metric_data = experiment.eip.last_state['version_data'][self.id]['aggregated_ratio_metric_data']
@@ -43,10 +42,10 @@ class DetailedVersion():
                 self.old_aggregated_ratio_metric_data[metric_id] = AggregatedRatioDataPoint()
 
         # these will get populated through their respective update methods
-        self.aggregated_counter_metric_data: Dict[Union[str, int, UUID], AggregatedCounterDataPoint] = {}
-        self.aggregated_ratio_metric_data: Dict[Union[str, int, UUID], AggregatedRatioDataPoint] = {}
+        self.aggregated_counter_metric_data: Dict[iter8id, AggregatedCounterDataPoint] = {}
+        self.aggregated_ratio_metric_data: Dict[iter8id, AggregatedRatioDataPoint] = {}
 
-    def update_counter_metrics(self, new_counter_metrics: Dict[Union[str, int, UUID], CounterDataPoint]):
+    def update_counter_metrics(self, new_counter_metrics: Dict[iter8id, CounterDataPoint]):
         # for each counter metric, update the aggregated counter metric data
         for metric_id in new_counter_metrics:
             old_value = self.old_aggregated_counter_metric_data[metric_id].value
@@ -60,7 +59,7 @@ class DetailedVersion():
             else:
                 self.aggregated_counter_metric_data[metric_id] = self.old_aggregated_counter_metric_data[metric_id]
         
-    def update_ratio_metrics(self):
+    def update_ratio_metrics(self, new_ratio_metrics: Dict[iter8id, RatioDataPoint]):
         for ms in self.experiment.experiment_ratio_metric_specs.values():
             # get value
             num = ms.numerator
@@ -180,10 +179,10 @@ class Experiment():
 
     def run(self) -> Iter8AssessmentAndRecommendation:
         """Perform a single iteration of the experiment and output assessment and recommendation"""  
-        self.update_counter_metric_data()
+        self.update_metric_data()
         for detailed_version in self.detailed_versions.values():
             detailed_version.update_counter_metrics(self.new_counter_metric_data[detailed_version.id])
-            detailed_version.update_ratio_metrics()
+            detailed_version.update_ratio_metrics(self.new_counter_metric_data[detailed_version.id])
             detailed_version.update_beliefs()
             detailed_version.create_posterior_samples()
             detailed_version.create_assessment()
@@ -191,13 +190,22 @@ class Experiment():
         self.create_traffic_recommendations()
         return self.assemble_assessment_and_recommendations()
 
-    def update_counter_metric_data(self):
+    def update_metric_data(self):
         """Query prometheus to update counter metric data. Prometheus instance creation, and all prometheus related errors are detected and the relevant status codes are populated here..."""
-        # Pick up version ids
-        version_ids = self.detailed_versions.keys()
 
         # version id -> dictionary(metric id -> counter data point)
-        self.new_counter_metric_data: Dict[Union[str, int, UUID],  Dict[Union[str, int, UUID], CounterDataPoint]] = get_counter_metric_data(self.experiment_counter_metric_specs, version_ids, self.eip.start_time, self.eip.baseline.version_labels.keys())
+        self.new_counter_metric_data: Dict[iter8id,  Dict[iter8id, CounterDataPoint]] = get_counter_metric_data(
+            self.experiment_counter_metric_specs, 
+            [version.spec for version in self.detailed_versions.values()],
+            self.eip.start_time)
+
+        # version id -> dictionary(metric id -> ratio data point)
+        self.new_ratio_metric_data: Dict[iter8id,  Dict[iter8id, RatioDataPoint]] = get_ratio_metric_data(
+            self.experiment_ratio_metric_specs, 
+            self.experiment_counter_metric_specs, 
+            self.new_counter_metric_data,
+            [version.spec for version in self.detailed_versions.values()],
+            self.eip.start_time)
 
     def create_winner_assessments(self):
         """Create winner assessment. If winner cannot be created due to insufficient data, then the relevant status codes are populated"""

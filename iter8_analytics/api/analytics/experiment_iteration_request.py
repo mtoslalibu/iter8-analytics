@@ -13,8 +13,11 @@ from pydantic import BaseModel, Field
 # iter8 stuff
 from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
 
+# type alias
+iter8id = Union[int, str, UUID]
+
 class Version(BaseModel):
-    id: Union[int, str, UUID] = Field(..., description="ID of the version")
+    id: iter8id = Field(..., description="ID of the version")
     version_labels: dict = Field(..., description="Key-value pairs used in prometheus queries to achieve version level grouping")
 
 class DirectionEnum(str, Enum): # directions for metric values
@@ -22,7 +25,7 @@ class DirectionEnum(str, Enum): # directions for metric values
     higher = "higher"
 
 class MetricSpec(BaseModel):
-    id: Union[int, str, UUID] = Field(..., alias = "name", description="ID of the metric")
+    id: iter8id = Field(..., alias = "name", description="ID of the metric")
     preferred_direction: DirectionEnum = Field(None, description="Indicates preference for metric values -- lower, higher, or None (default)")
 
     class Config:
@@ -57,8 +60,8 @@ class Threshold(BaseModel):
         allow_population_by_field_name = True
 
 class Criterion(BaseModel):
-    id: Union[int, str, UUID] = Field(..., description = "ID of the criterion")
-    metric_id: Union[int, str, UUID] = Field(
+    id: iter8id = Field(..., description = "ID of the criterion")
+    metric_id: iter8id = Field(
         ..., description="ID of the metric. This matches the unique ID of the metric in the metric spec")
     is_reward: bool = Field(
         False, description="Boolean flag indicating if this metric will be used as reward to be optimized in an A/B test. Only ratio metrics can be used as a reward. At most one metric can be used as reward")
@@ -95,6 +98,6 @@ class ExperimentIterationParameters(BaseModel):
     traffic_control: TrafficControl = Field(TrafficControl(
         max_traffic_increment = 2.0, strategy = TrafficSplitStrategy.progressive_traffic_shift
     ), description = "Advanced parameters") # default traffic control
-    current_traffic_split: Dict[Union[int, str, UUID], float] = Field(None, description="Current traffic split across versions. This is mandatory for controller interactions. Optional for human-in-the-loop interactions")
+    current_traffic_split: Dict[iter8id, float] = Field(None, description="Current traffic split across versions. This is mandatory for controller interactions. Optional for human-in-the-loop interactions")
     last_state: Dict[str, Any] = Field(
         None, description="Last recorded state from analytics service")
