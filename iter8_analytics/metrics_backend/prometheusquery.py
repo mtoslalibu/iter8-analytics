@@ -1,16 +1,22 @@
 from string import Template
 import requests
+from requests.auth import HTTPBasicAuth
 import logging
 import math
 from iter8_analytics.metrics_backend.datacapture import DataCapture
 import iter8_analytics.api.analytics.request_parameters as request_parameters
+import iter8_analytics.constants as constants
 
 log = logging.getLogger(__name__)
 
 class PrometheusQuery():
-    def __init__(self, prometheus_url, query_spec):
+    def __init__(self, prometheus_url, query_spec, authentication=None):
         self.prometheus_url = prometheus_url + "/api/v1/query"
         self.query_spec = query_spec
+        self.authentication = authentication
+        self.auth_type = constants.METRICS_BACKEND_AUTH_NONE
+        if self.authentication:
+            self.auth_type = self.authentication.get('type', constants.METRICS_BACKEND_AUTH_NONE).lower()
 
     def query_from_template(self, interval_str, offset_str):
         kwargs = {
@@ -24,11 +30,26 @@ class PrometheusQuery():
         return self.query(query)
 
     def query(self, query):
+        log.info('backend url is: {}'.format(self.prometheus_url))
         params = {'query': query}
-        #log.info(query)
         log.info(params)
         DataCapture.append_value("prometheus_requests", query)
-        query_result = requests.get(self.prometheus_url, params=params).json()
+
+        query_result = None
+        log.info('authentication type is: {}'.format(self.auth_type))
+        if self.auth_type == constants.METRICS_BACKEND_AUTH_NONE:
+            query_result = requests.get(self.prometheus_url, params=params).json()
+        elif self.auth_type == constants.METRICS_BACKEND_AUTH_BASIC:
+            log.info('username is: {}'.format(self.authentication.get('username')))
+            auth=HTTPBasicAuth(self.authentication.get('username'), self.authentication.get('password'))
+            verify = (not self.authentication.get('insecure_skip_verify'))
+            log.info('verify is: {}'.format(verify))
+            query_result = requests.get(self.prometheus_url, params=params, auth=auth, verify=verify).json()
+        else:
+            # probably should be an error
+            log.warning('Unsupported authentication type: {}; trying {}'.format(self.auth_type, constants.METRICS_BACKEND_AUTH_NONE))
+            query_result = requests.get(self.prometheus_url, params=params).json()
+
         DataCapture.append_value("prometheus_responses", query_result)
         return self.post_process(query_result)
 
