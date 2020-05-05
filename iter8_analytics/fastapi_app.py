@@ -57,7 +57,6 @@ def config_logger(log_level = "debug"):
     logger.addHandler(handler)
     logging.getLogger(__name__).info("Configured logger")
 
-
 def get_env_config():
     """
       Reads the environment variables that control the server behavior and populates the config dictionary
@@ -84,7 +83,6 @@ def get_env_config():
         'This value can be set by the environment variable {1}'.format(config[constants.ITER8_ANALYTICS_SERVER_PORT_ENV], constants.ITER8_ANALYTICS_SERVER_PORT_ENV))
 
     return config
-
 
 if __name__ == '__main__':
     env_config = get_env_config()

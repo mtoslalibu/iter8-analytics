@@ -60,27 +60,15 @@ class DetailedVersion():
                 self.aggregated_counter_metric_data[metric_id] = self.old_aggregated_counter_metric_data[metric_id]
         
     def update_ratio_metrics(self, new_ratio_metrics: Dict[iter8id, RatioDataPoint]):
-        for ms in self.experiment.experiment_ratio_metric_specs.values():
-            # get value
-            num = ms.numerator
-            den = ms.denominator
-            # values are available for numerator and denominator and they were computed in times close to each other
-            self.aggregated_ratio_metric_data[ms.id] = self.old_aggregated_ratio_metric_data[ms.id]
-            logger.debug(ms)
-            if self.aggregated_counter_metric_data[den].value:
-                logger.debug(f"denominator: {self.aggregated_counter_metric_data[den]}")
-                if self.aggregated_counter_metric_data[num].value is not None: 
-                    logger.debug(f"numerator: {self.aggregated_counter_metric_data[num]}")
-                    delta_timestamp = self.aggregated_counter_metric_data[num].timestamp - self.aggregated_counter_metric_data[den].timestamp
-                    # num and den timestamps are 100 msec apart
-                    logger.debug(f"Delta timestamp: {delta_timestamp.total_seconds()}")
-                    if delta_timestamp.total_seconds() < 0.1: 
-                        self.aggregated_counter_metric_data[ms.id] = AggregatedRatioDataPoint(
-                            value = self.aggregated_counter_metric_data[num].value / self.aggregated_counter_metric_data[den].value,
-                            timestamp = self.aggregated_counter_metric_data[num].timestamp + (delta_timestamp / 2),
-                            maximum = None,
-                            minimum = None
-                        )
+        for metric_id in new_ratio_metrics:
+            old_value = self.old_aggregated_ratio_metric_data[metric_id].value
+            if new_ratio_metrics[metric_id].value is not None:
+                self.aggregated_ratio_metric_data[metric_id] = AggregatedRatioDataPoint(
+                    value = new_ratio_metrics[metric_id].value,
+                    timestamp = new_ratio_metrics[metric_id].timestamp
+                )
+            else:
+                self.aggregated_ratio_metric_data[metric_id] = self.old_aggregated_ratio_metric_data[metric_id]
             # next get max and min... passing for now
 
     def update_beliefs(self):
@@ -182,7 +170,7 @@ class Experiment():
         self.update_metric_data()
         for detailed_version in self.detailed_versions.values():
             detailed_version.update_counter_metrics(self.new_counter_metric_data[detailed_version.id])
-            detailed_version.update_ratio_metrics(self.new_counter_metric_data[detailed_version.id])
+            detailed_version.update_ratio_metrics(self.new_ratio_metric_data[detailed_version.id])
             detailed_version.update_beliefs()
             detailed_version.create_posterior_samples()
             detailed_version.create_assessment()
@@ -192,7 +180,6 @@ class Experiment():
 
     def update_metric_data(self):
         """Query prometheus to update counter metric data. Prometheus instance creation, and all prometheus related errors are detected and the relevant status codes are populated here..."""
-
         # version id -> dictionary(metric id -> counter data point)
         self.new_counter_metric_data: Dict[iter8id,  Dict[iter8id, CounterDataPoint]] = get_counter_metric_data(
             self.experiment_counter_metric_specs, 
