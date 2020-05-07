@@ -11,6 +11,9 @@ from typing import List, Dict, Any, Union
 # Module dependencies
 from pydantic import BaseModel, Field
 
+# type alias
+iter8id = Union[int, str, UUID]
+
 class Interval(BaseModel):
     lower: float = Field(..., description="Lower endpoint of the interval")
     upper: float = Field(..., description="Upper endpoint of the interval")
@@ -22,7 +25,7 @@ class RatioStatistics(BaseModel):
     credible_interval: Interval = Field(..., description = "Credible interval for the value of this metric. This is currently computed based on Bayesian estimation")
 
 class Statistics(BaseModel):
-    value: float = Field(..., description="Current value of this metric")
+    value: float = Field(None, description="Current value of this metric")
     ratio_statistics: RatioStatistics = Field(None, description="Additional statistics. Defined only for ratio metrics")
 
 class ThresholdAssessment(BaseModel):
@@ -64,13 +67,19 @@ class StatusEnum(str, Enum):
     no_prom_data = "no_prom_data"
     insufficient_data_for_assessment = "insufficient_data_for_assessment" # needs to be refined
     invalid_experiment_spec = "invalid_experiment_spec" # needs to be refined
+    invalid_query_template = "invalid prometheus query template"
+    absent_version_in_prom_response = "absent version in prometheus response"
+    no_versions_in_prom_response = "no versions in prometheus response"
+    zeroed_counter = "zeroed counter"
+    zeroed_ratio = "zeroed ratio"
+    nan_value = "nan value"
 
 class Iter8AssessmentAndRecommendation(BaseModel):
     timestamp: datetime = Field(...,
                                  description="Timestamp at which the current assessment and recommendation is created")
     baseline_assessment: VersionAssessment = Field(..., description = "Baseline's assessment")
     candidate_assessments: List[CandidateVersionAssessment] = Field(..., min_items = 1, description="Assessment  of candidate versions")
-    traffic_split_recommendation: Dict[str, Dict[Union[int, str, UUID], float]] = Field(..., description = "Traffic split recommendation on a per algorithm basis. Each recommendation contains the percentage of traffic on a per-version basis")
+    traffic_split_recommendation: Dict[str, Dict[iter8id, int]] = Field(..., description = "Traffic split recommendation on a per algorithm basis. Each recommendation contains the percentage of traffic on a per-version basis")
     # this is a dictionary which maps version ids to percentage of traffic allocated to them. The percentages need to add up to 100
     winner_assessment: WinnerAssessment = Field(..., description="Assessment summary for winning candidate. This is currently computed based on Bayesian estimation")
     status: List[StatusEnum] = Field([StatusEnum.all_ok], description="List of status codes for this iteration -- did this iteration run without exceptions and if not, what went wrong?")
@@ -80,7 +89,13 @@ class Iter8AssessmentAndRecommendation(BaseModel):
         StatusEnum.no_prom_server: "Prometheus server unavailable", 
         StatusEnum.no_prom_data: "Incomplete Prometheus data during this iteration", 
         StatusEnum.insufficient_data_for_assessment: "Insufficient data available to create an assessment",
-        StatusEnum.invalid_experiment_spec: "Invalid experiment specification"
+        StatusEnum.invalid_experiment_spec: "Invalid experiment specification",
+        StatusEnum.invalid_query_template: "Invalid query template",
+        StatusEnum.absent_version_in_prom_response: "This version is absent in prom response",
+        StatusEnum.no_versions_in_prom_response: "No versions are present in prom response",
+        StatusEnum.zeroed_counter: "Using the default zero value for counter metric",
+        StatusEnum.zeroed_ratio: "Using the default zero value for ratio metric",
+        StatusEnum.nan_value: "NaN ratio value"
         }, 
         description="Human-friendly interpretations of the status codes returned by the analytics service") # the index of an interpretation corresponds to the corresponding status enum
     last_state: Dict[str, Any] = Field(

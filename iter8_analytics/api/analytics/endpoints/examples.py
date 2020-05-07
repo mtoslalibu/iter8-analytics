@@ -6,20 +6,20 @@ eip_example = {
         "counter_metrics": [
         {
             "id": "iter8_request_count",
-            "query_template": "sum(increase(istio_requests_total{reporter='source'}[$interval])) by ($entity_labels)"
+            "query_template": "sum(increase(istio_requests_total{reporter='source'}[$interval])) by ($version_labels)"
         },
         {
             "id": "iter8_total_latency",
-            "query_template": "sum(increase(istio_request_duration_seconds_sum{reporter='source'}[$interval])) by ($entity_labels)"
+            "query_template": "sum(increase(istio_request_duration_seconds_sum{reporter='source'}[$interval])) by ($version_labels)"
         },
         {
             "id": "iter8_error_count",
-            "query_template": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source'}[$interval])) by ($entity_labels)",
+            "query_template": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source'}[$interval])) by ($version_labels)",
             "preferred_direction": "lower"
         },
         {
             "id": "conversion_count",
-            "query_template": "sum(increase(newsletter_signups[$interval])) by ($entity_labels)"
+            "query_template": "sum(increase(newsletter_signups[$interval])) by ($version_labels)"
         },
     ],  
     "ratio_metrics": [

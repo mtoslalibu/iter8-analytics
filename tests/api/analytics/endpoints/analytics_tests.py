@@ -26,11 +26,15 @@ import logging
 import os
 import requests_mock
 import requests
-log = logging.getLogger(__name__)
 
 import re
 
 from urllib.parse import urlencode
+
+
+env_config = fastapi_app.get_env_config()
+fastapi_app.config_logger(env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
+log = logging.getLogger(__name__)
 
 class TestAnalyticsNamespaceAPI(unittest.TestCase):
     @classmethod
@@ -4160,20 +4164,25 @@ class TestUnifiedAnalyticsAPI(unittest.TestCase):
         """Setup common to all tests in this class"""
 
         cls.client = TestClient(fastapi_app.app)
+        cls.backend_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
+        cls.metrics_endpoint = f'{cls.backend_url}/api/v1/query'
         log.info('Completed initialization for FastAPI based  REST API tests')
 
     def test_fastapi(self):
         # fastapi endpoint
-        endpoint = "/assessment"
+        with requests_mock.mock(real_http=True) as m:
+            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
 
-        # fastapi post data
-        eip = ExperimentIterationParameters(** eip_example)
+            endpoint = "/assessment"
 
-        log.info("\n\n\n")
-        log.info('===TESTING FASTAPI ENDPOINT')
-        log.info("Test request with some required parameters")
+            # fastapi post data
+            eip = ExperimentIterationParameters(** eip_example)
 
-        # Call the FastAPI endpoint via the test client
-        resp = self.client.post(endpoint, json = eip_example)
-        it8_ar_example = Iter8AssessmentAndRecommendation(** resp.json())
-        self.assertEqual(resp.status_code, 200, msg = "Successful request")
+            log.info("\n\n\n")
+            log.info('===TESTING FASTAPI ENDPOINT')
+            log.info("Test request with some required parameters")
+
+            # Call the FastAPI endpoint via the test client
+            resp = self.client.post(endpoint, json = eip_example)
+            it8_ar_example = Iter8AssessmentAndRecommendation(** resp.json())
+            self.assertEqual(resp.status_code, 200, msg = "Successful request")
