@@ -4,11 +4,9 @@ import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
 from requests.models import Response
-from fastapi.testclient import TestClient
 
 import json
 from iter8_analytics import app as flask_app
-from iter8_analytics import fastapi_app
 
 from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters
 from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
@@ -32,8 +30,6 @@ import re
 from urllib.parse import urlencode
 
 
-env_config = fastapi_app.get_env_config()
-fastapi_app.config_logger(env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
 log = logging.getLogger(__name__)
 
 class TestAnalyticsNamespaceAPI(unittest.TestCase):
@@ -4157,32 +4153,3 @@ class TestAnalyticsNamespaceAPI(unittest.TestCase):
             }
         self.assertEqual(resp.status_code, 200, resp.data)
         self.assertEqual(correct_response, resp.get_json())
-
-class TestUnifiedAnalyticsAPI(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        """Setup common to all tests in this class"""
-
-        cls.client = TestClient(fastapi_app.app)
-        cls.backend_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
-        cls.metrics_endpoint = f'{cls.backend_url}/api/v1/query'
-        log.info('Completed initialization for FastAPI based  REST API tests')
-
-    def test_fastapi(self):
-        # fastapi endpoint
-        with requests_mock.mock(real_http=True) as m:
-            m.get(self.metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
-
-            endpoint = "/assessment"
-
-            # fastapi post data
-            eip = ExperimentIterationParameters(** eip_example)
-
-            log.info("\n\n\n")
-            log.info('===TESTING FASTAPI ENDPOINT')
-            log.info("Test request with some required parameters")
-
-            # Call the FastAPI endpoint via the test client
-            resp = self.client.post(endpoint, json = eip_example)
-            it8_ar_example = Iter8AssessmentAndRecommendation(** resp.json())
-            self.assertEqual(resp.status_code, 200, msg = "Successful request")

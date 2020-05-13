@@ -27,6 +27,8 @@ class DirectionEnum(str, Enum): # directions for metric values
 class MetricSpec(BaseModel):
     id: iter8id = Field(..., alias = "name", description="ID of the metric")
     preferred_direction: DirectionEnum = Field(None, description="Indicates preference for metric values -- lower, higher, or None (default)")
+    # this will be used in KUI / Kiali / controller status fields
+    descriptive_short_name: str = Field(None, description = "Descriptive short name")
 
     class Config:
         allow_population_by_field_name = True
@@ -67,19 +69,18 @@ class Criterion(BaseModel):
         False, description="Boolean flag indicating if this metric will be used as reward to be optimized in an A/B test. Only ratio metrics can be used as a reward. At most one metric can be used as reward")
     threshold: Threshold = Field(None, description="Threshold value for this metric if any")
 
-class Duration(BaseModel):
-    max_iterations: int = Field(..., description = "Maximum number of iterations in the experiment")
+# class Duration(BaseModel):
+#     max_iterations: int = Field(..., description = "Maximum number of iterations in the experiment")
 
 class TrafficSplitStrategy(str, Enum):
-    progressive_traffic_shift = "Progressive traffic shift"
-    top_2 = "Top 2"
-    uniform = "Uniform"
+    progressive = "progressive" # PBR
+    top_2 = "top_2" # top 2 PBR
+    uniform = "uniform" # Uniform split
 
 class TrafficControl(BaseModel): # parameters pertaining to traffic control
-    # match and experiment traffic percentage are not implemented right now... 
-    max_traffic_increment: float = Field(
+    max_increment: float = Field(
         2.0, description="Maximum possible increment in a candidate's traffic during the initial phase of the experiment", ge=0.0, le=100.0)
-    strategy: TrafficSplitStrategy = Field(TrafficSplitStrategy.progressive_traffic_shift, description = "Traffic split algorithm to use during the experiment")
+    strategy: TrafficSplitStrategy = Field(TrafficSplitStrategy.progressive, description = "Traffic split algorithm to use during the experiment")
 
 # parameters for current iteration of experiment
 class ExperimentIterationParameters(BaseModel):
@@ -94,10 +95,8 @@ class ExperimentIterationParameters(BaseModel):
         ..., description="All metric specification")
     criteria: Sequence[Criterion] = Field(
         ..., description="Criteria to be assessed for each version in this experiment")
-    duration: Duration = Field(None, description = "Parameters pertaining to duration of the experiment. This is mandatory for controller interactions. Optional for human-in-the-loop interactions")
     traffic_control: TrafficControl = Field(TrafficControl(
-        max_traffic_increment = 2.0, strategy = TrafficSplitStrategy.progressive_traffic_shift
+        max_increment = 2.0, strategy = TrafficSplitStrategy.progressive
     ), description = "Advanced parameters") # default traffic control
-    current_traffic_split: Dict[iter8id, float] = Field(None, description="Current traffic split across versions. This is mandatory for controller interactions. Optional for human-in-the-loop interactions")
-    last_state: Dict[str, Any] = Field(
+    last_state: Any = Field(
         None, description="Last recorded state from analytics service")
