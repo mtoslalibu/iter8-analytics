@@ -45,8 +45,8 @@ class AggregatedRatioDataPoint(RatioDataPoint):
     """
 
 class RatioMaxMin(BaseModel):
-    maximum: float = Field(None,  description = "maximum observed value of a ratio metric")
     minimum: float = Field(None,  description = "minimum observed value of a ratio metric")
+    maximum: float = Field(None,  description = "maximum observed value of a ratio metric")
 
 class QuerySpec(BaseModel):
     """Base class for prometheus query spec
@@ -70,6 +70,25 @@ class RatioQuerySpec(QuerySpec):
 
     class Config:
         arbitrary_types_allowed = True
+
+def new_ratio_max_min(metric_id_to_list_of_values: Dict[str, Iterable[float]]):
+    max_min_lists = {
+        metric_id: [None, None] for metric_id in metric_id_to_list_of_values
+    }
+
+    for metric_id in metric_id_to_list_of_values:
+        try:
+            max_min_lists[metric_id][0] = min(metric_id_to_list_of_values[metric_id])
+            max_min_lists[metric_id][1] = max(metric_id_to_list_of_values[metric_id])
+        except:
+            logger.debug("Empty list of values found for metric %s", metric_id)
+    
+    return {
+        metric_id: RatioMaxMin(
+            minimum = max_min_lists[metric_id][0],
+            maximum = max_min_lists[metric_id][1]
+        )
+    }
 
 def get_counter_metrics(
     counter_metric_specs: Dict[iter8id, CounterMetricSpec], 

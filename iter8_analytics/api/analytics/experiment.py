@@ -216,16 +216,25 @@ class Experiment():
         }
 
     def get_ratio_max_mins(self):
+        metric_id_to_list_of_values = {
+            metric_id: [] for metric_id in self.ratio_metric_specs
+        }
+
         if self.eip.last_state:
-            return {
-                spec_id: RatioMaxMin(
-                    ** self.eip.last_state.ratio_max_mins[spec_id]
-                ) for spec_id in self.ratio_metric_specs
-            }
-        else:
-            return {
-                spec_id: RatioMaxMin() for spec_id in self.ratio_metric_specs
-            }
+            for metric_id in self.ratio_metric_specs:
+                a = self.eip.last_state.ratio_max_mins[metric_id].minimum
+                b = self.eip.last_state.ratio_max_mins[metric_id].maximum
+                if a is not None:
+                    metric_id_to_list_of_values.append(a)
+                    metric_id_to_list_of_values.append(b)
+
+        for version_id in self.new_ratio_metrics:
+            for metric_id in self.new_ratio_metrics[version_id]:
+                a = self.new_ratio_metrics[version_id][metric_id].value
+                if a is not None:
+                    metric_id_to_list_of_values.append(a)
+
+        return new_ratio_max_min(metric_id_to_list_of_values)
 
     # until above is get metrics from prometheus
 
