@@ -19,8 +19,7 @@ import iter8_analytics.constants as constants
 # Module dependencies
 from pydantic import BaseModel, Field
 
-# For logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('iter8_analytics')
 
 class DataPoint(BaseModel):
     """A single data point for a given metric and given version.
@@ -166,7 +165,7 @@ def get_ratio_metrics(
             if version.id in rmd_from_prom:
                 rmd[version.id][ratio_metric_spec.id] = rmd_from_prom[version.id]
             else:
-                if version.id in counter_metrics and counter_metrics[version.id][ratio_metric_spec.denominator]:
+                if version.id in counter_metrics and counter_metrics[version.id][ratio_metric_spec.denominator].value:
                     rmd[version.id][ratio_metric_spec.id] = RatioDataPoint(
                         value = 0,
                         timestamp = current_time,
@@ -273,7 +272,7 @@ class PrometheusMetricQuery():
             for result in results:
                 version_id = self.get_version_id(result['metric'])
                 if version_id:
-                    prom_result[version_id] = self.result_value_to_data_point(result['value'][1])
+                    prom_result[version_id] = self.result_value_to_data_point(result['value'][1], ts)
 
         return prom_result
 

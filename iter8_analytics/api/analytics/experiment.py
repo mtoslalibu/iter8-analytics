@@ -14,7 +14,7 @@ from iter8_analytics.api.analytics.metrics import *
 
 from iter8_analytics.api.analytics.utils import *
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('iter8_analytics')
 
 class DetailedVersion():
     def __init__(self, spec, is_baseline, experiment):
@@ -226,6 +226,8 @@ class Experiment():
             return {
                 spec_id: RatioMaxMin() for spec_id in self.ratio_metric_specs
             }
+
+    # until above is get metrics from prometheus
 
     def create_winner_assessments(self):
         """Create winner assessment. If winner cannot be created due to insufficient data, then the relevant status codes are populated"""
