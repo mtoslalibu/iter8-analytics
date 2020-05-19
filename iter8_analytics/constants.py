@@ -11,3 +11,5 @@ ITER8_DATA_CAPTURE_MODE_ENV = 'ITER8_DATA_CAPTURE_MODE'
 
 METRICS_BACKEND_AUTH_NONE = 'none'
 METRICS_BACKEND_AUTH_BASIC = 'basic'
+
+ITER8_REQUEST_COUNT = 'iter8_request_count' # special metric indicating num requests to a version

@@ -7,8 +7,7 @@ import os
 import sys
 
 # iter8 stuff
-from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters
-from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
+from iter8_analytics.api.analytics.types import ExperimentIterationParameters, Iter8AssessmentAndRecommendation
 from iter8_analytics.api.analytics.experiment import Experiment
 from iter8_analytics.api.analytics.endpoints.examples import eip_example
 import iter8_analytics.constants as constants
@@ -31,7 +30,7 @@ def provide_iter8_analytics_health():
 
 def config_logger(log_level = "debug"):
     """Configures the global logger"""
-    logger = logging.getLogger('')
+    logger = logging.getLogger('iter8_analytics')
     handler = logging.StreamHandler()
 
     if str.lower(log_level) == 'info':
@@ -55,7 +54,7 @@ def config_logger(log_level = "debug"):
             ' - %(filename)s:%(lineno)d - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logging.getLogger(__name__).info("Configured logger")
+    logging.getLogger('iter8_analytics').info("Configured logger")
 
 def get_env_config():
     """
@@ -63,13 +62,13 @@ def get_env_config():
       """
 
     if not os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV):
-        logging.getLogger(__name__).critical(
+        logging.getLogger('iter8_analytics').critical(
             u'The environment variable {0} was not set. '
             'Example of a valid value: "http://localhost:9090". '
             'Aborting!'.format(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV))
         sys.exit(1)
 
-    logging.getLogger(__name__).info('Configuring iter8 analytics server')
+    logging.getLogger('iter8_analytics').info('Configuring iter8 analytics server')
 
     config = {}
     config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV] = os.getenv(
@@ -78,7 +77,7 @@ def get_env_config():
     config[constants.ITER8_ANALYTICS_SERVER_PORT_ENV] = os.getenv(
         constants.ITER8_ANALYTICS_SERVER_PORT_ENV, 5555)
 
-    logging.getLogger(__name__).info(
+    logging.getLogger('iter8_analytics').info(
         u'The iter8 analytics server will listen on port {0}. '
         'This value can be set by the environment variable {1}'.format(config[constants.ITER8_ANALYTICS_SERVER_PORT_ENV], constants.ITER8_ANALYTICS_SERVER_PORT_ENV))
 
@@ -87,6 +86,4 @@ def get_env_config():
 if __name__ == '__main__':
     env_config = get_env_config()
     config_logger(env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
-    logging.getLogger(__name__).info('Starting iter8 analytics server')
-
     uvicorn.run('fastapi_app:app', host='0.0.0.0', port=int(env_config[constants.ITER8_ANALYTICS_SERVER_PORT_ENV]), log_level=env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
