@@ -70,6 +70,18 @@ class TestExperiment:
             exp = Experiment(eip)
             exp.run()
 
+    def test_missing_iter8_request_count(self):
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+
+            eip = ExperimentIterationParameters(** reviews_example_without_request_count)
+            exp = Experiment(eip)
+            resp = exp.run()
+
+            assert resp.baseline_assessment.request_count is None
+            for assessment in resp.candidate_assessments:
+                assert assessment.request_count is None
+
 class TestDetailedVersion:
     def test_detailed_version(self):
         eip_with_ratio_max_mins = ExperimentIterationParameters(** reviews_example_with_ratio_max_mins)

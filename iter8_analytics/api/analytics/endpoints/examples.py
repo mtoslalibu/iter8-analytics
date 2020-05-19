@@ -467,3 +467,9 @@ eip_with_unknown_metric_in_criterion["criteria"].append({
           "value": 25
     }
 })
+
+reviews_example_without_request_count = copy.deepcopy(reviews_example)
+del reviews_example_without_request_count["criteria"][1]
+del reviews_example_without_request_count["metric_specs"]["counter_metrics"][0]
+del reviews_example_without_request_count["metric_specs"]["ratio_metrics"][0]
+
