@@ -8,8 +8,6 @@ from requests.models import Response
 import json
 from iter8_analytics import app as flask_app
 
-from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters
-from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
 from iter8_analytics.api.analytics.endpoints.examples import eip_example
 
 from iter8_analytics.api.analytics import responses

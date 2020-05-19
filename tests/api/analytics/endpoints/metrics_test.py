@@ -7,8 +7,7 @@ import json
 
 # iter8 stuff
 from iter8_analytics import fastapi_app
-from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters, Version
-from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
+from iter8_analytics.api.analytics.types import *
 import iter8_analytics.constants as constants
 from iter8_analytics.api.analytics.metrics import *
 

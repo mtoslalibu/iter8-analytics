@@ -5,74 +5,25 @@ Todo:
     * Docstrings
 """
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Iterable, Any
+from uuid import UUID
+from typing import Dict, Iterable, Any, Union
 import os
 import logging
 import requests
 from string import Template
 import math
 
-from iter8_analytics.api.analytics.experiment_iteration_request import CounterMetricSpec, RatioMetricSpec, iter8id, Version
-from iter8_analytics.api.analytics.experiment_iteration_response import StatusEnum
-import iter8_analytics.constants as constants
-
 # Module dependencies
 from pydantic import BaseModel, Field
 
+# iter8 stuff
+from iter8_analytics.api.analytics.types import *
+import iter8_analytics.constants as constants
+
 logger = logging.getLogger('iter8_analytics')
 
-class DataPoint(BaseModel):
-    """A single data point for a given metric and given version.
-    """
-    value: float = Field(None, description = "Value of the metric")
-    timestamp: datetime = Field(None, description = "Time at which this metric was last queried and updated")
-    status: StatusEnum = Field(StatusEnum.all_ok, description = "Status of this data point derived from prometheus response")
-
-class CounterDataPoint(DataPoint):
-    """A single counter data point for a given counter metric and given version.
-    """
-
-class RatioDataPoint(DataPoint):
-    """A single ratio data point for a given ratio metric and given version.
-    """
-
-class AggregatedCounterDataPoint(CounterDataPoint):
-    """A single aggregated counter data point for a given metric and given version.
-    """
-
-class AggregatedRatioDataPoint(RatioDataPoint):
-    """A single aggregated ratio data point for a given metric and given version.
-    """
-
-class RatioMaxMin(BaseModel):
-    minimum: float = Field(None,  description = "minimum observed value of a ratio metric")
-    maximum: float = Field(None,  description = "maximum observed value of a ratio metric")
-
-class QuerySpec(BaseModel):
-    """Base class for prometheus query spec
-    """
-    version_label_keys: Iterable[str] # prometheus label names (for grouping)
-    start_time: datetime # start time for computing duration in the query
-
-class CounterQuerySpec(QuerySpec):
-    """Base class for prometheus counter query spec
-    """
-    query_template: Any
-
-    class Config:
-        arbitrary_types_allowed = True
-
-class RatioQuerySpec(QuerySpec):
-    """Base class for prometheus ratio query spec
-    """
-    numerator_template: Any
-    denominator_template: Any
-
-    class Config:
-        arbitrary_types_allowed = True
-
 def new_ratio_max_min(metric_id_to_list_of_values: Dict[iter8id, Iterable[float]]):
-    """Return min and max for  each ratio metric
+    """Return min and max for each ratio metric
 
     Args:
         metric_id_to_list_of_values (Dict[iter8d, Iterable[float]]): dictionary whose keys are metric ids and whose values are a list of values seen for each emtric
@@ -212,14 +163,14 @@ class PrometheusMetricQuery():
     Attributes:
         prometheus_url (str): Prom url for quering
         query_spec (QuerySpec): Query spec for prom query
-        version_labels_to_id (Dict[Set<Tuple<str, str>>, str]): Dictionary mapping version labels to their ids
+        version_labels_to_id (Dict[Set[Tuple[str, str]], str]): Dictionary mapping version labels to their ids
     """
     def __init__(self, query_spec, versions):
         """Initialize prometheus metric query object.
 
         Args:
             query_spec (QuerySpec): Prom query spec
-            versions (Iterable<Version>): Iterable of version objects.
+            versions (Iterable[Version]): Iterable of Version objects.
         """
         prometheus_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
         self.prometheus_url = prometheus_url + "/api/v1/query"

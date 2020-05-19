@@ -7,8 +7,7 @@ import os
 import sys
 
 # iter8 stuff
-from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters
-from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
+from iter8_analytics.api.analytics.types import ExperimentIterationParameters, Iter8AssessmentAndRecommendation
 from iter8_analytics.api.analytics.experiment import Experiment
 from iter8_analytics.api.analytics.endpoints.examples import eip_example
 import iter8_analytics.constants as constants

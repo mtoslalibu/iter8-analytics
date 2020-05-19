@@ -8,9 +8,8 @@ from fastapi.testclient import TestClient
 import iter8_analytics.constants as constants
 from iter8_analytics import fastapi_app
 
-from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters
+from iter8_analytics.api.analytics.types import *
 from iter8_analytics.api.analytics.endpoints.examples import eip_example
-from iter8_analytics.api.analytics.experiment_iteration_response import Iter8AssessmentAndRecommendation
 
 env_config = fastapi_app.get_env_config()
 fastapi_app.config_logger(env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])

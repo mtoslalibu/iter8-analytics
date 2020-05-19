@@ -1,17 +1,13 @@
 """
 Class and methods to run an iteration of an iter8 eperiment, and return assessment and recommendations
 """
+# core python stuff
 import logging
 from typing import Dict
 
-from iter8_analytics.api.analytics.experiment_iteration_request import ExperimentIterationParameters, RatioMetricSpec, Version, iter8id
-
-from iter8_analytics.api.analytics.experiment_iteration_response import *
-
-from iter8_analytics.api.analytics.endpoints.examples import ar_example
-
+# iter8 stuff
+from iter8_analytics.api.analytics.types import *
 from iter8_analytics.api.analytics.metrics import *
-
 from iter8_analytics.api.analytics.utils import *
 
 logger = logging.getLogger('iter8_analytics')
@@ -24,24 +20,24 @@ class DetailedVersion():
         self.experiment = experiment
         """parent experiment to which this version belongs"""
 
+        self.aggregated_counter_metrics = {
+            metric_id: AggregatedCounterDataPoint() for metric_id in self.experiment.counter_metric_specs
+        }
+        self.aggregated_ratio_metrics = {
+            metric_id: AggregatedRatioDataPoint() for metric_id in self.experiment.ratio_metric_specs
+        }
+
         if experiment.eip.last_state:
-            self.aggregated_counter_metrics = {
-                metric_id: AggregatedCounterDataPoint(
-                    ** experiment.eip.last_state.aggregated_counter_metrics[self.id][metric_id]
-                ) for metric_id in self.experiment.counter_metric_specs
-            }
-            self.aggregated_ratio_metrics = {
-                metric_id: AggregatedRatioDataPoint(
-                    ** experiment.eip.last_state.aggregated_ratio_metrics[self.id][metric_id]
-                ) for metric_id in self.experiment.ratio_metric_specs
-            }
-        else:
-            self.aggregated_counter_metrics = {
-                metric_id: AggregatedCounterDataPoint() for metric_id in self.experiment.counter_metric_specs
-            }
-            self.aggregated_ratio_metrics = {
-                metric_id: AggregatedRatioDataPoint() for metric_id in self.experiment.ratio_metric_specs
-            }
+            if experiment.eip.last_state.aggregated_counter_metrics:
+                if self.id in experiment.eip.last_state.aggregated_counter_metrics:
+                    for metric_id in experiment.eip.last_state.aggregated_counter_metrics[self.id]:
+                        self.aggregated_counter_metrics[metric_id] = experiment.eip.last_state.aggregated_counter_metrics[self.id][metric_id]
+
+            if experiment.eip.last_state.aggregated_ratio_metrics:
+                if self.id in experiment.eip.last_state.aggregated_ratio_metrics:
+                    for metric_id in experiment.eip.last_state.aggregated_ratio_metrics[self.id]:
+                        self.aggregated_ratio_metrics[metric_id] = experiment.eip.last_state.aggregated_ratio_metrics[self.id][metric_id]
+
         """populated aggregated counter and ratio metrics"""
 
     def aggregate_counter_metrics(self, new_counter_metrics: Dict[iter8id, CounterDataPoint]):
@@ -91,7 +87,7 @@ class DetailedVersion():
                         value = self.aggregated_counter_metrics[criterion.metric_id].value
                     )
                 ))
-            elif criterion.metric_id in self.aggregated_ratio_metrics:
+            else: # criterion.metric_id in self.aggregated_ratio_metrics
                 self.criterion_assessments.append(CriterionAssessment(
                     id = criterion.id,
                     metric_id = criterion.metric_id,
@@ -99,10 +95,6 @@ class DetailedVersion():
                         value = self.aggregated_ratio_metrics[criterion.metric_id].value
                     )
                 ))
-            else:
-                logger.error("Criterion metric is neither counter nor ratio")
-                logger.error(criterion)
-                raise ValueError("Criterion metric_id is neither counter nor ratio")
 
 class DetailedBaselineVersion(DetailedVersion):
     def __init__(self, spec, experiment):
@@ -154,13 +146,13 @@ class Experiment():
                     self.counter_metric_specs[den] = all_counter_metric_specs[den]
                 except KeyError as ke:
                     """unknown numerator or denominator"""
-                    logger.error(ke)
+                    logger.error(f"Unknown numerator or denominator found: {ke}")
                     raise(ke)
             else:
                 """this is an unknown metric id"""
                 logger.error(f"Unknown metric id found in criteria: {cri.metric_id}")
-                raise KeyError(f"Unknown metric id found in criteria: {cri.metric_id}")
-            """Initialized counter and ratio metric specs relevant to this experiment"""
+                raise KeyError(f"Unknown metric id found in criteria: {cri.metric_id}")    
+        """Initialized counter and ratio metric specs relevant to this experiment"""
 
         self.detailed_versions = {
             spec.id: DetailedCandidateVersion(spec, self) for spec in self.eip.candidates
@@ -201,8 +193,10 @@ class Experiment():
                 self.new_ratio_metrics[detailed_version.id]
             )
             detailed_version.set_ratio_max_mins(self.ratio_max_mins)
-            # until above is get metrics from prometheus
+        
+        self.aggregated_ratio_metrics = self.get_aggregated_ratio_metrics()
 
+        for detailed_version in self.detailed_versions.values():
             detailed_version.update_beliefs()
             detailed_version.create_posterior_samples()
             detailed_version.create_assessment()
@@ -215,6 +209,11 @@ class Experiment():
             version_id: self.detailed_versions[version_id].aggregated_counter_metrics for version_id in self.detailed_versions
         }
 
+    def get_aggregated_ratio_metrics(self):
+        return {
+            version_id: self.detailed_versions[version_id].aggregated_ratio_metrics for version_id in self.detailed_versions            
+        }
+
     def get_ratio_max_mins(self):
         metric_id_to_list_of_values = {
             metric_id: [] for metric_id in self.ratio_metric_specs
@@ -225,14 +224,14 @@ class Experiment():
                 a = self.eip.last_state.ratio_max_mins[metric_id].minimum
                 b = self.eip.last_state.ratio_max_mins[metric_id].maximum
                 if a is not None:
-                    metric_id_to_list_of_values.append(a)
-                    metric_id_to_list_of_values.append(b)
+                    metric_id_to_list_of_values[metric_id].append(a)
+                    metric_id_to_list_of_values[metric_id].append(b)
 
         for version_id in self.new_ratio_metrics:
             for metric_id in self.new_ratio_metrics[version_id]:
                 a = self.new_ratio_metrics[version_id][metric_id].value
                 if a is not None:
-                    metric_id_to_list_of_values.append(a)
+                    metric_id_to_list_of_values[metric_id].append(a)
 
         return new_ratio_max_min(metric_id_to_list_of_values)
 
@@ -299,6 +298,11 @@ class Experiment():
             "winner_assessment": WinnerAssessment(
                 winning_version_found = False
             ),
-            "status": []
+            "status": [],
+            "last_state": {
+                "aggregated_counter_metrics": self.aggregated_counter_metrics,
+                "aggregated_ratio_metrics": self.aggregated_ratio_metrics,
+                "ratio_max_mins": self.ratio_max_mins
+            }
         })
         return it8ar
