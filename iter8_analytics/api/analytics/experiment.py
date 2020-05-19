@@ -9,6 +9,7 @@ from typing import Dict
 from iter8_analytics.api.analytics.types import *
 from iter8_analytics.api.analytics.metrics import *
 from iter8_analytics.api.analytics.utils import *
+from iter8_analytics.constants import ITER8_REQUEST_COUNT
 
 logger = logging.getLogger('iter8_analytics')
 
@@ -128,10 +129,16 @@ class Experiment():
             all_counter_metric_specs[cms.id] = cms
         for rms in self.eip.metric_specs.ratio_metrics: 
             all_ratio_metric_specs[rms.id] = rms
-        """Got all counter and ratio metric specs into their respective dictionaries"""
+        # Got all counter and ratio metric specs into their respective dictionaries
 
+        # ITER8_REQUEST_COUNT is a special metric. Lets add this always in counter metrics
         self.counter_metric_specs = {}
+        if ITER8_REQUEST_COUNT in all_counter_metric_specs:
+            self.counter_metric_specs[ITER8_REQUEST_COUNT] = all_counter_metric_specs[ITER8_REQUEST_COUNT]
+        else:
+            logger.warning("iter8_request_count metric is missing in metric specs")
         self.ratio_metric_specs = {}
+
         for cri in self.eip.criteria:
             if cri.metric_id in all_counter_metric_specs:
                 """this is a counter metric"""
@@ -276,17 +283,23 @@ class Experiment():
         baseline_assessment = None
         candidate_assessments = []
         for version in self.detailed_versions.values():
+            request_count = None
+            if ITER8_REQUEST_COUNT in self.counter_metric_specs:
+                request_count = version.aggregated_counter_metrics[ITER8_REQUEST_COUNT].value
+            else:
+                logger.warning("iter8_request_count metric is missing in metric specs")
+
             if version.is_baseline:
                 baseline_assessment = VersionAssessment(
                     id = version.id,
-                    request_count = 0,
+                    request_count = request_count,
                     criterion_assessments = version.criterion_assessments,
                     win_probability = 1/len(self.detailed_versions)
                 )
             else:
                 candidate_assessments.append(CandidateVersionAssessment(
                     id = version.id,
-                    request_count = 0,
+                    request_count = request_count,
                     criterion_assessments = version.criterion_assessments,
                     win_probability = 1/len(self.detailed_versions)
                 ))

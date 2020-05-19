@@ -203,7 +203,7 @@ class VersionAssessment(BaseModel): # assessment per version
     # e.g. keys within tags: destination_service_namespace and destination_workload
     # tags: Dict[str, str] = Field(..., description="Tags for this version")
     # baseline: bool = Field(False, description = "Is this the baseline?")
-    request_count: int = Field(..., ge = 0, description = "Number of requests sent to this version until now")
+    request_count: int = Field(None, ge = 0, description = "Number of requests sent to this version until now")
     criterion_assessments: List[CriterionAssessment] = Field(..., description="Metric assessments for this version")
     win_probability: float = Field(..., description = "Probability that this version is the winner. This is currently computed based on Bayesian estimation")
 
