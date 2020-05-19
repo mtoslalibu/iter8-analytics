@@ -324,3 +324,19 @@ class TestMetrics:
                 res = pcmq.query_from_spec(datetime.now(timezone.utc))
             except ValueError as ve:
                 pass
+
+    def test_new_ratio_max_min(self):
+
+        metric_id_to_list_of_values = {
+            "metric1": [0.1, 0.2, 0.3],
+            "metric2": [0.2],
+            "metric3": []
+        }
+
+        nrmm = new_ratio_max_min(metric_id_to_list_of_values)
+        logger.debug(nrmm)
+        assert len(nrmm) == 3
+        assert nrmm["metric1"] == RatioMaxMin(minimum = 0.1, maximum = 0.3)
+        assert nrmm["metric2"] == RatioMaxMin(minimum = 0.2, maximum = 0.2)
+        assert nrmm["metric3"] == RatioMaxMin()
+
