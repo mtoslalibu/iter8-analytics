@@ -14,6 +14,14 @@ from iter8_analytics.constants import ITER8_REQUEST_COUNT
 logger = logging.getLogger('iter8_analytics')
 
 class DetailedVersion():
+    """Base class for a version.
+
+    Attributes:
+        spec (str): Prom url for quering
+        id (str): Query spec for prom query
+        is_baseline (bool): Is this the baseline version
+        experiment (Experiment): Parent experiment object to which this detailed version belongs
+    """
     def __init__(self, spec, is_baseline, experiment):
         self.spec = spec
         self.id = spec.id
