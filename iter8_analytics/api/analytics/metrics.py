@@ -1,9 +1,7 @@
-"""Core module for querying prometheus and returning metric data.
-
-Todo:
-    * Create unit tests for these functions
-    * Docstrings
+"""Module containing classes and methods for querying prometheus and returning metric data.
 """
+
+# core python dependencies
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from typing import Dict, Iterable, Any, Union
@@ -13,10 +11,10 @@ import requests
 from string import Template
 import math
 
-# Module dependencies
+# external module dependencies
 from pydantic import BaseModel, Field
 
-# iter8 stuff
+# iter8 dependencies
 from iter8_analytics.api.analytics.types import *
 import iter8_analytics.constants as constants
 
@@ -31,7 +29,6 @@ def new_ratio_max_min(metric_id_to_list_of_values: Dict[iter8id, Iterable[float]
     Returns:
         max_min_lists (Dict[iter8id, RatioMaxMin): dictionary whose keys are metric ids and whose values are an object for each metric containing its min and max
     """
-
     max_min_lists = {
         metric_id: [None, None] for metric_id in metric_id_to_list_of_values
     }
@@ -46,6 +43,8 @@ def new_ratio_max_min(metric_id_to_list_of_values: Dict[iter8id, Iterable[float]
                 minimum = max_min_lists[metric_id][0],
                 maximum = max_min_lists[metric_id][1]
         )
+        """if the list of values is empty for a metric id, return None values for max and min
+        """
     
     return max_min_lists
 
@@ -94,6 +93,9 @@ def get_counter_metrics(
                     timestamp = current_time,
                     status = status
                 )
+        """if a version cannot be found in the list of counter metrics returned by prometheus, then the value of the counter is assumed to be zero
+        """
+        
     return cmd
 
 def get_ratio_metrics(
@@ -124,7 +126,6 @@ def get_ratio_metrics(
             }
         }      
     """
-
     rmd = {version.id: {} for version in versions} #  initialize rmd
 
     # populate rmd
@@ -155,6 +156,9 @@ def get_ratio_metrics(
                         timestamp = current_time,
                         status = StatusEnum.absent_version_in_prom_response
                     )
+        """if a version cannot be found in the list of ratio metrics returned by prometheus, then the value of the ratio is set to zero if denominator is non-zero, and is set to None otherwise.
+        """
+
     return rmd
 
 class PrometheusMetricQuery():
@@ -178,6 +182,8 @@ class PrometheusMetricQuery():
         self.version_labels_to_id = {
             frozenset(version.version_labels.items()): version.id for version in versions
         }
+        """the above frozenset maps from version labels to version ids
+        """
 
     def query_from_spec(self, current_time):
         """Query prometheus using query spec.
@@ -244,8 +250,8 @@ class PrometheusMetricQuery():
         elif "data" not in raw_query_result:
             return ValueError("Query did not succeed. Prometheus returned without data.")
         elif raw_query_result["data"]['resultType'] != 'vector':
-            return ValueError("Query succeeded but returned a non-vector result")
-        else:
+            return ValueError("Query succeeded but returned with a non-vector result. Check your query template.")
+        else: # query succeeded and we have some proper data to work with
             results = raw_query_result["data"]["result"]
             for result in results:
                 version_id = self.get_version_id(result['metric'])
@@ -255,7 +261,7 @@ class PrometheusMetricQuery():
         return prom_result
 
     def get_version_id(self, version_labels):
-        """Get version id from version label.
+        """Get version id from version labels.
 
         Args:
             version_labels (Dict[str, str]): Dictionary of labels and their values for a version
@@ -300,6 +306,8 @@ class PrometheusCounterMetricQuery(PrometheusMetricQuery):
         return CounterDataPoint(
             value = result_float,
             timestamp = ts)
+        """Counter data point can never have a None value
+        """
 
 class PrometheusRatioMetricQuery(PrometheusMetricQuery):
     """Derived class for querying prometheus for counter metric.

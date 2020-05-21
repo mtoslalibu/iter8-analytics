@@ -1,3 +1,8 @@
+"""
+Module containing low-level math utilities used by iter8
+"""
+
+# core python dependencies
 import math
 from random import random
 
