@@ -1,24 +1,30 @@
-# Module dependencies
-from fastapi import FastAPI, Body
-import uvicorn
-
+"""Fast API based iter8 analytics service.
+"""
+# core python dependencies
 import logging
 import os
 import sys
 
-# iter8 stuff
+# external dependencies
+from fastapi import FastAPI, Body
+import uvicorn
+
+# iter8 dependencies
 from iter8_analytics.api.analytics.types import ExperimentIterationParameters, Iter8AssessmentAndRecommendation
 from iter8_analytics.api.analytics.experiment import Experiment
 from iter8_analytics.api.analytics.endpoints.examples import eip_example
 import iter8_analytics.constants as constants
 
+# main FastAPI app
 app = FastAPI()
 
 @app.post("/assessment", response_model=Iter8AssessmentAndRecommendation)
 def provide_assessment_for_this_experiment_iteration(eip: ExperimentIterationParameters = Body(..., example=eip_example)):
     """
-      POST iter8 experiment iteration data and obtain assessment of how the versions are performing and recommendations on how to split traffic based on multiple strategies.
-      """
+    POST iter8 experiment iteration data and obtain assessment of how the versions are performing and recommendations on how to split traffic based on multiple strategies.
+    \f
+    :body eip: ExperimentIterationParameters
+    """
     return Experiment(eip).run()
 
 
@@ -29,7 +35,11 @@ def provide_iter8_analytics_health():
 
 
 def config_logger(log_level = "debug"):
-    """Configures the global logger"""
+    """Configures the global logger
+
+    Args:
+        log_level (str): log level ('debug', 'info', ...)
+    """
     logger = logging.getLogger('iter8_analytics')
     handler = logging.StreamHandler()
 
@@ -58,7 +68,10 @@ def config_logger(log_level = "debug"):
 
 def get_env_config():
     """
-      Reads the environment variables that control the server behavior and populates the config dictionary
+      Read the environment variables that control the server behavior and populate the config dictionary
+
+      Returns:
+        config (Dict): config dictionary
       """
 
     if not os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV):
