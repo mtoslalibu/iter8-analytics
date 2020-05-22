@@ -8,6 +8,8 @@ import sys
 # external dependencies
 from fastapi import FastAPI, Body
 import uvicorn
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 
 # iter8 dependencies
 from iter8_analytics.api.analytics.types import ExperimentIterationParameters, Iter8AssessmentAndRecommendation
@@ -74,11 +76,19 @@ def get_env_config():
         config (Dict): config dictionary
       """
 
-    if not os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV):
+    prom_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
+    if prom_url is None:
         logging.getLogger('iter8_analytics').critical(
             u'The environment variable {0} was not set. '
             'Example of a valid value: "http://localhost:9090". '
             'Aborting!'.format(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV))
+        sys.exit(1)
+
+    val = URLValidator()
+    try:
+        val(prom_url)
+    except ValidationError as e:
+        logging.getLogger('iter8_analytics').critical(f'Prometheus URL {prom_url} is invalid')
         sys.exit(1)
 
     logging.getLogger('iter8_analytics').info('Configuring iter8 analytics server')
