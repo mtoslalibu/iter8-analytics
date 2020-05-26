@@ -12,10 +12,11 @@ import requests_mock
 from iter8_analytics import fastapi_app
 from iter8_analytics.api.analytics.types import *
 import iter8_analytics.constants as constants
+import iter8_analytics.config as config
 from iter8_analytics.api.analytics.experiment import Experiment
 from iter8_analytics.api.analytics.endpoints.examples import *
 
-env_config = fastapi_app.get_env_config()
+env_config = config.get_env_config()
 fastapi_app.config_logger(env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
 logger = logging.getLogger('iter8_analytics')
 

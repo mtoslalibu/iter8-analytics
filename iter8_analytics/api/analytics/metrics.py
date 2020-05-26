@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 # iter8 dependencies
 from iter8_analytics.api.analytics.types import *
 import iter8_analytics.constants as constants
+from iter8_analytics.config import env_config
 
 logger = logging.getLogger('iter8_analytics')
 
@@ -216,6 +217,7 @@ class PrometheusMetricQuery():
         """
         params = {'query': query}
         try:
+            logger.info(f">>>>>>>>>>>>>>>>>>>> MK MK MK MK MK MK {env_config}")
             query_result = requests.get(self.prometheus_url, params=params).json()
             logger.debug("query result -- raw")
             logger.debug(query_result)
