@@ -5,7 +5,6 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from typing import Dict, Iterable, Any, Union
-import os
 import logging
 import requests
 from string import Template
@@ -177,7 +176,7 @@ class PrometheusMetricQuery():
             query_spec (QuerySpec): Prom query spec
             versions (Iterable[Version]): Iterable of Version objects.
         """
-        prometheus_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
+        prometheus_url = env_config[constants.METRICS_BACKEND_CONFIG_URL]
         self.prometheus_url = prometheus_url + "/api/v1/query"
         self.query_spec = query_spec
         self.version_labels_to_id = {

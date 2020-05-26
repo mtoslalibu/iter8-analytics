@@ -17,10 +17,10 @@ from iter8_analytics.api.analytics.experiment import Experiment
 from iter8_analytics.api.analytics.endpoints.examples import *
 
 env_config = config.get_env_config()
-fastapi_app.config_logger(env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
+fastapi_app.config_logger(env_config[constants.LOG_LEVEL])
 logger = logging.getLogger('iter8_analytics')
 
-metrics_backend_url = os.getenv(constants.ITER8_ANALYTICS_METRICS_BACKEND_URL_ENV)
+metrics_backend_url = os.getenv(constants.METRICS_BACKEND_CONFIG_URL)
 metrics_endpoint = f'{metrics_backend_url}/api/v1/query'
 
 class TestExperiment:

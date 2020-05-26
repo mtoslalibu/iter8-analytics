@@ -71,5 +71,5 @@ def config_logger(log_level = "debug"):
     logging.getLogger('iter8_analytics').info("Configured logger")
 
 if __name__ == '__main__':
-    config_logger(config.env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
-    uvicorn.run('fastapi_app:app', host='0.0.0.0', port=int(config.env_config[constants.ITER8_ANALYTICS_SERVER_PORT_ENV]), log_level=config.env_config[constants.ITER8_ANALYTICS_LOG_LEVEL_ENV])
+    config_logger(config.env_config[constants.LOG_LEVEL])
+    uvicorn.run('fastapi_app:app', host='0.0.0.0', port=int(config.env_config[constants.ANALYTICS_SERVICE_PORT]), log_level=config.env_config[constants.LOG_LEVEL])
