@@ -1,4 +1,3 @@
-import os
 import requests_mock
 import logging
 import json
@@ -17,7 +16,7 @@ fastapi_app.config_logger(env_config[constants.LOG_LEVEL])
 logger = logging.getLogger('iter8_analytics')
 
 test_client = TestClient(fastapi_app.app)
-metrics_backend_url = os.getenv(constants.METRICS_BACKEND_CONFIG_URL)
+metrics_backend_url = env_config[constants.METRICS_BACKEND_CONFIG_URL]
 metrics_endpoint = f'{metrics_backend_url}/api/v1/query'
 
 class TestUnifiedAnalyticsAPI:
