@@ -216,7 +216,6 @@ class PrometheusMetricQuery():
         """
         params = {'query': query}
         try:
-            logger.info(f">>>>>>>>>>>>>>>>>>>> MK MK MK MK MK MK {env_config}")
             query_result = requests.get(self.prometheus_url, params=params).json()
             logger.debug("query result -- raw")
             logger.debug(query_result)
