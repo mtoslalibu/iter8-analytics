@@ -5,148 +5,22 @@ Module containing classes to run an iteration of an iter8 eperiment, and return 
 import logging
 from typing import Dict
 
+# external module dependencies
+import numpy as np
+
 # iter8 dependencies
 from iter8_analytics.api.analytics.types import *
 from iter8_analytics.api.analytics.metrics import *
 from iter8_analytics.api.analytics.utils import *
 from iter8_analytics.constants import ITER8_REQUEST_COUNT
+import iter8_analytics.api.analytics.detailedversion
+
+# type aliases
+DetailedVersion = iter8_analytics.api.analytics.detailedversion.DetailedVersion
+DetailedBaselineVersion = iter8_analytics.api.analytics.detailedversion.DetailedBaselineVersion
+DetailedCandidateVersion = iter8_analytics.api.analytics.detailedversion.DetailedCandidateVersion
 
 logger = logging.getLogger('iter8_analytics')
-
-class DetailedVersion():
-    """Base class for a version.
-
-    Attributes:
-        spec (str): version spec
-        id (str): unique iter8id of this version. contained in spec.
-        is_baseline (bool): boolean indicating if this is the baseline version
-        experiment (Experiment): parent experiment object to which this detailed version belongs
-    """
-    def __init__(self, spec, is_baseline, experiment):
-        """Initialize detailed version object.
-
-        Args:
-            spec (str): version spec
-            id (str): unique iter8id of this version. contained in spec.
-            is_baseline (bool): boolean indicating if this is the baseline version
-            experiment (Experiment): parent experiment object to which this detailed version belongs
-        """
-        self.spec = spec
-        self.id = spec.id
-        self.is_baseline = is_baseline
-        self.experiment = experiment
-        """linked back to parent experiment to which this version belongs
-        """
-
-        self.aggregated_counter_metrics = {
-            metric_id: AggregatedCounterDataPoint() for metric_id in self.experiment.counter_metric_specs
-        }
-        self.aggregated_ratio_metrics = {
-            metric_id: AggregatedRatioDataPoint() for metric_id in self.experiment.ratio_metric_specs
-        }
-
-        if experiment.eip.last_state:
-            if experiment.eip.last_state.aggregated_counter_metrics:
-                if self.id in experiment.eip.last_state.aggregated_counter_metrics:
-                    for metric_id in experiment.eip.last_state.aggregated_counter_metrics[self.id]:
-                        self.aggregated_counter_metrics[metric_id] = experiment.eip.last_state.aggregated_counter_metrics[self.id][metric_id]
-
-            if experiment.eip.last_state.aggregated_ratio_metrics:
-                if self.id in experiment.eip.last_state.aggregated_ratio_metrics:
-                    for metric_id in experiment.eip.last_state.aggregated_ratio_metrics[self.id]:
-                        self.aggregated_ratio_metrics[metric_id] = experiment.eip.last_state.aggregated_ratio_metrics[self.id][metric_id]
-        """populated aggregated counter and ratio metrics
-        """
-
-    def aggregate_counter_metrics(self, new_counter_metrics: Dict[iter8id, CounterDataPoint]):
-        """combine aggregated counter metrics from last state for this version with new counter metrics. Aggregated results stored in self.aggregated_counter_metrics
-
-        Args:
-            new_counter_metrics (Dict[iter8id, CounterDataPoint]): dictionary mapping from metric id to CounterDataPoint
-        """
-        for metric_id in new_counter_metrics:
-            if new_counter_metrics[metric_id].value is not None:
-                self.aggregated_counter_metrics[metric_id] = AggregatedCounterDataPoint(
-                    ** new_counter_metrics[metric_id].dict()
-                )
-            # else: # new counter is none, so we will retain old value
-            #     pass
-        
-    def aggregate_ratio_metrics(self, new_ratio_metrics: Dict[iter8id, RatioDataPoint]):
-        """combine aggregated ratio metrics from last state for this version with new ratio metrics. Aggregated results stored in self.aggregated_ratio_metrics
-
-        Args:
-            new_ratio_metrics (Dict[iter8id, RatioDataPoint]): dictionary mapping from metric id to RatioDataPoint
-        """
-        for metric_id in new_ratio_metrics:
-            if new_ratio_metrics[metric_id].value is not None:
-                self.aggregated_ratio_metrics[metric_id] = AggregatedRatioDataPoint(
-                    ** new_ratio_metrics[metric_id].dict()
-                )
-            # else: # new ratio is none, so we will retain old value
-            #     pass
-
-
-    def set_ratio_max_mins(self, ratio_max_mins):
-        """Update max and min for each ratio metric. Updated values are stored in self.ratio_max_mins
-
-        Args:
-            ratio_max_mins (Dict[iter8id, RatioMaxMin]): dictionary mapping from metric id to RatioMaxMin
-        """
-        self.ratio_max_mins = ratio_max_mins
-
-    def update_beliefs(self):
-        """Update beliefs for ratio metrics. If belief update is not possible due to insufficient data, then the relevant status codes are populated here
-        """
-        # for rms in self.spec.metric_specs.ratio_metrics:
-        #     metric_spec.update_belief()
-        pass
-
-    def create_posterior_samples(self):
-        """Create posterior samples used for assessment and traffic routing
-        """
-        self.create_ratio_metric_samples()
-        self.create_utility_samples()
-
-    def create_ratio_metric_samples(self):
-        """Create ratio metric samples used for assessment and traffic routing
-        """
-        pass
-
-    def create_utility_samples(self):
-        """Create utility samples used for assessment and traffic routing
-        """
-        pass
-
-    def create_assessment(self):
-        """Create assessment for this version. Results are stored in self.criterion_assessments
-        """
-        self.criterion_assessments = []
-        for criterion in self.experiment.eip.criteria:
-            if criterion.metric_id in self.aggregated_counter_metrics:
-                self.criterion_assessments.append(CriterionAssessment(
-                    id = criterion.id,
-                    metric_id = criterion.metric_id,
-                    statistics = Statistics(
-                        value = self.aggregated_counter_metrics[criterion.metric_id].value
-                    )
-                ))
-            else: # criterion.metric_id in self.aggregated_ratio_metrics
-                self.criterion_assessments.append(CriterionAssessment(
-                    id = criterion.id,
-                    metric_id = criterion.metric_id,
-                    statistics = Statistics(
-                        value = self.aggregated_ratio_metrics[criterion.metric_id].value
-                    )
-                ))
-
-class DetailedBaselineVersion(DetailedVersion):
-    def __init__(self, spec, experiment):
-        super().__init__(spec, True, experiment)
-
-class DetailedCandidateVersion(DetailedVersion):
-    def __init__(self, spec, experiment):
-        super().__init__(spec, False, experiment)
 
 class Experiment():
     """The experiment class which provides necessary methods for running a single iteration of an iter8 experiment
@@ -164,7 +38,7 @@ class Experiment():
 
         self.eip = eip
 
-        self.traffic_split = {} 
+        self.traffic_split = {}
         """Initialized traffic split dictionary
         """
  
@@ -211,11 +85,15 @@ class Experiment():
         """Initialized counter and ratio metric specs relevant to this experiment
         """
 
-        self.detailed_versions = {
-            spec.id: DetailedCandidateVersion(spec, self) for spec in self.eip.candidates
+        self.detailed_candidate_versions = {
+            spec.id: DetailedCandidateVersion(spec, self, index + 2) for index, spec in enumerate(self.eip.candidates)
         }
-        self.detailed_versions[self.eip.baseline.id] = DetailedBaselineVersion(self.eip.baseline, self)
-        """Initialized detailed versions
+        self.detailed_versions = {
+            ver: self.detailed_candidate_versions[ver] for ver in self.detailed_candidate_versions
+        }
+        self.detailed_baseline_version = DetailedBaselineVersion(self.eip.baseline, self)
+        self.detailed_versions[self.eip.baseline.id] = self.detailed_baseline_version
+        """Initialized detailed versions. Pseudo reward for baseline = 1.0; pseudo reward for candidate is 2 + its index in the candidates list (i.e., the first candidate has pseudo reward 2.0, 2nd has 3.0, and so on)
         """
 
     def run(self) -> Iter8AssessmentAndRecommendation:
@@ -251,7 +129,6 @@ class Experiment():
             detailed_version.aggregate_ratio_metrics(
                 self.new_ratio_metrics[detailed_version.id]
             )
-            detailed_version.set_ratio_max_mins(self.ratio_max_mins)
         
         self.aggregated_ratio_metrics = self.get_aggregated_ratio_metrics()
 
@@ -270,7 +147,9 @@ class Experiment():
             a dictionary (Dict[iter8id, AggregatedCounterMetric]): dictionary mapping metric id to an aggregated counter metric for this version
         """  
         return {
-            version_id: self.detailed_versions[version_id].aggregated_counter_metrics for version_id in self.detailed_versions
+            version.id: {
+                dcm.metric_id: dcm.aggregated_metric for dcm in version.metrics["counter_metrics"].values()
+            } for version in self.detailed_versions.values()
         }
 
     def get_aggregated_ratio_metrics(self):
@@ -280,7 +159,9 @@ class Experiment():
             a dictionary (Dict[iter8id, AggregatedRatioMetric]): dictionary mapping metric id to an aggregated ratio metric for this version
         """  
         return {
-            version_id: self.detailed_versions[version_id].aggregated_ratio_metrics for version_id in self.detailed_versions            
+            version.id: {
+                drm.metric_id: drm.aggregated_metric for drm in version.metrics["ratio_metrics"].values()
+            } for version in self.detailed_versions.values()
         }
 
     def get_ratio_max_mins(self):
@@ -357,7 +238,7 @@ class Experiment():
         for version in self.detailed_versions.values():
             request_count = None
             if ITER8_REQUEST_COUNT in self.counter_metric_specs:
-                request_count = version.aggregated_counter_metrics[ITER8_REQUEST_COUNT].value
+                request_count = version.metrics["counter_metrics"][ITER8_REQUEST_COUNT].aggregated_metric.value
             else:
                 logger.warning("iter8_request_count metric is missing in metric specs")
 

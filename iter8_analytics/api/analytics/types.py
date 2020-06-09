@@ -91,6 +91,8 @@ class StatusEnum(str, Enum):
     zeroed_counter = "zeroed counter"
     zeroed_ratio = "zeroed ratio"
     nan_value = "nan value"
+    uninitialized_belief = "uninitialized belief"
+    uninitialized_value = "uninitialized value"
 
 ### Types pertaining to metrics
 
@@ -238,7 +240,9 @@ class Iter8AssessmentAndRecommendation(BaseModel):
         StatusEnum.no_versions_in_prom_response: "No versions are present in prom response",
         StatusEnum.zeroed_counter: "Using the default zero value for counter metric",
         StatusEnum.zeroed_ratio: "Using the default zero value for ratio metric",
-        StatusEnum.nan_value: "NaN ratio value"
+        StatusEnum.nan_value: "NaN ratio value",
+        StatusEnum.uninitialized_belief: "Uninitialized belief",
+        StatusEnum.uninitialized_value: "Uninitialized value"
         }, 
         description="Human-friendly interpretations of the status codes returned by the analytics service") # the index of an interpretation corresponds to the corresponding status enum
     last_state: Dict[str, Any] = Field(
