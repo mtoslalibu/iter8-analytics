@@ -4,13 +4,16 @@ import logging
 log = logging.getLogger(__name__)
 SAMPLE_SIZE_SUFFICIENT_STR = 'sample_size_sufficient'
 SUCCESS_STR = 'success'
+CANDIDATE_VALUE_STR = 'candidate_value'
+BASELINE_VALUE_STR = 'baseline_value'
 
 class StatisticalTests: # only provides class methods for statistical tests; cannot be instantiated
     @staticmethod
     def simple_threshold(version_metric, criterion):
         #handle None response
         test_result = {
-            SAMPLE_SIZE_SUFFICIENT_STR: True
+            SAMPLE_SIZE_SUFFICIENT_STR: True,
+            CANDIDATE_VALUE_STR: version_metric[responses.STATISTICS_STR][responses.VALUE_STR]
         }
         if version_metric[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR] < criterion.sample_size:
             test_result[SAMPLE_SIZE_SUFFICIENT_STR] = False
@@ -30,7 +33,9 @@ class StatisticalTests: # only provides class methods for statistical tests; can
         if criterion.is_counter:
             raise ValueError("Delta criterion cannot be used with counter metric.")
         test_result = {
-            SAMPLE_SIZE_SUFFICIENT_STR: True
+            SAMPLE_SIZE_SUFFICIENT_STR: True,
+            CANDIDATE_VALUE_STR: candidate_metric[responses.STATISTICS_STR][responses.VALUE_STR],
+            BASELINE_VALUE_STR: baseline_metric[responses.STATISTICS_STR][responses.VALUE_STR]
         }
         if candidate_metric[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR] < criterion.sample_size or baseline_metric[responses.STATISTICS_STR][responses.SAMPLE_SIZE_STR] < criterion.sample_size:
             test_result[SAMPLE_SIZE_SUFFICIENT_STR] = False
@@ -71,8 +76,8 @@ class SuccessCriterion:
     def update_response_with_test_result_and_conclusion(self, test_result):
         is_or_is_not = "is" if test_result[SUCCESS_STR] else "is not"
         delta_or_threshold = "delta" if self.criterion.type == "delta" else "threshold"
-        baseline_str = "of the baseline" if self.criterion.type == "delta" else ""
-        result_str = f"{self.criterion.metric_name} of the candidate {is_or_is_not} within {delta_or_threshold} {self.criterion.value} {baseline_str}. "
+        baseline_str = f"of the baseline ({test_result[BASELINE_VALUE_STR]})" if self.criterion.type == "delta" else ""
+        result_str = f"{self.criterion.metric_name} of the candidate ({test_result[CANDIDATE_VALUE_STR]}) {is_or_is_not} within {delta_or_threshold} {self.criterion.value} {baseline_str}. "
         conclusion_str = ["Insufficient sample size. " if not test_result[SAMPLE_SIZE_SUFFICIENT_STR] else result_str]
         counter_exceeded = True if (self.criterion.is_counter and test_result[SAMPLE_SIZE_SUFFICIENT_STR] and (self.criterion.type== "threshold") and not test_result[SUCCESS_STR]) else False
         if counter_exceeded:

@@ -41,6 +41,7 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         tr = sc.update_response_with_test_result_and_conclusion({
             "sample_size_sufficient": False,
+            'candidate_value': 0.04,
             "success": False
         })
         assert(not tr["abort_experiment"])
@@ -61,6 +62,7 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         tr = sc.update_response_with_test_result_and_conclusion({
             "sample_size_sufficient": True,
+            'candidate_value': 0.04,
             "success": False
         })
         assert(tr["abort_experiment"])
@@ -87,7 +89,7 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         tc = ThresholdCriterion(criterion, candidate_metrics).test()
 
-        assert "iter8_error_count of the candidate is not within threshold 10 . " in tc["conclusions"]
+        assert "iter8_error_count of the candidate (13) is not within threshold 10 . " in tc["conclusions"]
         self.assertEqual(tc["success_criterion_met"], False)
 
 
@@ -95,7 +97,7 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         tc = ThresholdCriterion(criterion, candidate_metrics).test()
 
-        assert "iter8_error_count of the candidate is within threshold 10 . " in tc["conclusions"][0]
+        assert "iter8_error_count of the candidate (9) is within threshold 10 . " in tc["conclusions"][0]
         self.assertEqual(tc["success_criterion_met"], True)
 
         #Testing Delta criterion
@@ -116,14 +118,14 @@ class TestAnalyticsAPI(unittest.TestCase):
 
 
         dc = DeltaCriterion(criterion, baseline_metrics, candidate_metrics).test()
-        assert "iter8_error_rate of the candidate is within delta 0.5 of the baseline." in dc["conclusions"][0]
+        assert "iter8_error_rate of the candidate (12) is within delta 0.5 of the baseline (10). " in dc["conclusions"][0]
         self.assertEqual(dc["success_criterion_met"], True)
 
 
         candidate_metrics["statistics"]["value"] = 20
 
         dc = DeltaCriterion(criterion, baseline_metrics, candidate_metrics).test()
-        assert "iter8_error_rate of the candidate is not within delta 0.5 of the baseline." in dc["conclusions"][0]
+        assert "iter8_error_rate of the candidate (20) is not within delta 0.5 of the baseline (10). " in dc["conclusions"][0]
         self.assertEqual(dc["success_criterion_met"], False)
 
 
@@ -184,6 +186,6 @@ class TestAnalyticsAPI(unittest.TestCase):
 
         tc = ThresholdCriterion(criterion, candidate_metrics).test()
 
-        assert "iter8_error_count of the candidate is not within threshold 10 . " in tc["conclusions"]
+        assert "iter8_error_count of the candidate (13) is not within threshold 10 . " in tc["conclusions"]
         assert "Counter Metric exceeded threshold value. Aborting experiment." in tc["conclusions"]
         self.assertEqual(tc["success_criterion_met"], False)
