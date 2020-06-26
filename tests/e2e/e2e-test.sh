@@ -13,3 +13,4 @@ $DIR/../../iter8-controller/test/e2e/e2e-scenario-2.sh
 $DIR/../../iter8-controller/test/e2e/e2e-scenario-3.sh
 $DIR/../../iter8-controller/test/e2e/e2e-scenario-4.sh
 $DIR/../../iter8-controller/test/e2e/e2e-scenario-5.sh
+$DIR/../../iter8-controller/test/e2e/e2e-scenario-6.sh
