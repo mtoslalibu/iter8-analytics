@@ -1,4 +1,4 @@
-"""Tests for module iter8_analytics.api.analytics.endpoints.metrics_test"""
+"""Tests for module iter8_analytics.api.analytics.endpoints.metrics"""
 # standard python stuff
 import logging
 import requests_mock
@@ -241,7 +241,7 @@ class TestMetrics:
 
     def test_prom_exception(self):
         def bad_json(request, context):
-            raise ConnectionError()
+            raise HTTPException()
 
         with requests_mock.mock(real_http=True) as m:
             m.get(metrics_endpoint, json=bad_json)
@@ -267,7 +267,7 @@ class TestMetrics:
             try:
                 pcmq = PrometheusCounterMetricQuery(query_spec, versions)
                 res = pcmq.query_from_spec(datetime.now(timezone.utc))
-            except ConnectionError as ce:
+            except HTTPException as he:
                 pass
 
     def test_unsuccessful_prom(self):
@@ -298,7 +298,7 @@ class TestMetrics:
             try:
                 pcmq = PrometheusCounterMetricQuery(query_spec, versions)
                 res = pcmq.query_from_spec(datetime.now(timezone.utc))
-            except ValueError as ve:
+            except HTTPException as he:
                 pass
 
             m.get(metrics_endpoint, json={
@@ -308,7 +308,7 @@ class TestMetrics:
             try:
                 pcmq = PrometheusCounterMetricQuery(query_spec, versions)
                 res = pcmq.query_from_spec(datetime.now(timezone.utc))
-            except ValueError as ve:
+            except HTTPException as he:
                 pass
 
             m.get(metrics_endpoint, json={
@@ -321,7 +321,7 @@ class TestMetrics:
             try:
                 pcmq = PrometheusCounterMetricQuery(query_spec, versions)
                 res = pcmq.query_from_spec(datetime.now(timezone.utc))
-            except ValueError as ve:
+            except HTTPException as he:
                 pass
 
     def test_new_ratio_max_min(self):

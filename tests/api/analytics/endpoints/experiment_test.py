@@ -6,6 +6,7 @@ import json
 
 # python libraries
 import requests_mock
+from fastapi import HTTPException
 
 # iter8 stuff
 from iter8_analytics import fastapi_app
@@ -40,14 +41,14 @@ class TestExperiment:
         try:
             eip = ExperimentIterationParameters(** eip_with_invalid_ratio)
             exp = Experiment(eip)
-        except KeyError as ke:
+        except HTTPException as he:
             pass
 
     def test_unknown_metric_in_criterion(self):
         try:
             eip = ExperimentIterationParameters(** eip_with_unknown_metric_in_criterion)
             exp = Experiment(eip)
-        except KeyError as ke:
+        except HTTPException as he:
             pass
 
     def test_get_ratio_max_min(self):

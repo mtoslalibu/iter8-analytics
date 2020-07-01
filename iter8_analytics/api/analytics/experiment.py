@@ -7,6 +7,7 @@ from typing import Dict
 
 # external module dependencies
 import numpy as np
+from fastapi import HTTPException
 
 # iter8 dependencies
 from iter8_analytics.api.analytics.types import *
@@ -33,7 +34,7 @@ class Experiment():
             eip (ExperimentIterationParameters): Experiment iteration parameters
 
         Raises:
-            KeyError: Ratio metrics contain metric ids other than counter metric ids in their numerator or denominator. Also when unknown metric id is found in criteria
+            HTTPException: Ratio metrics contain metric ids other than counter metric ids in their numerator or denominator. Also when unknown metric id is found in criteria
         """
 
         self.eip = eip
@@ -76,12 +77,12 @@ class Experiment():
                     """unknown numerator or denominator
                     """
                     logger.error(f"Unknown numerator or denominator found: {ke}")
-                    raise(ke)
+                    raise HTTPException(status_code=404, detail=f"Unknown numerator or denominator found: {ke}")
             else:
                 """this is an unknown metric id
                 """
                 logger.error(f"Unknown metric id found in criteria: {cri.metric_id}")
-                raise KeyError(f"Unknown metric id found in criteria: {cri.metric_id}")    
+                raise HTTPException(status_code=404, detail=f"Unknown metric id found in criteria: {cri.metric_id}")    
         """Initialized counter and ratio metric specs relevant to this experiment
         """
 

@@ -12,6 +12,7 @@ import math
 
 # external module dependencies
 from pydantic import BaseModel, Field
+from fastapi import HTTPException
 
 # iter8 dependencies
 from iter8_analytics.api.analytics.types import *
@@ -221,7 +222,7 @@ class PrometheusMetricQuery():
             logger.debug(query_result)
         except Exception as e:
             logger.error("Error while attempting to connect to prometheus")
-            raise(e)
+            raise HTTPException(status_code=404, detail="Error while attempting to connect to prometheus.")
         return self.post_process(query_result, current_time)
 
     def post_process(self, raw_query_result,  ts):
@@ -242,15 +243,15 @@ class PrometheusMetricQuery():
             query_result (Dict[str, Dict[str, DataPoint]]]): Post processed query result
         
         Raises:
-            ValueError: If query was unsuccessful for reasons such as bad template, prom result contained no data or returned data in a non-vector form which cannot be post processed.
+            HTTPException: If query was unsuccessful for reasons such as bad template, prom result contained no data or returned data in a non-vector form which cannot be post processed.
         """
         prom_result = {}
         if raw_query_result["status"] != "success":
-            raise ValueError("Query did not succeed. Check your query template.")
+            raise HTTPException(status_code=404, detail="Query did not succeed. Check your query template.")
         elif "data" not in raw_query_result:
-            return ValueError("Query did not succeed. Prometheus returned without data.")
+            return HTTPException(status_code=404, detail="Query did not succeed. Prometheus returned without data.")
         elif raw_query_result["data"]['resultType'] != 'vector':
-            return ValueError("Query succeeded but returned with a non-vector result. Check your query template.")
+            return HTTPException(status_code=404, detail="Query succeeded but returned with a non-vector result. Check your query template.")
         else: # query succeeded and we have some proper data to work with
             results = raw_query_result["data"]["result"]
             for result in results:
