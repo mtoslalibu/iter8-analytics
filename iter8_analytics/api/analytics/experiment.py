@@ -77,12 +77,12 @@ class Experiment():
                     """unknown numerator or denominator
                     """
                     logger.error(f"Unknown numerator or denominator found: {ke}")
-                    raise HTTPException(status_code=404, detail=f"Unknown numerator or denominator found: {ke}")
+                    raise HTTPException(status_code=422, detail=f"Unknown numerator or denominator found: {ke}")
             else:
                 """this is an unknown metric id
                 """
                 logger.error(f"Unknown metric id found in criteria: {cri.metric_id}")
-                raise HTTPException(status_code=404, detail=f"Unknown metric id found in criteria: {cri.metric_id}")    
+                raise HTTPException(status_code=422, detail=f"Unknown metric id found in criteria: {cri.metric_id}")    
         """Initialized counter and ratio metric specs relevant to this experiment
         """
 

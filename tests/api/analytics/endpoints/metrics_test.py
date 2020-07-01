@@ -241,7 +241,7 @@ class TestMetrics:
 
     def test_prom_exception(self):
         def bad_json(request, context):
-            raise HTTPException()
+            raise HTTPException(status_code=422, detail = "Bad JSON")
 
         with requests_mock.mock(real_http=True) as m:
             m.get(metrics_endpoint, json=bad_json)
