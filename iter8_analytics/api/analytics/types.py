@@ -134,7 +134,7 @@ class LastState(BaseModel): # last state recorded by analytics service in its pr
 class ExperimentIterationParameters(BaseModel):
     start_time: datetime = Field(...,
                                  description = "Start time of the experiment")
-    iteration_number: int = Field(None, description = "Iteration number, ranging from 1 to maximum number of iterations (advanced_parameters.max_iterations). This is mandatory for controller interactions. Optional for human-in-the-loop interactions", ge = 1)
+    iteration_number: int = Field(None, description = "Iteration number, ranging from 1 to maximum number of iterations (advanced_parameters.max_iterations). This is mandatory for controller interactions. Optional for human-in-the-loop interactions", ge = 0)
     service_name: str = Field(..., description = "Name of the service in this experiment")
     baseline: Version = Field(..., description="The baseline version")
     candidates: Sequence[Version] = Field(...,
