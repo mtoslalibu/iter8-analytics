@@ -41,5 +41,9 @@ build-default:
    		--name iter8-analytics \
 	>> install/kubernetes/iter8-analytics.yaml
 
+.PHONY: changelog
+changelog:
+	@sed -n '/$(ver)/,/=====/p' CHANGELOG | grep -v $(ver) | grep -v "====="
+
 test:
 	nosetests --exe --with-coverage --cover-package=iter8_analytics --cover-html --cover-html-dir=code_coverage
