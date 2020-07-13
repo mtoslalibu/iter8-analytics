@@ -7,6 +7,7 @@ from typing import Dict
 
 # external module dependencies
 import numpy as np
+import pandas as pd
 from fastapi import HTTPException
 
 # iter8 dependencies
@@ -133,9 +134,12 @@ class Experiment():
         
         self.aggregated_ratio_metrics = self.get_aggregated_ratio_metrics()
 
+        self.utilities = pd.DataFrame()
+
         for detailed_version in self.detailed_versions.values():
             detailed_version.update_beliefs()
             detailed_version.create_posterior_samples()
+            self.utilities[detailed_version.id] = detailed_version.get_utility()
             detailed_version.create_assessment()
         self.create_winner_assessments()
         self.create_traffic_recommendations()
@@ -195,7 +199,10 @@ class Experiment():
     def create_winner_assessments(self):
         """Create winner assessment. If winner cannot be created due to insufficient data, then the relevant status codes are populated
         """
-        pass
+        # get the fraction of the time a particular version emerged as the winner
+        rank_df = self.utilities.rank(axis = 1, method = 'min')
+        low_rank = rank_df <= 1
+        self.win_probababilities = low_rank.sum() / low_rank.sum().sum()
 
     def create_traffic_recommendations(self):
         """Create traffic recommendations for individual algorithms
@@ -208,23 +215,31 @@ class Experiment():
     def create_progressive_recommendation(self):
         """Create traffic recommendations for the progressive strategy -- uses the posterior Bayesian routing (PBR) algorithm
         """
-        pass
+        self.create_top_k_recommendation(1)
 
     def create_top_2_recommendation(self):
         """Create traffic recommendations for the progressive strategy -- uses the top-2 posterior Bayesian routing (top-2 PBR) algorithm
         """
-        pass
+        self.create_top_k_recommendation(2)
 
     def create_uniform_recommendation(self):
         """Create traffic recommendations based on uniform traffic split
         """
-        self.traffic_split["uniform"] = {}
-        integral_split_gen = gen_round([100/len(self.detailed_versions)]*len(self.detailed_versions), 100) # round the uniform split so that it sums up to 100
-        # assign one of the rounded splits to a detailed_version
-        for key in self.detailed_versions:
-            self.traffic_split["uniform"][key] = next(integral_split_gen)
-        """Split traffic uniformly across versions and round
+        self.create_top_k_recommendation(len(self.detailed_versions))
+
+    def create_top_k_recommendation(self, k):
         """
+        Create traffic split using the top-k PBR algorithm
+        """
+        self.traffic_split[k] = {}
+        # get the fractional split
+        rank_df = self.utilities.rank(axis = 1, method = 'min')
+        low_rank = rank_df <= 1
+        fractional_split = low_rank.sum() / low_rank.sum().sum()
+        # round the fractional split so that it sums up to 100
+        integral_split_gen = gen_round(fractional_split * 100, 100)
+        for key in self.utilities:
+            self.traffic_split[k][key] = next(integral_split_gen)
 
     def mix_recommendations(self):
         """Create the final traffic recommendation
@@ -248,22 +263,27 @@ class Experiment():
                     id = version.id,
                     request_count = request_count,
                     criterion_assessments = version.criterion_assessments,
-                    win_probability = 1/len(self.detailed_versions)
+                    win_probability = self.win_probababilities[version.id]
                 )
             else:
                 candidate_assessments.append(CandidateVersionAssessment(
                     id = version.id,
                     request_count = request_count,
                     criterion_assessments = version.criterion_assessments,
-                    win_probability = 1/len(self.detailed_versions)
+                    win_probability = self.win_probababilities[version.id]
                 ))
-            """populated baseline and candidate assessments
-            """
+
+        ts = {
+            'progressive': self.traffic_split[1],
+            'top_2': self.traffic_split[2],
+            'uniform': self.traffic_split[len(self.detailed_versions)]
+        }
+
         it8ar = Iter8AssessmentAndRecommendation(** {
             "timestamp": datetime.now(),
             "baseline_assessment": baseline_assessment,
             "candidate_assessments": candidate_assessments,
-            "traffic_split_recommendation": self.traffic_split,
+            "traffic_split_recommendation": ts,
             "winner_assessment": WinnerAssessment(
                 winning_version_found = False
             ),

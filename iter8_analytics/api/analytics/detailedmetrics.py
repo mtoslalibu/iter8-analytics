@@ -13,7 +13,7 @@ from iter8_analytics.api.analytics.types import *
 class Belief():
     """Base class for belief probability distributions.
     """
-    sample_size = 10000 # hardcoded for now. super ugly! 
+    sample_size = 10000 # hardcoded for now. super ugly!
 
     def __init__(self, status: StatusEnum):
         self.status = status

@@ -151,7 +151,7 @@ class DetailedVersion():
         """
         ## Initialize reward and utility sample
         reward_sample = np.ones(Belief.sample_size) * self.pseudo_reward
-        utility_sample = np.ones(Belief.sample_size)
+        self.utilities = np.ones(Belief.sample_size)
 
         # for criterion in self.experiment.eip.criteria:
         #     if criterion.metric_id in self.metrics["counter_metrics"]:
@@ -173,11 +173,13 @@ class DetailedVersion():
         #             threshold_assessment = self.create_threshold_assessment(criterion)
         #         ))
 
-        logger.info(f"reward_sample: {reward_sample}")
         # if any criteria or reward ratios are missing
             # leave utility status as none
             # else use the respective samples to generate utility samples
                 # se utility status as all ok        
+
+    def get_utility(self):
+        return self.utilities
 
     def create_threshold_assessment(self, criterion):
         """Create threshold assessment.
