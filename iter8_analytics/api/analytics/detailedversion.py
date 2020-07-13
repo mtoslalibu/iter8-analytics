@@ -68,7 +68,6 @@ class DetailedVersion():
         # self.beliefs =  {
         #     metric_id: Belief(status = StatusEnum.uninitialized_belief) for metric_id in self.experiment.ratio_metric_specs
         # }
-        self.utility_sample = Belief(status = StatusEnum.uninitialized_belief)
 
         if experiment.eip.last_state:
             if experiment.eip.last_state.aggregated_counter_metrics:
@@ -147,11 +146,12 @@ class DetailedVersion():
                 rm.belief.sample_posterior()
 
     def create_utility_samples(self):
-        """Create utility samples used for assessment and traffic routing. Updates self.utility _sample object.
+        """Create utility samples used for winner assessment and traffic routing
         """
         ## Initialize reward and utility sample
         reward_sample = np.ones(Belief.sample_size) * self.pseudo_reward
-        self.utilities = np.ones(Belief.sample_size)
+        if not self.aggregate_counter_metrics[ITER8_REQUEST_COUNT].value:
+            self.utility_sample = np.ones(Belief.sample_size) * float("inf")
 
         # for criterion in self.experiment.eip.criteria:
         #     if criterion.metric_id in self.metrics["counter_metrics"]:
