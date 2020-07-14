@@ -37,6 +37,14 @@ class TestExperiment:
         eip_with_ratio_max_mins = ExperimentIterationParameters(** reviews_example_with_ratio_max_mins)
         exp_with_partial_last_state = Experiment(eip_with_ratio_max_mins)
 
+    def test_missing_iter8_request_count(self):
+        try:
+            eip = ExperimentIterationParameters(** reviews_example_without_request_count)
+            exp = Experiment(eip)
+        except HTTPException as he:
+            pass
+
+
     def test_invalid_ratio_metric(self):
         try:
             eip = ExperimentIterationParameters(** eip_with_invalid_ratio)
@@ -70,18 +78,6 @@ class TestExperiment:
             eip = ExperimentIterationParameters(** reviews_example_with_ratio_max_mins)
             exp = Experiment(eip)
             exp.run()
-
-    def test_missing_iter8_request_count(self):
-        with requests_mock.mock(real_http=True) as m:
-            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
-
-            eip = ExperimentIterationParameters(** reviews_example_without_request_count)
-            exp = Experiment(eip)
-            resp = exp.run()
-
-            assert resp.baseline_assessment.request_count is None
-            for assessment in resp.candidate_assessments:
-                assert assessment.request_count is None
 
 class TestDetailedVersion:
     def test_detailed_version(self):

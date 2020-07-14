@@ -1,6 +1,7 @@
 import requests_mock
 import logging
 import json
+import copy
 
 from fastapi.testclient import TestClient
 
@@ -30,9 +31,22 @@ class TestUnifiedAnalyticsAPI:
             # fastapi post data
             eip = ExperimentIterationParameters(** eip_example)
 
-            logger.info("\n\n\n")
-            logger.info('===TESTING FASTAPI ENDPOINT')
-            logger.info("Test request with some required parameters")
+            # Call the FastAPI endpoint via the test client
+            resp = test_client.post(endpoint, json = eip_example)
+            it8_ar_example = Iter8AssessmentAndRecommendation(** resp.json())
+            assert resp.status_code == 200
+
+    def test_fastapi_with_empty_last_state(self):
+        # fastapi endpoint
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+
+            endpoint = "/assessment"
+
+            # fastapi post data
+            eg = copy.deepcopy(eip_example)
+            eg['last_state'] = {}
+            eip = ExperimentIterationParameters(** eg)
 
             # Call the FastAPI endpoint via the test client
             resp = test_client.post(endpoint, json = eip_example)

@@ -18,10 +18,6 @@ from iter8_analytics.constants import ITER8_REQUEST_COUNT
 
 logger = logging.getLogger('iter8_analytics')
 
-class UtilitySample(Belief):
-    def __init__(self, sample):
-        self.sample = sample
-
 class DetailedVersion():
     """Base class for a version.
 
@@ -46,10 +42,8 @@ class DetailedVersion():
         self.id = spec.id
         self.version_labels = spec.version_labels
         self.is_baseline = is_baseline
-        self.experiment = experiment
+        self.experiment = experiment # link back to parent experiment
         self.pseudo_reward = pseudo_reward
-        """linked back to parent experiment to which this version belongs
-        """
 
         self.metrics = {
             "counter_metrics": {
@@ -59,16 +53,8 @@ class DetailedVersion():
                 rms.id: DetailedRatioMetric(rms, self) for rms in self.experiment.ratio_metric_specs.values()
                 }
         }
-        # self.aggregated_counter_metrics = {
-        #     metric_id: AggregatedCounterDataPoint() for metric_id in self.experiment.counter_metric_specs
-        # }
-        # self.aggregated_ratio_metrics = {
-        #     metric_id: AggregatedRatioDataPoint() for metric_id in self.experiment.ratio_metric_specs
-        # }
-        # self.beliefs =  {
-        #     metric_id: Belief(status = StatusEnum.uninitialized_belief) for metric_id in self.experiment.ratio_metric_specs
-        # }
 
+        # populated aggregated counter and ratio metrics from last state
         if experiment.eip.last_state:
             if experiment.eip.last_state.aggregated_counter_metrics:
                 if self.id in experiment.eip.last_state.aggregated_counter_metrics:
@@ -79,13 +65,10 @@ class DetailedVersion():
                 if self.id in experiment.eip.last_state.aggregated_ratio_metrics:
                     for metric_id in experiment.eip.last_state.aggregated_ratio_metrics[self.id]:
                         self.metrics["ratio_metrics"][metric_id].set_aggregated_metric(experiment.eip.last_state.aggregated_ratio_metrics[self.id][metric_id])
-        """populated aggregated counter and ratio metrics
-        """
 
         self.threshold_breached = {
             criterion.id: None for criterion in self.experiment.eip.criteria if criterion.threshold
         }
-
         self.probability_of_satisfying_threshold = {
             criterion.id: None for criterion in self.experiment.eip.criteria if criterion.threshold
         }
@@ -114,18 +97,6 @@ class DetailedVersion():
                     ** new_ratio_metrics[metric_id].dict()
                 ))
                 
-            # else: # new ratio is none, so we will retain old value
-            #     pass
-
-
-    # def set_ratio_max_mins(self, ratio_max_mins):
-    #     """Update max and min for each ratio metric. Updated values are stored in self.ratio_max_mins
-
-    #     Args:
-    #         ratio_max_mins (Dict[iter8id, RatioMaxMin]): dictionary mapping from metric id to RatioMaxMin
-    #     """
-    #     self.ratio_max_mins = ratio_max_mins
-
     def update_beliefs(self):
         """Update beliefs for ratio metrics. If belief update is not possible due to insufficient data, then the relevant status codes are populated here
         """
@@ -145,41 +116,44 @@ class DetailedVersion():
             if rm.belief.status == StatusEnum.all_ok:
                 rm.belief.sample_posterior()
 
+    def get_reward_sample(self):
+        self.reward_metric_id = None
+        for criterion in self.experiment.eip.criteria:
+            if criterion.is_reward:
+                self.reward_metric_id = criterion.metric_id
+                break
+
+        if not self.reward_metric_id: # return pseudo-reward
+            return np.full((Belief.sample_size, ), np.float(self.pseudo_reward))
+        else: # try and return a real reward
+            drm = self.metrics["ratio_metrics"][self.reward_metric_id]
+            if drm.belief.status == StatusEnum.all_ok:
+                return drm.belief.sample_posterior()
+            else: 
+                return np.full((Belief.sample_size, ), np.nan)
+
+    def get_criterion_mask(self, criterion):
+        return np.ones((Belief.sample_size, ))
+        # raise NotImplementedError
+
     def create_utility_samples(self):
-        """Create utility samples used for winner assessment and traffic routing
+        """Create utility samples used for winner assessment and traffic routing. This could be an array of nans if data is not available for its computation.
         """
-        ## Initialize reward and utility sample
-        reward_sample = np.ones(Belief.sample_size) * self.pseudo_reward
-        if not self.aggregate_counter_metrics[ITER8_REQUEST_COUNT].value:
-            self.utility_sample = np.ones(Belief.sample_size) * float("inf")
+        if not self.metrics["counter_metrics"][ITER8_REQUEST_COUNT].aggregated_metric.value:
+            logger.warning(f"No requests so far for version: {self.id}")
+            self.utility_sample = np.full((Belief.sample_size, ), 1.0e10) # large number
+        else:
+            self.utility_sample = self.get_reward_sample()
 
-        # for criterion in self.experiment.eip.criteria:
-        #     if criterion.metric_id in self.metrics["counter_metrics"]:
-        #         self.criterion_assessments.append(CriterionAssessment(
-        #             id = criterion.id,
-        #             metric_id = criterion.metric_id,
-        #             statistics = Statistics(
-        #                 value = self.metrics["counter_metrics"][criterion.metric_id].aggregated_metric.value
-        #             ),
-        #             threshold_assessment = self.create_threshold_assessment(criterion)
-        #         ))
-        #     else: # criterion.metric_id in self.metrics["ratio_metrics"]
-        #         self.criterion_assessments.append(CriterionAssessment(
-        #             id = criterion.id,
-        #             metric_id = criterion.metric_id,
-        #             statistics = Statistics(
-        #                 value = self.metrics["ratio_metrics"][criterion.metric_id].aggregated_metric.value
-        #             ),
-        #             threshold_assessment = self.create_threshold_assessment(criterion)
-        #         ))
+        for criterion in self.experiment.eip.criteria:
+            self.utility_sample *= self.get_criterion_mask(criterion)
 
-        # if any criteria or reward ratios are missing
-            # leave utility status as none
-            # else use the respective samples to generate utility samples
-                # se utility status as all ok        
-
+        # bias term to ensure baseline is picked when all versions have zero utilities
+        if self.is_baseline:
+            self.utility_sample += 1.0e-10
+            
     def get_utility(self):
-        return self.utilities
+        return self.utility_sample
 
     def create_threshold_assessment(self, criterion):
         """Create threshold assessment.
