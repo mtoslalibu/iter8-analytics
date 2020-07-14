@@ -57,7 +57,8 @@ class Experiment():
         if ITER8_REQUEST_COUNT in all_counter_metric_specs:
             self.counter_metric_specs[ITER8_REQUEST_COUNT] = all_counter_metric_specs[ITER8_REQUEST_COUNT]
         else:
-            logger.warning("iter8_request_count metric is missing in metric specs")
+            logger.error("iter8_request_count metric is missing in metric specs")
+            raise HTTPException(status_code=422, detail = f"{ITER8_REQUEST_COUNT} is a mandatory counter metric which is missing from the list of metric specs")
         self.ratio_metric_specs = {}
 
         for cri in self.eip.criteria:
@@ -179,7 +180,7 @@ class Experiment():
             metric_id: [] for metric_id in self.ratio_metric_specs
         }
 
-        if self.eip.last_state:
+        if self.eip.last_state and self.eip.last_state.ratio_max_mins:
             for metric_id in self.ratio_metric_specs:
                 a = self.eip.last_state.ratio_max_mins[metric_id].minimum
                 b = self.eip.last_state.ratio_max_mins[metric_id].maximum
@@ -232,9 +233,12 @@ class Experiment():
         Create traffic split using the top-k PBR algorithm
         """
         self.traffic_split[k] = {}
+
         # get the fractional split
-        rank_df = self.utilities.rank(axis = 1, method = 'min')
-        low_rank = rank_df <= 1
+        rank_df = self.utilities.rank(axis = 1, method = 'min', ascending = False)
+
+        low_rank = rank_df <= k
+
         fractional_split = low_rank.sum() / low_rank.sum().sum()
         # round the fractional split so that it sums up to 100
         integral_split_gen = gen_round(fractional_split * 100, 100)
@@ -252,11 +256,7 @@ class Experiment():
         baseline_assessment = None
         candidate_assessments = []
         for version in self.detailed_versions.values():
-            request_count = None
-            if ITER8_REQUEST_COUNT in self.counter_metric_specs:
-                request_count = version.metrics["counter_metrics"][ITER8_REQUEST_COUNT].aggregated_metric.value
-            else:
-                logger.warning("iter8_request_count metric is missing in metric specs")
+            request_count = version.metrics["counter_metrics"][ITER8_REQUEST_COUNT].aggregated_metric.value
 
             if version.is_baseline:
                 baseline_assessment = VersionAssessment(

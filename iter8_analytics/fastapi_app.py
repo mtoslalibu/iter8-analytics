@@ -4,6 +4,7 @@
 import logging
 import os
 import sys
+from pprint import pformat
 
 # external dependencies
 from fastapi import FastAPI, Body
@@ -29,7 +30,10 @@ def provide_assessment_for_this_experiment_iteration(eip: ExperimentIterationPar
     \f
     :body eip: ExperimentIterationParameters
     """
-    return experiment.Experiment(eip).run()
+    run_result = experiment.Experiment(eip).run()
+
+    logger = logging.getLogger('iter8_analytics')
+    return run_result
 
 
 @app.get("/health_check")

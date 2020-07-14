@@ -27,6 +27,16 @@ class GaussianBelief(Belief):
 
     def sample_posterior(self):
         self.sample = np.random.normal(loc = self.mean, scale = self.stddev, size = self.sample_size)
+        return self.sample
+
+class ConstantBelief(Belief):
+    def __init__(self, value):
+        self.value = value
+        self.status = StatusEnum.all_ok
+
+    def sample_posterior(self):
+        self.sample = np.full((self.sample_size, ), np.float(self.value))
+        return self.sample
 
 class DetailedMetric():
     """Base class for a detailed metric.
@@ -61,7 +71,7 @@ class DetailedMetric():
 class DetailedCounterMetric(DetailedMetric):
     def __init__(self, metric_spec, detailed_version):
         super().__init__(metric_spec, detailed_version)
-        self.aggregated_metric = AggregatedRatioDataPoint(status = StatusEnum.uninitialized_value)
+        self.aggregated_metric = AggregatedCounterDataPoint(status = StatusEnum.uninitialized_value)
 
 class DetailedRatioMetric(DetailedMetric):
     def __init__(self, metric_spec, detailed_version):
@@ -82,3 +92,5 @@ class DetailedRatioMetric(DetailedMetric):
                         width = mm.maximum - mm.minimum
                         if width > 0:
                             self.belief = GaussianBelief(mean = self.aggregated_metric.value, variance=width / (1 + denominator_value))
+                        else:
+                            self.belief = ConstantBelief(value = mm.maximum)
