@@ -73,17 +73,7 @@ eip_example = {
                 'destination_workload': "reviews-v2"
             }
         }
-    ],
-    "advanced_traffic_control_parameters": {
-        "exploration_traffic_percentage": 5.0,
-        "check_and_increment_parameters": {
-            "step_size": 1
-        }
-    },
-    "advanced_assessment_parameters": {
-        "posterior_probability_for_credible_intervals": 95.0,
-        "min_posterior_probability_for_winner": 99.0
-    }
+    ]
 }
 
 ar_example = {
@@ -226,17 +216,7 @@ reviews_example = {
         "destination_workload": "reviews-v3"
       }
     }
-  ],
-  "advanced_traffic_control_parameters": {
-    "exploration_traffic_percentage": 5,
-    "check_and_increment_parameters": {
-      "step_size": 1
-    }
-  },
-  "advanced_assessment_parameters": {
-    "posterior_probability_for_credible_intervals": 95,
-    "min_posterior_probability_for_winner": 99
-  }
+  ]
 }
 
 last_state = {
@@ -421,16 +401,6 @@ reviews_example_with_last_state = {
       }
     }
   ],
-  "advanced_traffic_control_parameters": {
-    "exploration_traffic_percentage": 5,
-    "check_and_increment_parameters": {
-      "step_size": 1
-    }
-  },
-  "advanced_assessment_parameters": {
-    "posterior_probability_for_credible_intervals": 95,
-    "min_posterior_probability_for_winner": 99
-  },
   "last_state": copy.deepcopy(last_state)
 }
 

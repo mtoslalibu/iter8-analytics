@@ -234,14 +234,38 @@ class Experiment():
         """
         self.traffic_split[k] = {}
 
+        logger.debug(f"Top k split with k = {k}")
+
+        logger.debug("Utilities")
+        logger.debug(self.utilities.head())
+
         # get the fractional split
         rank_df = self.utilities.rank(axis = 1, method = 'min', ascending = False)
 
+        logger.debug("Rank")
+        logger.debug(rank_df.head())
+
         low_rank = rank_df <= k
 
+        logger.debug("Low rank")
+        logger.debug(low_rank.head())
+
         fractional_split = low_rank.sum() / low_rank.sum().sum()
-        # round the fractional split so that it sums up to 100
-        integral_split_gen = gen_round(fractional_split * 100, 100)
+
+        logger.debug(f"Fractional split: {fractional_split}")
+
+        uniform_split = np.full(fractional_split.shape, 1.0 / len(self.detailed_versions))
+
+        logger.debug(f"Uniform split: {uniform_split}")
+
+        # exploration traffic fraction
+        etf = AdvancedParameters.exploration_traffic_percentage / 100.0 
+        mix_split = (uniform_split * etf) + (fractional_split * (1 - etf))
+
+        logger.debug(f"Mix split: {mix_split}")
+
+        # round the mix split so that it sums up to 100
+        integral_split_gen = gen_round(mix_split * 100, 100)
         for key in self.utilities:
             self.traffic_split[k][key] = next(integral_split_gen)
 

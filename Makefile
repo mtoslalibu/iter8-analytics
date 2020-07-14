@@ -46,6 +46,5 @@ changelog:
 	@sed -n '/$(ver)/,/=====/p' CHANGELOG | grep -v $(ver) | grep -v "====="
 
 test:
-	nosetests --exe --with-coverage --cover-package=iter8_analytics --cover-html --cover-html-dir=code_coverage --ignore-files=".*_test.py"
 	coverage run --source=iter8_analytics --omit="*/__init__.py" -m pytest
 	coverage html

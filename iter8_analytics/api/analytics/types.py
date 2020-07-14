@@ -1,5 +1,5 @@
 """
-Module containing pydantic data models for iter8
+Module containing pydantic data models for iter8 along with some global constants
 """
 # core python dependencies
 from datetime import datetime
@@ -134,7 +134,7 @@ class LastState(BaseModel): # last state recorded by analytics service in its pr
 class ExperimentIterationParameters(BaseModel):
     start_time: datetime = Field(...,
                                  description = "Start time of the experiment")
-    iteration_number: int = Field(None, description = "Iteration number, ranging from 1 to maximum number of iterations (advanced_parameters.max_iterations). This is mandatory for controller interactions. Optional for human-in-the-loop interactions", ge = 0)
+    iteration_number: int = Field(None, description = "Iteration number. This is mandatory for controller interactions. Optional for human-in-the-loop interactions", ge = 0)
     service_name: str = Field(..., description = "Name of the service in this experiment")
     baseline: Version = Field(..., description="The baseline version")
     candidates: Sequence[Version] = Field(...,
@@ -145,7 +145,7 @@ class ExperimentIterationParameters(BaseModel):
         ..., description="Criteria to be assessed for each version in this experiment")
     traffic_control: TrafficControl = Field(TrafficControl(
         max_increment = 2.0, strategy = TrafficSplitStrategy.progressive
-    ), description = "Advanced parameters") # default traffic control
+    ), description = "Traffic control parameters") # default traffic control
     last_state: LastState = Field(
         None, description="Last recorded state from analytics service")
 
@@ -223,7 +223,7 @@ class Iter8AssessmentAndRecommendation(BaseModel):
     timestamp: datetime = Field(...,
                                  description="Timestamp at which the current assessment and recommendation is created")
     baseline_assessment: VersionAssessment = Field(..., description = "Baseline's assessment")
-    candidate_assessments: List[CandidateVersionAssessment] = Field(..., min_items = 1, description="Assessment  of candidate versions")
+    candidate_assessments: List[CandidateVersionAssessment] = Field(..., description="Assessment  of candidate versions")
     traffic_split_recommendation: Dict[TrafficSplitStrategy, Dict[iter8id, int]] = Field(..., description = "Traffic split recommendation on a per algorithm basis. Each recommendation contains the percentage of traffic on a per-version basis in the inner dict")
     # this is a dictionary which maps version ids to percentage of traffic allocated to them. The percentages need to add up to 100
     winner_assessment: WinnerAssessment = Field(..., description="Assessment summary for winning candidate. This is currently computed based on Bayesian estimation")
@@ -247,3 +247,9 @@ class Iter8AssessmentAndRecommendation(BaseModel):
         description="Human-friendly interpretations of the status codes returned by the analytics service") # the index of an interpretation corresponds to the corresponding status enum
     last_state: Dict[str, Any] = Field(
         None, description="Last recorded state from analytics service")
+
+# These are not pydantic models, simply advanced iter8 parameters defined globally
+class AdvancedParameters:
+    exploration_traffic_percentage = 5.0 # 5% of traffic always used for exploration
+    posterior_probability_for_credible_intervals = 95.0
+    min_posterior_probability_for_winner = 99.0 # no winner until iter8 is 99% confident
