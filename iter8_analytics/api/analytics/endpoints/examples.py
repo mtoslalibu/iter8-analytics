@@ -12,7 +12,7 @@ eip_example = {
         },
         {
             "id": "iter8_total_latency",
-            "query_template": "sum(increase(istio_request_duration_seconds_sum{reporter='source'}[$interval])) by ($version_labels)"
+            "query_template": "sum(increase(istio_request_duration_milliseconds_sum{reporter='source'}[$interval])) by ($version_labels)"
         },
         {
             "id": "iter8_error_count",
@@ -174,7 +174,7 @@ reviews_example = {
       },
       {
         "id": "iter8_total_latency",
-        "query_template": "sum(increase(istio_request_duration_seconds_sum{reporter='source'}[$interval])) by ($version_labels)"
+        "query_template": "sum(increase(istio_request_duration_milliseconds_sum{reporter='source'}[$interval])) by ($version_labels)"
       },
       {
         "id": "iter8_error_count",
@@ -207,7 +207,7 @@ reviews_example = {
       "is_reward": False,
       "threshold": {
         "type": "absolute",
-        "value": 25
+        "value": 500
       }
     }
   ],
@@ -368,7 +368,7 @@ reviews_example_with_last_state = {
       },
       {
         "id": "iter8_total_latency",
-        "query_template": "sum(increase(istio_request_duration_seconds_sum{reporter='source'}[$interval])) by ($version_labels)"
+        "query_template": "sum(increase(istio_request_duration_milliseconds_sum{reporter='source'}[$interval])) by ($version_labels)"
       },
       {
         "id": "iter8_error_count",
@@ -401,7 +401,7 @@ reviews_example_with_last_state = {
       "is_reward": False,
       "threshold": {
         "type": "absolute",
-        "value": 25
+        "value": 500
       }
     }
   ],
@@ -453,7 +453,7 @@ eip_with_invalid_ratio["criteria"].append({
     "is_reward": False,
     "threshold": {
           "type": "absolute",
-          "value": 25
+          "value": 500
     }
 })
 
@@ -464,7 +464,7 @@ eip_with_unknown_metric_in_criterion["criteria"].append({
     "is_reward": False,
     "threshold": {
           "type": "absolute",
-          "value": 25
+          "value": 500
     }
 })
 

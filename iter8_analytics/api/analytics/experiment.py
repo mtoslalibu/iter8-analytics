@@ -233,9 +233,12 @@ class Experiment():
         Create traffic split using the top-k PBR algorithm
         """
         self.traffic_split[k] = {}
+
         # get the fractional split
-        rank_df = self.utilities.rank(axis = 1, method = 'min')
-        low_rank = rank_df <= 1
+        rank_df = self.utilities.rank(axis = 1, method = 'min', ascending = False)
+
+        low_rank = rank_df <= k
+
         fractional_split = low_rank.sum() / low_rank.sum().sum()
         # round the fractional split so that it sums up to 100
         integral_split_gen = gen_round(fractional_split * 100, 100)

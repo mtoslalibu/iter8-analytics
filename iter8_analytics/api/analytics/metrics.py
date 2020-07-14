@@ -9,6 +9,7 @@ import logging
 import requests
 from string import Template
 import math
+from pprint import pformat
 
 # external module dependencies
 from pydantic import BaseModel, Field
@@ -346,7 +347,7 @@ class PrometheusRatioMetricQuery(PrometheusMetricQuery):
             value = None,
             timestamp = ts,
             status = StatusEnum.nan_value
-        ) if math.isnan(result_float) else RatioDataPoint(
+        ) if math.isnan(result_float) or math.isinf(result_float) else RatioDataPoint(
             value = result_float,
             timestamp = ts
         )
