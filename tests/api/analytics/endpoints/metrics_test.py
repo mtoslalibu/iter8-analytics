@@ -91,7 +91,7 @@ class TestMetrics:
             }),
             "iter8_total_latency": CounterMetricSpec(** {
                 "id": "iter8_total_latency",
-                "query_template": "sum(increase(istio_request_duration_seconds_sum{reporter='source'}[$interval])) by ($version_labels)"
+                "query_template": "sum(increase(istio_request_duration_milliseconds_sum{reporter='source'}[$interval])) by ($version_labels)"
             }),
             "iter8_error_count": CounterMetricSpec(** {
                 "id": "iter8_error_count",
@@ -144,7 +144,7 @@ class TestMetrics:
             }),
             "iter8_total_latency": CounterMetricSpec(** {
                 "id": "iter8_total_latency",
-                "query_template": "sum(increase(istio_request_duration_seconds_sum{reporter='source'}[$interval])) by ($version_labels)"
+                "query_template": "sum(increase(istio_request_duration_milliseconds_sum{reporter='source'}[$interval])) by ($version_labels)"
             }),
             "iter8_error_count": CounterMetricSpec(** {
                 "id": "iter8_error_count",
