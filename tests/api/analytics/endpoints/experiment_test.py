@@ -52,6 +52,47 @@ class TestExperiment:
         except HTTPException as he:
             pass
 
+    def test_counter_metric_as_reward(self):
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+            
+            try:
+                eg = copy.deepcopy(eip_example)
+                eg["criteria"].append({
+                    "id": "1",
+                    "metric_id": "conversion_count",
+                    "is_reward": True
+                })
+                eip = ExperimentIterationParameters(** eg)
+                exp = Experiment(eip)
+                exp.run()
+            except HTTPException as he:
+                pass
+
+    def test_multiple_ratio_metrics_as_reward(self):
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+            
+            try:
+                eg = copy.deepcopy(eip_example)
+                eg["criteria"].append({
+                    "id": "1",
+                    "metric_id": "iter8_error_rate",
+                    "is_reward": True
+                })
+                eg["criteria"].append({
+                    "id": "2",
+                    "metric_id": "conversion_rate",
+                    "is_reward": True
+                })
+
+                eip = ExperimentIterationParameters(** eg)
+                exp = Experiment(eip)
+                exp.run()
+            except HTTPException as he:
+                pass
+
+
     def test_unknown_metric_in_criterion(self):
         try:
             eip = ExperimentIterationParameters(** eip_with_unknown_metric_in_criterion)
