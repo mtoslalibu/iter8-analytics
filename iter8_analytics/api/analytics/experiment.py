@@ -35,7 +35,7 @@ class Experiment():
             eip (ExperimentIterationParameters): Experiment iteration parameters
 
         Raises:
-            HTTPException: Ratio metrics contain metric ids other than counter metric ids in their numerator or denominator. Also when unknown metric id is found in criteria
+            HTTPException: Ratio metrics contain metric ids other than counter metric ids in their numerator or denominator. Unknown metric id is found in criteria. Metric marked as reward is not a ratio metric. There is at most one reward metric.
         """
 
         self.eip = eip
@@ -66,6 +66,8 @@ class Experiment():
                 """this is a counter metric
                 """
                 self.counter_metric_specs[cri.metric_id] = all_counter_metric_specs[cri.metric_id]
+                if cri.is_reward:
+                    raise HTTPException(status_code = 422, detail = f"Counter metric {cri.metric_id} used as reward. Only ratio metrics can be used as a reward.")
             elif cri.metric_id in all_ratio_metric_specs:
                 """this is a ratio metric
                 """
@@ -84,9 +86,13 @@ class Experiment():
                 """this is an unknown metric id
                 """
                 logger.error(f"Unknown metric id found in criteria: {cri.metric_id}")
-                raise HTTPException(status_code=422, detail=f"Unknown metric id found in criteria: {cri.metric_id}")    
+                raise HTTPException(status_code=422, detail=f"Unknown metric id found in criteria: {cri.metric_id}")  
         """Initialized counter and ratio metric specs relevant to this experiment
         """
+
+        if sum(1 for _ in filter(lambda c: c.is_reward, self.eip.criteria)) > 1:
+            # there is more than one reward metric
+            raise HTTPException(status_code = 422, detail = "More than one reward criteria found")
 
         self.detailed_candidate_versions = {
             spec.id: DetailedCandidateVersion(spec, self, index + 2) for index, spec in enumerate(self.eip.candidates)
