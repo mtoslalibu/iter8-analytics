@@ -251,5 +251,5 @@ class Iter8AssessmentAndRecommendation(BaseModel):
 # These are not pydantic models, simply advanced iter8 parameters defined globally
 class AdvancedParameters:
     exploration_traffic_percentage = 5.0 # 5% of traffic always used for exploration
-    posterior_probability_for_credible_intervals = 95.0
-    min_posterior_probability_for_winner = 99.0 # no winner until iter8 is 99% confident
+    posterior_probability_for_credible_intervals = 0.95
+    min_posterior_probability_for_winner = 0.99 # no winner until iter8 is 99% confident

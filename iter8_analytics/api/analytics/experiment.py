@@ -201,7 +201,7 @@ class Experiment():
         """Create winner assessment. If winner cannot be created due to insufficient data, then the relevant status codes are populated
         """
         # get the fraction of the time a particular version emerged as the winner
-        rank_df = self.utilities.rank(axis = 1, method = 'min')
+        rank_df = self.utilities.rank(axis = 1, method = 'min', ascending = False)
         low_rank = rank_df <= 1
         self.win_probababilities = low_rank.sum() / low_rank.sum().sum()
 
@@ -277,6 +277,7 @@ class Experiment():
     def assemble_assessment_and_recommendations(self):
         """Create and return the final assessment and recommendation
         """        
+        # get baseline and candidate assessments
         baseline_assessment = None
         candidate_assessments = []
         for version in self.detailed_versions.values():
@@ -297,20 +298,38 @@ class Experiment():
                     win_probability = self.win_probababilities[version.id]
                 ))
 
+        # get traffic splits
         ts = {
             'progressive': self.traffic_split[1],
             'top_2': self.traffic_split[2],
             'uniform': self.traffic_split[len(self.detailed_versions)]
         }
 
+        # get winner assessments
+        wvf = False
+        wa = WinnerAssessment(
+                winning_version_found = wvf
+            )
+        current_winner = self.win_probababilities.index[np.argmax(self.win_probababilities)]
+        current_winner_probability = self.win_probababilities[current_winner]
+        if current_winner_probability > AdvancedParameters.min_posterior_probability_for_winner:
+            wvf = True
+            wa = WinnerAssessment(
+                winning_version_found = wvf,
+                current_winner = current_winner,
+                winning_probability = current_winner_probability
+            )
+        logger.debug("Winner assessment")
+        logger.debug(self.win_probababilities)
+        logger.debug(f"{wvf, current_winner, current_winner_probability}")
+
+        # get final assessment and response
         it8ar = Iter8AssessmentAndRecommendation(** {
             "timestamp": datetime.now(),
             "baseline_assessment": baseline_assessment,
             "candidate_assessments": candidate_assessments,
             "traffic_split_recommendation": ts,
-            "winner_assessment": WinnerAssessment(
-                winning_version_found = False
-            ),
+            "winner_assessment": wa,
             "status": [],
             "last_state": {
                 "aggregated_counter_metrics": self.aggregated_counter_metrics,
