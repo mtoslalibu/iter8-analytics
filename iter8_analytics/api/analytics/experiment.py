@@ -160,6 +160,7 @@ class Experiment():
 
         for detailed_version in self.detailed_versions.values():
             # beliefs are needed for creating posterior samples
+            logger.info(f"Updating beliefs for {detailed_version.id}")
             detailed_version.update_beliefs()
             # posterior samples for ratio metrics are needed to create reward and criterion masks
             detailed_version.create_ratio_metric_samples()
@@ -171,6 +172,7 @@ class Experiment():
         # utility samples are needed for winner assessment and traffic recommendations
         self.create_utility_samples()
         self.create_winner_assessments()
+        self.add_baseline_bias()
         self.create_traffic_recommendations()
         return self.assemble_assessment_and_recommendations()
 
@@ -187,9 +189,10 @@ class Experiment():
 
         # multiple effective rewards with criteria masks
         self.utilities = self.effective_rewards * self.criteria_mask
+
+    def add_baseline_bias(self):
         # bias term to ensure baseline is picked when all versions have zero utilities
         self.utilities[self.detailed_baseline_version.id] += 1.0e-10
-
 
     def get_aggregated_counter_metrics(self):
         """Get aggregated counter metrics for this detailed version
@@ -351,22 +354,24 @@ class Experiment():
         }
 
         # get winner assessments
+
         wvf = False
-        wa = WinnerAssessment(
-                winning_version_found = wvf
-            )
-        current_winner = self.win_probababilities.index[np.argmax(self.win_probababilities)]
-        current_winner_probability = self.win_probababilities[current_winner]
-        if current_winner_probability > AdvancedParameters.min_posterior_probability_for_winner:
+
+        current_best_version = self.win_probababilities.index[np.argmax(self.win_probababilities)]
+        probability_of_winning_for_best_version = self.win_probababilities[current_best_version]
+
+        if probability_of_winning_for_best_version > AdvancedParameters.min_posterior_probability_for_winner:
             wvf = True
-            wa = WinnerAssessment(
-                winning_version_found = wvf,
-                current_winner = current_winner,
-                winning_probability = current_winner_probability
-            )
-        logger.debug("Winner assessment")
-        logger.debug(self.win_probababilities)
-        logger.debug(f"{wvf, current_winner, current_winner_probability}")
+
+        wa = WinnerAssessment(
+            winning_version_found=wvf,
+            current_best_version=current_best_version,
+            probability_of_winning_for_best_version=probability_of_winning_for_best_version
+        )
+
+        logger.info("Winner assessment")
+        logger.info(self.win_probababilities)
+        logger.info(f"{(wvf, current_best_version, probability_of_winning_for_best_version)}")
 
         # get final assessment and response
         it8ar = Iter8AssessmentAndRecommendation(** {

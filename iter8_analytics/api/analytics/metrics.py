@@ -197,6 +197,16 @@ class PrometheusMetricQuery():
             query_result (Dict[str, Dict[str, DataPoint]]]): Post processed query result
         """
         interval = int((current_time - self.query_spec.start_time).total_seconds())
+        if interval < 20.0: # less than twenty seconds has elapsed since start of the experiment
+            logger.info("Less than 20 seconds have elapsed since the start of the experiment")
+            return self.post_process({
+                "status": "success", 
+                "data": {
+                    "resultType": "vector",
+                    "result": []
+                }
+            }, current_time)
+
         kwargs = {
             "interval": f"{interval}s",
             "version_labels": ",".join(self.query_spec.version_label_keys) # also hard coded

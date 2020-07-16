@@ -213,9 +213,9 @@ class CandidateVersionAssessment(VersionAssessment): # assessment per candidate
     rollback: bool = Field(False, description = "Rollback this version. Currently candidates can be rolled back if they violate criteria for which rollback_on_violation is True")
  
 class WinnerAssessment(BaseModel):
-    winning_version_found: bool = Field(False, description = "Indicates whether or not a clear winner has emerged. This is currently computed based on Bayesian estimation and uses posterior_probability_for_winner from the iteration parameters")
-    current_winner: str = Field(None, description = "ID of the current winner with the maximum probability of winning. This is currently computed based on Bayesian estimation")
-    winning_probability: float = Field(None, description = "Posterior probability of the version declared as the current winner. This is None if winner is None. This is currently computed based on Bayesian estimation")
+    winning_version_found: bool = Field(..., description = "Indicates whether or not a clear winner has emerged. This is currently computed based on Bayesian estimation and uses posterior_probability_for_winner from the iteration parameters")
+    current_best_version: str = Field(..., description = "ID of the current best version with the maximum probability of winning. This is currently computed based on Bayesian estimation")
+    probability_of_winning_for_best_version: float = Field(..., description = "Posterior probability of the current best version. This is currently computed based on Bayesian estimation")
    ## coming soon
     # safe_to_rollforward: bool = Field(False, description = "True if it is now safe to terminate the experiment early and rollforward to the winner")
 
@@ -253,3 +253,4 @@ class AdvancedParameters:
     exploration_traffic_percentage = 5.0 # 5% of traffic always used for exploration
     posterior_probability_for_credible_intervals = 0.95
     min_posterior_probability_for_winner = 0.99 # no winner until iter8 is 99% confident
+    variance_boost_factor = 100.0 # a higher value of this factor encourages greater exploration

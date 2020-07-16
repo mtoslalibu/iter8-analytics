@@ -107,6 +107,7 @@ class DetailedVersion():
         """
         for rm in self.metrics["ratio_metrics"].values():
             rm.update_belief()
+            logger.info(f"Updated belief: {vars(rm.belief)}")
 
     def create_ratio_metric_samples(self):
         """Create ratio metric samples used for assessment and traffic routing
