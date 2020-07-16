@@ -131,25 +131,13 @@ class DetailedVersion():
             else: 
                 return np.full((Belief.sample_size, ), np.nan)
 
-    def create_utility_samples(self):
-        """Create utility samples used for winner assessment and traffic routing. This could be an array of nans if data is not available for its computation.
-        """
-        if not self.metrics["counter_metrics"][ITER8_REQUEST_COUNT].aggregated_metric.value:
-            logger.warning(f"No requests so far for version: {self.id}")
-            self.utility_sample = np.full((Belief.sample_size, ), 1.0e10) # large number
-        else:
-            self.utility_sample = self.get_reward_sample()
-
+    def get_criteria_mask(self):
+        product_cm = np.ones((Belief.sample_size, ))
         for criterion in self.experiment.eip.criteria:
-            self.utility_sample *= self.detailed_criteria[criterion.id].get_criterion_mask()
-
-        # bias term to ensure baseline is picked when all versions have zero utilities
-        if self.is_baseline:
-            self.utility_sample += 1.0e-10
+            cm = self.detailed_criteria[criterion.id].get_criterion_mask()
+            product_cm *= cm
+        return product_cm
             
-    def get_utility(self):
-        return self.utility_sample
-
     def create_criteria_assessments(self):
         """Create assessment for this version. Results are stored in self.criterion_assessments
         """
