@@ -180,7 +180,7 @@ class Interval(BaseModel):
 class RatioStatistics(BaseModel):
     improvement_over_baseline: Interval = Field(None, description = "Credible interval for percentage improvement over baseline. Defined only for non-baseline versions. This is currently computed based on Bayesian estimation")
     probability_of_beating_baseline: float = Field(None, le = 1.0, ge = 0.0, description = "Probability of beating baseline with respect to this metric. Defined only for non-baseline versions. This is currently computed based on Bayesian estimation")
-    probability_of_being_best_version: float = Field(..., le = 1.0, ge = 0.0, description = "Probability of being the best version with respect to this metric. This is currently computed based on Bayesian estimation")
+    probability_of_being_best_version: float = Field(None, le = 1.0, ge = 0.0, description = "Probability of being the best version with respect to this metric. This is currently computed based on Bayesian estimation")
     credible_interval: Interval = Field(..., description = "Credible interval for the value of this metric. This is currently computed based on Bayesian estimation")
 
 class Statistics(BaseModel):

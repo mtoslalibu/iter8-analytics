@@ -12,7 +12,8 @@ import numpy as np
 from iter8_analytics.api.analytics.types import *
 from iter8_analytics.api.analytics.metrics import *
 from iter8_analytics.api.analytics.utils import *
-from iter8_analytics.api.analytics.detailedmetrics import *
+from iter8_analytics.api.analytics.detailedmetric import *
+from iter8_analytics.api.analytics.detailedcriterion import *
 
 from iter8_analytics.constants import ITER8_REQUEST_COUNT
 
@@ -54,6 +55,10 @@ class DetailedVersion():
                 }
         }
 
+        self.detailed_criteria = {
+            cri.id: DetailedCriterion(cri, self) for cri in self.experiment.eip.criteria
+        }
+
         # populated aggregated counter and ratio metrics from last state
         if experiment.eip.last_state:
             if experiment.eip.last_state.aggregated_counter_metrics:
@@ -66,12 +71,12 @@ class DetailedVersion():
                     for metric_id in experiment.eip.last_state.aggregated_ratio_metrics[self.id]:
                         self.metrics["ratio_metrics"][metric_id].set_aggregated_metric(experiment.eip.last_state.aggregated_ratio_metrics[self.id][metric_id])
 
-        self.threshold_breached = {
-            criterion.id: None for criterion in self.experiment.eip.criteria if criterion.threshold
-        }
-        self.probability_of_satisfying_threshold = {
-            criterion.id: None for criterion in self.experiment.eip.criteria if criterion.threshold
-        }
+        # self.threshold_breached = {
+        #     criterion.id: None for criterion in self.experiment.eip.criteria if criterion.threshold
+        # }
+        # self.probability_of_satisfying_threshold = {
+        #     criterion.id: None for criterion in self.experiment.eip.criteria if criterion.threshold
+        # }
 
     def aggregate_counter_metrics(self, new_counter_metrics: Dict[iter8id, CounterDataPoint]):
         """combine aggregated counter metrics from last state for this version with new counter metrics. Aggregated results stored in self.aggregated_counter_metrics
@@ -103,12 +108,6 @@ class DetailedVersion():
         for rm in self.metrics["ratio_metrics"].values():
             rm.update_belief()
 
-    def create_posterior_samples(self):
-        """Create posterior samples used for assessment and traffic routing
-        """
-        self.create_ratio_metric_samples()
-        self.create_utility_samples()
-
     def create_ratio_metric_samples(self):
         """Create ratio metric samples used for assessment and traffic routing
         """
@@ -132,10 +131,6 @@ class DetailedVersion():
             else: 
                 return np.full((Belief.sample_size, ), np.nan)
 
-    def get_criterion_mask(self, criterion):
-        return np.ones((Belief.sample_size, ))
-        # raise NotImplementedError
-
     def create_utility_samples(self):
         """Create utility samples used for winner assessment and traffic routing. This could be an array of nans if data is not available for its computation.
         """
@@ -146,7 +141,7 @@ class DetailedVersion():
             self.utility_sample = self.get_reward_sample()
 
         for criterion in self.experiment.eip.criteria:
-            self.utility_sample *= self.get_criterion_mask(criterion)
+            self.utility_sample *= self.detailed_criteria[criterion.id].get_criterion_mask()
 
         # bias term to ensure baseline is picked when all versions have zero utilities
         if self.is_baseline:
@@ -155,128 +150,38 @@ class DetailedVersion():
     def get_utility(self):
         return self.utility_sample
 
-    def create_threshold_assessment(self, criterion):
-        """Create threshold assessment.
-
-        Args:
-            criterion (Criterion): A criterion object from the experiment with a threshold
-
-        Returns:
-            threshold (ThresholdAssessment): A threshold assessment object or none if metric values are unavailable to create the assessment
-        """         
-
-        return None # short circuiting for now... 
-        
-        def get_probability_of_satisfying_threshold(belief, criterion):
-            return 1.0
-
-        if criterion.threshold is None:
-            return None
-
-        mid = criterion.metric_id
-        data_point = self.metrics["counter_metrics"][mid].aggregated_metric if mid in self.metrics["counter_metrics"] else self.metrics["ratio_metrics"][mid].aggregated_metric
-        if data_point.value is None:
-            return None
-
-        return ThresholdAssessment(
-            threshold_breached = self.threshold_breached[criterion.id],
-            probability_of_satisfying_threshold = self.probability_of_satisfying_threshold[criterion.id]
-        )
-
-    def create_assessment(self):
+    def create_criteria_assessments(self):
         """Create assessment for this version. Results are stored in self.criterion_assessments
         """
-        self.criterion_assessments = []
-        for criterion in self.experiment.eip.criteria:
-            if criterion.metric_id in self.metrics["counter_metrics"]:
-                self.criterion_assessments.append(CriterionAssessment(
-                    id = criterion.id,
-                    metric_id = criterion.metric_id,
-                    statistics = Statistics(
-                        value = self.metrics["counter_metrics"][criterion.metric_id].aggregated_metric.value
-                    ),
-                    threshold_assessment = self.create_threshold_assessment(criterion)
-                ))
-            else: # criterion.metric_id in self.metrics["ratio_metrics"]
-                self.criterion_assessments.append(CriterionAssessment(
-                    id = criterion.id,
-                    metric_id = criterion.metric_id,
-                    statistics = Statistics(
-                        value = self.metrics["ratio_metrics"][criterion.metric_id].aggregated_metric.value
-                    ),
-                    threshold_assessment = self.create_threshold_assessment(criterion)
-                ))
-
-    def check_breach(self, data_point, limit, preferred_direction):
-        """Check if metric value has breached a limit.
-
-            Args:
-                data_point (DataPoint): aggregated counter or ratio data point
-                limit (float): limit to be checked
-                preferred_direction (DirectionEnum): preferred direction for the metric
-
-            Returns:
-                status (bool): True if the data point has breached threshold. False otherwise.
-        """
-        if preferred_direction == DirectionEnum.lower:
-            return data_point.value > limit
-        elif preferred_direction == DirectionEnum.higher:
-            return data_point.value < limit
-
-    def check_threshold_breaches(self):
-        """Check and record if thresholds have been breached in criteria
-        """
-        raise NotImplementedError()
-
-    def compute_probabilities_of_breaching_thresholds(self):
-        """Compute and record probabilities of thresholds being breached in criteria
-        """
-        raise NotImplementedError()
-
-    def get_threshold_details(self, criterion, detailed_baseline_version):
-        """Compute and record probabilities of thresholds being breached in criteria
-        """
-        if criterion.metric_id in self.aggregated_counter_metrics:
-            data_point = self.aggregated_counter_metrics[criterion.metric_id]
-            preferred_direction = self.experiment.counter_metric_specs[criterion.metric_id].preferred_direction
-            baseline_data_point = detailed_baseline_version.aggregated_counter_metrics[criterion.metric_id]
-
-        if criterion.threshold.threshold_type == ThresholdEnum.absolute:
-            limit = criterion.threshold.value
-        else:
-            limit = criterion.threshold.value * baseline_data_point.value
-
-        return {
-            data_point: data_point,
-            limit: limit,
-            preferred_direction: preferred_direction
-        }
+        for dc in self.detailed_criteria.values():
+            dc.create_assessment()
+        self.criterion_assessments = [self.detailed_criteria[cri.id].get_assessment() for cri in self.experiment.eip.criteria]
 
 class DetailedBaselineVersion(DetailedVersion):
     def __init__(self, spec, experiment):
         super().__init__(spec, True, experiment, 1.0) # baseline always has pseudo_reward = 1.0
 
-    def check_threshold_breaches(self):
-        """Check if thresholds have been breached in criteria
-        """
-        self.threshold_breached = {
-            criterion.id: self.check_breach(** self.get_threshold_details(criterion, self)) for criterion in self.experiment.eip.criteria if criterion.threshold
-        }
+    # def check_threshold_breaches(self):
+    #     """Check if thresholds have been breached in criteria
+    #     """
+    #     self.threshold_breached = {
+    #         criterion.id: self.check_breach(** self.get_threshold_details(criterion, self)) for criterion in self.experiment.eip.criteria if criterion.threshold
+    #     }
 
 class DetailedCandidateVersion(DetailedVersion):
     def __init__(self, spec, experiment, pseudo_reward):
         super().__init__(spec, False, experiment, pseudo_reward)
 
-    def check_threshold_breaches(self):
-        """Check if thresholds have been breached in criteria
-        """
-        self.threshold_breached = {
-            criterion.id: self.check_breach(** self.get_threshold_details(criterion, self)) for criterion in self.experiment.eip.criteria if criterion.threshold
-        }
+    # def check_threshold_breaches(self):
+    #     """Check if thresholds have been breached in criteria
+    #     """
+    #     self.threshold_breached = {
+    #         criterion.id: self.check_breach(** self.get_threshold_details(criterion, self)) for criterion in self.experiment.eip.criteria if criterion.threshold
+    #     }
 
-    def check_threshold_breaches(self):
-        """Check if thresholds have been breached in criteria
-        """
-        self.threshold_breached = {
-            criterion.id: self.check_breach(** self.get_threshold_details(criterion, self.detailed_baseline_versions)) for criterion in self.experiment.eip.criteria if criterion.threshold
-        }
+    # def check_threshold_breaches(self):
+    #     """Check if thresholds have been breached in criteria
+    #     """
+    #     self.threshold_breached = {
+    #         criterion.id: self.check_breach(** self.get_threshold_details(criterion, self.detailed_baseline_versions)) for criterion in self.experiment.eip.criteria if criterion.threshold
+    #     }

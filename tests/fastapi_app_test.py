@@ -33,7 +33,7 @@ class TestUnifiedAnalyticsAPI:
 
             # Call the FastAPI endpoint via the test client
             resp = test_client.post(endpoint, json = eip_example)
-            it8_ar_example = Iter8AssessmentAndRecommendation(** resp.json())
+            iter8_ar_example = Iter8AssessmentAndRecommendation(** resp.json())
             assert resp.status_code == 200
 
     def test_fastapi_with_empty_last_state(self):

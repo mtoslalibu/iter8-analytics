@@ -69,6 +69,26 @@ class TestExperiment:
             except HTTPException as he:
                 pass
 
+
+    def test_delta_criterion_with_counter_metric(self):
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+            
+            try:
+                eg = copy.deepcopy(eip_example)
+                eg["criteria"].append({
+                    "id": "1",
+                    "metric_id": "conversion_count",
+                    "threshold": {
+                        "type": "relative",
+                        "value": 2.5
+                    }
+                })
+                eip = ExperimentIterationParameters(** eg)
+                exp = Experiment(eip)
+            except HTTPException as he:
+                pass
+
     def test_multiple_ratio_metrics_as_reward(self):
         with requests_mock.mock(real_http=True) as m:
             m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
@@ -130,7 +150,7 @@ class TestDetailedVersion:
                 value = 20.0, timestamp = datetime.now(), status = StatusEnum.all_ok)
         })
 
-    def test_create_assessment(self):
+    def test_create_criteria_assessments(self):
         eip_with_ratio_max_mins = ExperimentIterationParameters(** reviews_example_with_ratio_max_mins)
         exp_with_partial_last_state = Experiment(eip_with_ratio_max_mins)
 
@@ -139,4 +159,4 @@ class TestDetailedVersion:
                 value = 20.0, timestamp = datetime.now(), status = StatusEnum.all_ok)
         })
 
-        exp_with_partial_last_state.detailed_versions['reviews_candidate'].create_assessment()
+        exp_with_partial_last_state.detailed_versions['reviews_candidate'].create_criteria_assessments()
