@@ -207,7 +207,7 @@ class VersionAssessment(BaseModel): # assessment per version
     # baseline: bool = Field(False, description = "Is this the baseline?")
     request_count: int = Field(None, ge = 0, description = "Number of requests sent to this version until now")
     criterion_assessments: List[CriterionAssessment] = Field(..., description="Metric assessments for this version")
-    win_probability: float = Field(..., description = "Probability that this version is the winner. This is currently computed based on Bayesian estimation")
+    win_probability: float = Field(..., description = "Posterior probability of this version. This is currently computed based on Bayesian estimation")
 
 class CandidateVersionAssessment(VersionAssessment): # assessment per candidate
     rollback: bool = Field(False, description = "Rollback this version. Currently candidates can be rolled back if they violate criteria for which rollback_on_violation is True")
