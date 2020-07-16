@@ -10,6 +10,8 @@ import numpy as np
 # iter8 dependencies
 from iter8_analytics.api.analytics.types import *
 
+logger = logging.getLogger('iter8_analytics')
+
 class Belief():
     """Base class for belief probability distributions.
     """
@@ -86,15 +88,21 @@ class DetailedRatioMetric(DetailedMetric):
     def update_belief(self):
         ratio_max_mins = self.detailed_version.experiment.ratio_max_mins
 
-        if self.aggregated_metric.value:
+        logger.debug(f"Updating belief for {self.metric_id} for version {self.detailed_version.id}")
+
+        if self.aggregated_metric.value is not None:
+            logger.debug(f"Metric value: {self.aggregated_metric.value}")
             denominator_id = self.metric_spec.denominator
             denominator_value = self.detailed_version.metrics["counter_metrics"][denominator_id].aggregated_metric.value
             if denominator_value is not None:
                 if denominator_value > 0:
                     mm = ratio_max_mins[self.metric_id]
+                    logger.debug(f"Ratio max mins: {mm}")
                     if mm.maximum is not None and mm.minimum is not None:
                         width = mm.maximum - mm.minimum
                         if width > 0:
                             self.belief = GaussianBelief(mean = self.aggregated_metric.value, variance=width / (1 + denominator_value))
+                            logger.debug(f"Gaussian belief: {self.belief}")
                         else:
                             self.belief = ConstantBelief(value = mm.maximum)
+                            logger.debug(f"Constant belief: {self.belief}")

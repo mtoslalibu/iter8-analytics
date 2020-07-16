@@ -101,6 +101,17 @@ class Experiment():
         self.detailed_baseline_version = DetailedBaselineVersion(self.eip.baseline, self)
         self.detailed_versions[self.eip.baseline.id] = self.detailed_baseline_version
 
+        # check if there is a reward metric, and what its preferred direction is
+        self.reward_metric_id = None
+        self.preferred_reward_direction = DirectionEnum.higher
+        for criterion in self.eip.criteria:
+            if criterion.is_reward:
+                self.reward_metric_id = criterion.metric_id
+                if self.ratio_metric_specs[self.reward_metric_id].preferred_direction == DirectionEnum.lower:
+                    self.preferred_reward_direction = DirectionEnum.lower
+                break
+
+
     def populate_metric_values(self):
         """
         Populate metric values in detailed versions. Also populate aggregated_counter_metrics and ratio_max_mins attributes.
@@ -143,8 +154,9 @@ class Experiment():
 
         self.populate_metric_values()
 
-        # empty data frame to hold utility samples
-        self.utilities = pd.DataFrame()
+        # empty data frame to hold reward samples and criteria_masks
+        self.rewards = pd.DataFrame()
+        self.criteria_mask = pd.DataFrame()
 
         for detailed_version in self.detailed_versions.values():
             # beliefs are needed for creating posterior samples
@@ -152,14 +164,32 @@ class Experiment():
             # posterior samples for ratio metrics are needed to create reward and criterion masks
             detailed_version.create_ratio_metric_samples()
             # this step involves creating detailed criteria, along with reward and criterion masks
-            detailed_version.create_criteria_assessments() 
-            # criterion masks are used to compute utility samples
-            detailed_version.create_utility_samples()
-            self.utilities[detailed_version.id] = detailed_version.get_utility()
+            detailed_version.create_criteria_assessments()
+            # reward and criteria masks are used to compute utility samples
+            self.rewards[detailed_version.id] = detailed_version.get_reward_sample()
+            self.criteria_mask[detailed_version.id] = detailed_version.get_criteria_mask()
         # utility samples are needed for winner assessment and traffic recommendations
+        self.create_utility_samples()
         self.create_winner_assessments()
         self.create_traffic_recommendations()
         return self.assemble_assessment_and_recommendations()
+
+    def create_utility_samples(self):
+        if self.preferred_reward_direction == DirectionEnum.higher:
+            self.effective_rewards = self.rewards
+        else:
+            max_rewards = self.rewards.max(axis = 1, skipna = False)
+            self.effective_rewards = pd.DataFrame()
+            for col in self.rewards.columns:
+                self.effective_rewards[col] = max_rewards - self.rewards[col]
+
+        self.effective_rewards.fillna(0)
+
+        # multiple effective rewards with criteria masks
+        self.utilities = self.effective_rewards * self.criteria_mask
+        # bias term to ensure baseline is picked when all versions have zero utilities
+        self.utilities[self.detailed_baseline_version.id] += 1.0e-10
+
 
     def get_aggregated_counter_metrics(self):
         """Get aggregated counter metrics for this detailed version

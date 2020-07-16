@@ -15,6 +15,8 @@ from iter8_analytics.api.analytics.types import *
 from iter8_analytics.api.analytics.detailedmetric import *
 # from iter8_analytics.api.analytics.detailedcriterion import *
 
+logger = logging.getLogger('iter8_analytics')
+
 class DetailedCriterion():
     """Base class for a detailed criterion.
 
@@ -32,17 +34,22 @@ class DetailedCriterion():
         self.detailed_version = detailed_version
         # some redundancy is ok
         self.id = self.spec.id
-        self.metric_id = self.spec.metric_id 
+        self.metric_id = self.spec.metric_id
+        self.is_counter = self.metric_id in self.detailed_version.metrics["counter_metrics"]
+        if self.is_counter:
+            self.detailed_metric = self.detailed_version.metrics["counter_metrics"][self.metric_id]
+        else:
+            self.detailed_metric = self.detailed_version.metrics["ratio_metrics"][self.metric_id]
 
     def create_assessment(self):
-        if self.metric_id in self.detailed_version.metrics["counter_metrics"]:
+        if self.is_counter:
             self.assessment = CriterionAssessment(
                 id = self.id,
                 metric_id = self.metric_id,
                 statistics = self.create_statistics(),
                 threshold_assessment = self.create_threshold_assessment()
             )
-        else: # criterion.metric_id in self.metrics["ratio_metrics"]
+        else: # criterion.metric_id is ratio
             self.assessment = CriterionAssessment(
                 id = self.id,
                 metric_id = self.metric_id,
@@ -51,9 +58,9 @@ class DetailedCriterion():
             )
 
     def create_statistics(self):
-        if self.metric_id in self.detailed_version.metrics["counter_metrics"]:
+        if self.is_counter:
             return Statistics(value = self.detailed_version.metrics["counter_metrics"][self.metric_id].aggregated_metric.value)
-        else:
+        else: # criterion.metric_id is ratio
             return Statistics(value = self.detailed_version.metrics["ratio_metrics"][self.metric_id].aggregated_metric.value, 
             ratio_statistics = self.get_ratio_statistics())
 
@@ -72,14 +79,59 @@ class DetailedCriterion():
         gap = (1.0 - AdvancedParameters.posterior_probability_for_credible_intervals)*100.0
         cilp = gap / 2.0
         ciup = (gap/2.0) + AdvancedParameters.posterior_probability_for_credible_intervals*100.0
-        ci = Interval(lower = np.percentile(ms, cilp), upper = np.percentile(ms, ciup))
+        ci = Interval(
+            lower = max(0.0, np.percentile(ms, cilp)), 
+            upper = max(0.0, np.percentile(ms, ciup))) # don't allow negative values
         # else, get samples of this metric for baseline, and all other candidates
         # compute the relevant statistics and return ratio metrics
         # tbd
         return RatioStatistics(credible_interval = ci)
 
     def get_criterion_mask(self):
-        return np.ones((Belief.sample_size, ))
+        ms = self.detailed_metric.metric_spec
+        if not self.spec.threshold:
+            logger.debug(f"No threshold for {ms.id} for {self.detailed_version.id}")
+            logger.debug("Returning ones")
+            return np.ones((Belief.sample_size, )).astype(np.float)
+        else:
+            if self.is_counter: # counter metric. lower is preferred.
+                if ms.preferred_direction == DirectionEnum.lower:
+                    if self.detailed_metric.aggregated_metric.value <= self.spec.threshold.value:
+                        logger.debug(f"Counter metric {ms.id} within threshold for {self.detailed_version.id}")
+                        logger.debug("Returning ones")
+                        return np.ones((Belief.sample_size, )).astype(np.float)
+                    else:
+                        logger.debug(f"Counter metric {ms.id} violating threshold for {self.detailed_version.id}")
+                        logger.debug("Returning zeros")
+                        return np.zeros((Belief.sample_size, )).astype(np.float)
+                else: # ms.preferred_direction == DirectionEnum.higher:
+                    if self.detailed_metric.aggregated_metric.value >= self.spec.threshold.value:
+                        logger.debug(f"Counter metric {ms.id} within threshold for {self.detailed_version.id}")
+                        logger.debug("Returning ones")                        
+                        return np.ones((Belief.sample_size, )).astype(np.float)
+                    else:
+                        logger.debug(f"Counter metric {ms.id} violating threshold for {self.detailed_version.id}")
+                        logger.debug("Returning zeros")
+                        return np.zeros((Belief.sample_size, )).astype(np.float)
+            else: # self.is_counter == False. Ratio metric.
+                b = self.detailed_version.metrics["ratio_metrics"][self.metric_id].belief
+                if b.status == StatusEnum.uninitialized_belief:
+                    logger.debug(f"Uninitialized belief for metric {ms.id} for {self.detailed_version.id}")
+                    logger.debug("Returning zeros")                  
+                    return np.zeros((Belief.sample_size, )).astype(np.float) # nothing is known about this version
+                # if samples for this metric are all nans, return None
+                sample = b.sample_posterior()
+                if np.any(np.isnan(sample)):
+                    logger.debug(f"Nan values in  metric sample {ms.id} for {self.detailed_version.id}")
+                    logger.debug("Returning zeros")                  
+                    return np.zeros((Belief.sample_size, )).astype(np.float) # can't use nan values
+                else:
+                    logger.debug(f"Returning posterior indicators for metric {ms.id} for {self.detailed_version.id}")
+                    if ms.preferred_direction == DirectionEnum.lower:
+                        return (sample <= self.spec.threshold.value).astype(np.float)
+                    else:
+                        return (sample >= self.spec.threshold.value).astype(np.float)
+                
 
     def create_threshold_assessment(self):
         pass
