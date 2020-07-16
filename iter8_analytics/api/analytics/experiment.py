@@ -40,17 +40,16 @@ class Experiment():
 
         self.eip = eip
 
+        # Initialized traffic split dictionary
         self.traffic_split = {}
-        """Initialized traffic split dictionary
-        """
  
+        # Get all counter and ratio metric specs into their respective dictionaries
         all_counter_metric_specs = {}
         all_ratio_metric_specs = {}
         for cms in self.eip.metric_specs.counter_metrics: 
             all_counter_metric_specs[cms.id] = cms
         for rms in self.eip.metric_specs.ratio_metrics: 
             all_ratio_metric_specs[rms.id] = rms
-        # Got all counter and ratio metric specs into their respective dictionaries
 
         # ITER8_REQUEST_COUNT is a special metric. Lets add this always in counter metrics
         self.counter_metric_specs = {}
@@ -61,39 +60,38 @@ class Experiment():
             raise HTTPException(status_code=422, detail = f"{ITER8_REQUEST_COUNT} is a mandatory counter metric which is missing from the list of metric specs")
         self.ratio_metric_specs = {}
 
+        # Initialize counter and ratio metric specs relevant to this experiment
         for cri in self.eip.criteria:
             if cri.metric_id in all_counter_metric_specs:
-                """this is a counter metric
-                """
+                # this is a counter metric
                 self.counter_metric_specs[cri.metric_id] = all_counter_metric_specs[cri.metric_id]
                 if cri.is_reward:
                     raise HTTPException(status_code = 422, detail = f"Counter metric {cri.metric_id} used as reward. Only ratio metrics can be used as a reward.")
+                if cri.threshold and cri.threshold.threshold_type == ThresholdEnum.relative:
+                    raise HTTPException(status_code = 422, detail = f"Counter metric {cri.metric_id} used with relative thresholds. Only absolute thresholds are allowed for counter metrics within criteria.")
             elif cri.metric_id in all_ratio_metric_specs:
-                """this is a ratio metric
-                """
+                # this is a ratio metric
                 self.ratio_metric_specs[cri.metric_id] = all_ratio_metric_specs[cri.metric_id]
                 num = self.ratio_metric_specs[cri.metric_id].numerator
                 den = self.ratio_metric_specs[cri.metric_id].denominator
                 try:
                     self.counter_metric_specs[num] = all_counter_metric_specs[num]
                     self.counter_metric_specs[den] = all_counter_metric_specs[den]
-                except KeyError as ke:
-                    """unknown numerator or denominator
-                    """
+                except KeyError as ke: # unknown numerator or denominator                    
                     logger.error(f"Unknown numerator or denominator found: {ke}")
                     raise HTTPException(status_code=422, detail=f"Unknown numerator or denominator found: {ke}")
-            else:
-                """this is an unknown metric id
-                """
+            else: #this is an unknown metric id
                 logger.error(f"Unknown metric id found in criteria: {cri.metric_id}")
                 raise HTTPException(status_code=422, detail=f"Unknown metric id found in criteria: {cri.metric_id}")  
-        """Initialized counter and ratio metric specs relevant to this experiment
-        """
 
+        # raise exceptions if you find more than one reward metric
         if sum(1 for _ in filter(lambda c: c.is_reward, self.eip.criteria)) > 1:
             # there is more than one reward metric
             raise HTTPException(status_code = 422, detail = "More than one reward criteria found")
 
+        # Initialize detailed versions. Pseudo reward for baseline = 1.0; pseudo reward for 
+        # candidate is 2.0 + its index in the candidates list (i.e., the first candidate has
+        # pseudo reward 2.0, 2nd has 3.0, and so on)
         self.detailed_candidate_versions = {
             spec.id: DetailedCandidateVersion(spec, self, index + 2) for index, spec in enumerate(self.eip.candidates)
         }
@@ -102,15 +100,11 @@ class Experiment():
         }
         self.detailed_baseline_version = DetailedBaselineVersion(self.eip.baseline, self)
         self.detailed_versions[self.eip.baseline.id] = self.detailed_baseline_version
-        """Initialized detailed versions. Pseudo reward for baseline = 1.0; pseudo reward for candidate is 2 + its index in the candidates list (i.e., the first candidate has pseudo reward 2.0, 2nd has 3.0, and so on)
-        """
 
-    def run(self) -> Iter8AssessmentAndRecommendation:
-        """Perform a single iteration of the experiment and return assessment and recommendation
-        
-        Returns:
-            it8ar (Iter8AssessmentAndRecommendation): Iter8 assessment and recommendation
-        """  
+    def populate_metric_values(self):
+        """
+        Populate metric values in detailed versions. Also populate aggregated_counter_metrics and ratio_max_mins attributes.
+        """
         self.new_counter_metrics: Dict[iter8id,  Dict[iter8id, CounterDataPoint]] = get_counter_metrics(
             self.counter_metric_specs, 
             [version.spec for version in self.detailed_versions.values()],
@@ -130,24 +124,39 @@ class Experiment():
             self.eip.start_time
         )
 
+        # This is in the shape of a Dict[str, RatioMaxMin], where the keys are ratio metric ids
+        # and values are their max mins. 
+
         self.ratio_max_mins = self.get_ratio_max_mins()
-        """This is in the shape of a Dict[str, RatioMaxMin], where the keys are ratio metric ids and values are their max mins
-        """
 
         for detailed_version in self.detailed_versions.values():
             detailed_version.aggregate_ratio_metrics(
                 self.new_ratio_metrics[detailed_version.id]
             )
-        
-        self.aggregated_ratio_metrics = self.get_aggregated_ratio_metrics()
 
+    def run(self) -> Iter8AssessmentAndRecommendation:
+        """Perform a single iteration of the experiment and return assessment and recommendation
+        
+        Returns:
+            it8ar (Iter8AssessmentAndRecommendation): Iter8 assessment and recommendation
+        """  
+
+        self.populate_metric_values()
+
+        # empty data frame to hold utility samples
         self.utilities = pd.DataFrame()
 
         for detailed_version in self.detailed_versions.values():
+            # beliefs are needed for creating posterior samples
             detailed_version.update_beliefs()
-            detailed_version.create_posterior_samples()
+            # posterior samples for ratio metrics are needed to create reward and criterion masks
+            detailed_version.create_ratio_metric_samples()
+            # this step involves creating detailed criteria, along with reward and criterion masks
+            detailed_version.create_criteria_assessments() 
+            # criterion masks are used to compute utility samples
+            detailed_version.create_utility_samples()
             self.utilities[detailed_version.id] = detailed_version.get_utility()
-            detailed_version.create_assessment()
+        # utility samples are needed for winner assessment and traffic recommendations
         self.create_winner_assessments()
         self.create_traffic_recommendations()
         return self.assemble_assessment_and_recommendations()
@@ -339,7 +348,7 @@ class Experiment():
             "status": [],
             "last_state": {
                 "aggregated_counter_metrics": self.aggregated_counter_metrics,
-                "aggregated_ratio_metrics": self.aggregated_ratio_metrics,
+                "aggregated_ratio_metrics": self.get_aggregated_ratio_metrics(),
                 "ratio_max_mins": self.ratio_max_mins
             }
         })

@@ -17,26 +17,30 @@ class Belief():
 
     def __init__(self, status: StatusEnum):
         self.status = status
+        self.sample = None
+
+    def sample_posterior(self):
+        if self.sample is None:
+            self.compute_sample()
+        return self.sample
 
 class GaussianBelief(Belief):
     def __init__(self, mean: float, variance: float):
+        super().__init__(StatusEnum.all_ok)
         self.mean = mean
         self.variance = variance
         self.stddev = np.sqrt(variance)
-        self.status = StatusEnum.all_ok
 
-    def sample_posterior(self):
+    def compute_sample(self):
         self.sample = np.random.normal(loc = self.mean, scale = self.stddev, size = self.sample_size)
-        return self.sample
 
 class ConstantBelief(Belief):
     def __init__(self, value):
+        super().__init__(StatusEnum.all_ok)
         self.value = value
-        self.status = StatusEnum.all_ok
 
-    def sample_posterior(self):
+    def compute_sample(self):
         self.sample = np.full((self.sample_size, ), np.float(self.value))
-        return self.sample
 
 class DetailedMetric():
     """Base class for a detailed metric.
@@ -51,7 +55,7 @@ class DetailedMetric():
 
         Args:
             metric_spec (MetricSpec): metric spec
-            detailed_version (DetailedVersion): detailed version to which this detailed metric belongs   
+            detailed_version (DetailedVersion): detailed version to which this detailed metric belongs
         """
         self.metric_spec = metric_spec # there's some duplication here. Ok for now.
         self.metric_id = self.metric_spec.id
