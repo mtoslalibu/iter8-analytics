@@ -101,7 +101,7 @@ class DetailedRatioMetric(DetailedMetric):
                     if mm.maximum is not None and mm.minimum is not None:
                         width = mm.maximum - mm.minimum
                         if width > 0:
-                            self.belief = GaussianBelief(mean = self.aggregated_metric.value, variance=width / (1 + denominator_value))
+                            self.belief = GaussianBelief(mean = self.aggregated_metric.value, variance=width*AdvancedParameters.variance_boost_factor / (1 + denominator_value))
                             logger.debug(f"Gaussian belief: {self.belief}")
                         else:
                             self.belief = ConstantBelief(value = mm.maximum)
