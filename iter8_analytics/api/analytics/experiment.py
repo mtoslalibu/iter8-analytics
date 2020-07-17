@@ -317,6 +317,17 @@ class Experiment():
         for key in self.utilities:
             self.traffic_split[k][key] = next(integral_split_gen)
 
+        # apply max_increment based traffic capping
+        # if old split exists, get it.
+        # else, initialize it.
+        # for each candidate:
+            # if the increase is greater than max_increment:
+                # cap it at max_increment
+                # and push the reminder to baseline
+                # maintain total = 100% as the loop invariant
+        
+
+
     def mix_recommendations(self):
         """Create the final traffic recommendation
         """
