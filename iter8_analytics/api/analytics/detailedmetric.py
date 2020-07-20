@@ -108,30 +108,29 @@ class DetailedRatioMetric(DetailedMetric):
 
             denominator_id = self.metric_spec.denominator
             denominator_value = self.detailed_version.metrics["counter_metrics"][denominator_id].aggregated_metric.value
-            numerator_id = self.metric_spec.numerator
-            numerator_value = self.detailed_version.metrics["counter_metrics"][numerator_id].aggregated_metric.value
+            # numerator_id = self.metric_spec.numerator
+            # numerator_value = self.detailed_version.metrics["counter_metrics"][numerator_id].aggregated_metric.value
 
-            if denominator_value is not None:
-                if denominator_value > 0:
-                    # try to use beta belief first -- most specific
-                    if self.metric_spec.zero_to_one:
-                        if numerator_value is not None:
-                            diff = denominator_value - numerator_value
-                            self.belief = BetaBelief(alpha = 1.0 + numerator_value, beta = 1.0 + diff)
-                            if diff < 0.0:
-                                raise HTTPException(status_code=422, detail = f"Numerator value {numerator_value} is greater than denominator value {denominator_value} for ratio metric {self.metric_id} which has zero_to_one set to true")
-                            logger.debug(f"Beta belief: {self.belief}")
+            if denominator_value is not None and denominator_value > 0:
+                if self.metric_spec.zero_to_one: # beta belief
+                    if self.aggregated_metric.value > 1.0:
+                        raise HTTPException(status_code=422, detail=f"Value {self.aggregated_metric.value} exceeds 1.0 for ratio metric {self.metric_id} which has zero_to_one set to true.")
+                    numerator_value = self.aggregated_metric.value * denominator_value
+                    diff = denominator_value - numerator_value
+                    self.belief = BetaBelief(alpha=1.0 + numerator_value, beta=1.0 + diff)
+                    logger.debug(f"Beta belief: {self.belief}")
+                    return
+                else:  # Gaussian or constant or undefined
+                    mm = ratio_max_mins[self.metric_id]
+                    logger.debug(f"Ratio max mins: {mm}")
+                    if mm.maximum is not None and mm.minimum is not None:
+                        width = mm.maximum - mm.minimum
+                        if width > 0: # gaussian
+                            self.belief = GaussianBelief(mean= self.aggregated_metric.value, variance=width*AdvancedParameters.variance_boost_factor / (1 + denominator_value))
+                            logger.debug(f"Gaussian belief: {self.belief}")
                             return
-                    else: # try to use Gaussian belief
-                        mm = ratio_max_mins[self.metric_id]
-                        logger.debug(f"Ratio max mins: {mm}")
-                        if mm.maximum is not None and mm.minimum is not None:
-                            width = mm.maximum - mm.minimum
-                            if width > 0:
-                                self.belief = GaussianBelief(mean = self.aggregated_metric.value, variance=width*AdvancedParameters.variance_boost_factor / (1 + denominator_value))
-                                logger.debug(f"Gaussian belief: {self.belief}")
-                                return
-                            else:
-                                self.belief = ConstantBelief(value = mm.maximum)
-                                logger.debug(f"Constant belief: {self.belief}")
-                                return
+                        else: # use constant belief.
+                            self.belief = ConstantBelief(value= mm.maximum)
+                            logger.debug(f"Constant belief: {self.belief}")
+                            return
+                    # else undefined belief
