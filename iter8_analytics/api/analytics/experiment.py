@@ -185,14 +185,25 @@ class Experiment():
             for col in self.rewards.columns:
                 self.effective_rewards[col] = max_rewards - self.rewards[col]
 
-        self.effective_rewards.fillna(0)
+        self.effective_rewards = self.effective_rewards.fillna(0)
+
+        logger.debug("Effective rewards")
+        logger.debug(self.effective_rewards.head())
+
+        logger.debug("Criteria mask")
+        logger.debug(self.criteria_mask.head())
+
 
         # multiple effective rewards with criteria masks
         self.utilities = self.effective_rewards * self.criteria_mask
+        logger.debug("Created utility samples")
+        logger.debug(self.utilities.head())
 
     def add_baseline_bias(self):
         # bias term to ensure baseline is picked when all versions have zero utilities
         self.utilities[self.detailed_baseline_version.id] += 1.0e-10
+        logger.debug("Added baseline bias")
+        logger.debug(self.utilities.head())
 
     def get_aggregated_counter_metrics(self):
         """Get aggregated counter metrics for this detailed version
@@ -256,6 +267,9 @@ class Experiment():
     def create_traffic_recommendations(self):
         """Create traffic recommendations for individual algorithms
         """
+        self.traffic_split_recommendation = {
+            x: {} for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform]
+        }
         self.create_progressive_recommendation() # PBR  = posterior Bayesian sampling
         self.create_top_2_recommendation()
         self.create_uniform_recommendation()
@@ -282,7 +296,7 @@ class Experiment():
         """
         self.traffic_split[k] = {}
 
-        logger.debug(f"Top k split with k = {k}")
+        logger.info(f"Top k split with k = {k}")
 
         logger.debug("Utilities")
         logger.debug(self.utilities.head())
@@ -317,10 +331,49 @@ class Experiment():
         for key in self.utilities:
             self.traffic_split[k][key] = next(integral_split_gen)
 
+        # apply max_increment based traffic capping
+        # if old split exists, get it.
+        # else, initialize it.
+        # for each candidate:
+            # if the increase is greater than max_increment:
+                # cap it at max_increment
+                # and push the reminder to baseline
+                # maintain total = 100% as the loop invariant
+        
+
+
     def mix_recommendations(self):
-        """Create the final traffic recommendation
+        """Create the final traffic recommendations
         """
-        pass
+        # apply max_increment based traffic capping
+
+        # find the old split or initialize it to 100% baseline for all algos
+        if self.eip.last_state and self.eip.last_state.traffic_split_recommendation:
+            old_split = self.eip.last_state.traffic_split_recommendation
+        else:
+            old_split = {
+                x: {
+                    y: 0 for y in self.detailed_versions
+                } for x in [1, 2, len(self.detailed_versions)]
+            }
+            for x in old_split:
+                old_split[x][self.detailed_baseline_version.id] = 100
+        
+        
+
+        logger.debug("Integral split")
+        logger.debug(self.traffic_split)
+        logger.debug("Old split")
+        logger.debug(old_split)
+        
+        # if old split exists, get it.
+        # else, initialize it.
+        # for each candidate:
+            # if the increase is greater than max_increment:
+                # cap it at max_increment
+                # and push the reminder to baseline
+                # maintain total = 100% as the loop invariant
+        
 
     def assemble_assessment_and_recommendations(self):
         """Create and return the final assessment and recommendation
@@ -369,9 +422,9 @@ class Experiment():
             probability_of_winning_for_best_version=probability_of_winning_for_best_version
         )
 
-        logger.info("Winner assessment")
-        logger.info(self.win_probababilities)
-        logger.info(f"{(wvf, current_best_version, probability_of_winning_for_best_version)}")
+        logger.debug("Winner assessment")
+        logger.debug(self.win_probababilities)
+        logger.debug(f"{(wvf, current_best_version, probability_of_winning_for_best_version)}")
 
         # get final assessment and response
         it8ar = Iter8AssessmentAndRecommendation(** {

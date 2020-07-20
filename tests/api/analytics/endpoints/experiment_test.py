@@ -1,7 +1,7 @@
 """Tests for module iter8_analytics.api.analytics.endpoints.metrics_test"""
 # standard python stuff
 import logging
-from datetime import datetime
+from datetime import datetime,timezone
 import json
 
 # python libraries
@@ -139,6 +139,16 @@ class TestExperiment:
             eip = ExperimentIterationParameters(** reviews_example_with_ratio_max_mins)
             exp = Experiment(eip)
             exp.run()
+
+    def test_start_time_with_current_time(self):
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
+
+            eip = ExperimentIterationParameters(** eip_with_current_time)
+            eip.start_time = datetime.now(timezone.utc)
+            exp = Experiment(eip)
+            exp.run()
+
 
 class TestDetailedVersion:
     def test_detailed_version(self):

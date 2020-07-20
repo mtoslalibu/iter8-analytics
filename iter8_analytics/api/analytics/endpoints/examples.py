@@ -438,6 +438,112 @@ eip_with_unknown_metric_in_criterion["criteria"].append({
     }
 })
 
+
+eip_with_current_time = {
+    "name": "productpage-abn-test",
+    "start_time": "2020-07-17T20:05:02-04:00",
+    "service_name": "productpage",
+    "iteration_number": 0,
+    "metric_specs": {
+        "counter_metrics": [{
+            "name": "iter8_request_count",
+            "preferred_direction": "lower",
+            "query_template": "sum(increase(istio_requests_total{reporter='source',job='istio-mesh'}[$interval])) by ($version_labels)"
+        }, {
+            "name": "iter8_total_latency",
+            "preferred_direction": "lower",
+            "query_template": "(sum(increase(istio_request_duration_milliseconds_sum{reporter='source',job='istio-mesh'}[$interval])) by ($version_labels))*1000"
+        }, {
+            "name": "iter8_error_count",
+            "preferred_direction": "higher",
+            "query_template": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source',job='istio-mesh'}[$interval])) by ($version_labels)"
+        }, {
+            "name": "books_purchased_total",
+            "preferred_direction": "higher",
+            "query_template": "sum(increase(number_of_books_purchased_total{}[$interval])) by ($version_labels)"
+        }, {
+            "name": "500_ms_latency_percentile",
+            "preferred_direction": "higher",
+            "query_template": "(sum(increase(istio_request_duration_milliseconds_bucket{le='500',reporter='source',job='istio-mesh'}[$interval])) by ($version_labels))"
+        }, {
+            "name": "latency_percentile_total",
+            "query_template": "(sum(increase(istio_request_duration_milliseconds_bucket{le='10000',reporter='source',job='istio-mesh'}[$interval])) by ($version_labels))"
+        }],
+        "ratio_metrics": [{
+            "name": "iter8_mean_latency",
+            "numerator": "iter8_total_latency",
+            "denominator": "iter8_request_count"
+        }, {
+            "name": "iter8_error_rate",
+            "numerator": "iter8_error_count",
+            "denominator": "iter8_request_count",
+            "zero_to_one": True
+        }, {
+            "name": "mean_books_purchased",
+            "numerator": "books_purchased_total",
+            "denominator": "iter8_request_count"
+        }, {
+            "name": "mean_500_ms_latency_percentile",
+            "numerator": "500_ms_latency_percentile",
+            "denominator": "latency_percentile_total"
+        }]
+    },
+    "criteria": [{
+        "id": "iter8_mean_latency",
+        "metric_id": "iter8_mean_latency",
+        "is_reward": False,
+        "threshold": {
+            "threshold_type": "relative",
+            "value": 0.6
+        }
+    }, {
+        "id": "iter8_error_rate",
+        "metric_id": "iter8_error_rate",
+        "is_reward": False,
+        "threshold": {
+            "threshold_type": "absolute",
+            "value": 0.05
+        }
+    }, {
+        "id": "mean_500_ms_latency_percentile",
+        "metric_id": "mean_500_ms_latency_percentile",
+        "is_reward": False,
+        "threshold": {
+            "threshold_type": "absolute",
+            "value": 0.99
+        }
+    }, {
+        "id": "mean_books_purchased",
+        "metric_id": "mean_books_purchased",
+        "is_reward": True
+    }],
+    "baseline": {
+        "id": "productpage-v1",
+        "version_labels": {
+            "destination_service_namespace": "kubecon-demo",
+            "destination_workload": "productpage-v1"
+        }
+    },
+    "candidates": [{
+        "id": "productpage-v2",
+        "version_labels": {
+            "destination_service_namespace": "kubecon-demo",
+            "destination_workload": "productpage-v2"
+        }
+    }, {
+        "id": "productpage-v3",
+        "version_labels": {
+            "destination_service_namespace": "kubecon-demo",
+            "destination_workload": "productpage-v3"
+        }
+    }],
+    "last_state": {},
+    "traffic_control": {
+        "max_increment": 2,
+        "strategy": "progressive"
+    }
+}
+
 reviews_example_without_request_count = copy.deepcopy(reviews_example)
 del reviews_example_without_request_count["criteria"][1]
 del reviews_example_without_request_count["metric_specs"]["counter_metrics"][0]

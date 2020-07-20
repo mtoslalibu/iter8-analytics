@@ -129,6 +129,8 @@ class LastState(BaseModel): # last state recorded by analytics service in its pr
     aggregated_counter_metrics: Dict[iter8id, Dict[iter8id, AggregatedCounterDataPoint]] = Field(None, description = "Dictionary mapping from version id to another dictionary which maps from counter metric id to its latest aggregated metric value")
     aggregated_ratio_metrics: Dict[iter8id, Dict[iter8id, AggregatedRatioDataPoint]] = Field(None, description = "Dictionary mapping from version id to another dictionary which maps from ratio metric id to its latest aggregated metric value")
     ratio_max_mins: Dict[iter8id, RatioMaxMin] = Field(None, description = "Dictionary mapping from ratio metric id to its max min values")
+    traffic_split_recommendation: Dict[TrafficSplitStrategy, Dict[iter8id, int]] = Field(None, description = "Traffic split recommendation on a per algorithm basis. Each recommendation contains the percentage of traffic on a per-version basis in the inner dict")
+    # this is a dictionary which maps version ids to percentage of traffic allocated to them. The percentages need to add up to 100
 
 # parameters for current iteration of experiment
 class ExperimentIterationParameters(BaseModel):
