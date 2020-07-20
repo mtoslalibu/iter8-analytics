@@ -160,7 +160,7 @@ class Experiment():
 
         for detailed_version in self.detailed_versions.values():
             # beliefs are needed for creating posterior samples
-            logger.info(f"Updating beliefs for {detailed_version.id}")
+            logger.debug(f"Updating beliefs for {detailed_version.id}")
             detailed_version.update_beliefs()
             # posterior samples for ratio metrics are needed to create reward and criterion masks
             detailed_version.create_ratio_metric_samples()
@@ -296,7 +296,7 @@ class Experiment():
         """
         self.traffic_split[k] = {}
 
-        logger.info(f"Top k split with k = {k}")
+        logger.debug(f"Top k split with k = {k}")
 
         logger.debug("Utilities")
         logger.debug(self.utilities.head())

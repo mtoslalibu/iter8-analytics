@@ -144,7 +144,7 @@ class TestExperiment:
         with requests_mock.mock(real_http=True) as m:
             m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_sample_response.json")))
 
-            eip = ExperimentIterationParameters(** eip_with_current_time)
+            eip = ExperimentIterationParameters(** eip_with_percentile)
             eip.start_time = datetime.now(timezone.utc)
             exp = Experiment(eip)
             exp.run()

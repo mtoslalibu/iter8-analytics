@@ -439,83 +439,71 @@ eip_with_unknown_metric_in_criterion["criteria"].append({
 })
 
 
-eip_with_current_time = {
+eip_with_percentile = {
     "name": "productpage-abn-test",
     "start_time": "2020-07-17T20:05:02-04:00",
     "service_name": "productpage",
-    "iteration_number": 0,
+    "iteration_number": 1,
     "metric_specs": {
         "counter_metrics": [{
             "name": "iter8_request_count",
-            "preferred_direction": "lower",
-            "query_template": "sum(increase(istio_requests_total{reporter='source',job='istio-mesh'}[$interval])) by ($version_labels)"
+            "query_template": "sum(increase(istio_requests_total{reporter='source'}[$interval])) by ($version_labels)"
         }, {
             "name": "iter8_total_latency",
-            "preferred_direction": "lower",
-            "query_template": "(sum(increase(istio_request_duration_milliseconds_sum{reporter='source',job='istio-mesh'}[$interval])) by ($version_labels))*1000"
+            "query_template": "(sum(increase(istio_request_duration_milliseconds_sum{reporter='source'}[$interval])) by ($version_labels))"
         }, {
             "name": "iter8_error_count",
-            "preferred_direction": "higher",
-            "query_template": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source',job='istio-mesh'}[$interval])) by ($version_labels)"
+            "preferred_direction": "lower",
+            "query_template": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source'}[$interval])) by ($version_labels)"
         }, {
             "name": "books_purchased_total",
             "preferred_direction": "higher",
             "query_template": "sum(increase(number_of_books_purchased_total{}[$interval])) by ($version_labels)"
         }, {
-            "name": "500_ms_latency_percentile",
+            "name": "500_ms_latency_count",
             "preferred_direction": "higher",
-            "query_template": "(sum(increase(istio_request_duration_milliseconds_bucket{le='500',reporter='source',job='istio-mesh'}[$interval])) by ($version_labels))"
-        }, {
-            "name": "latency_percentile_total",
-            "query_template": "(sum(increase(istio_request_duration_milliseconds_bucket{le='10000',reporter='source',job='istio-mesh'}[$interval])) by ($version_labels))"
+            "query_template": "(sum(increase(istio_request_duration_milliseconds_bucket{le='500',reporter='source'}[$interval])) by ($version_labels))"
         }],
         "ratio_metrics": [{
             "name": "iter8_mean_latency",
             "numerator": "iter8_total_latency",
-            "denominator": "iter8_request_count"
+            "denominator": "iter8_request_count",
+            "preferred_direction": "lower"
         }, {
             "name": "iter8_error_rate",
             "numerator": "iter8_error_count",
             "denominator": "iter8_request_count",
+            "preferred_direction": "lower",
             "zero_to_one": True
         }, {
             "name": "mean_books_purchased",
             "numerator": "books_purchased_total",
-            "denominator": "iter8_request_count"
+            "denominator": "iter8_request_count",
+            "preferred_direction": "higher"
         }, {
-            "name": "mean_500_ms_latency_percentile",
-            "numerator": "500_ms_latency_percentile",
-            "denominator": "latency_percentile_total"
+            "name": "500_ms_latency_percentile",
+            "numerator": "500_ms_latency_count",
+            "denominator": "iter8_request_count",
+            "preferred_direction": "higher",
+            "zero_to_one": True
         }]
     },
     "criteria": [{
-        "id": "iter8_mean_latency",
-        "metric_id": "iter8_mean_latency",
-        "is_reward": False,
-        "threshold": {
-            "threshold_type": "relative",
-            "value": 0.6
-        }
-    }, {
-        "id": "iter8_error_rate",
-        "metric_id": "iter8_error_rate",
-        "is_reward": False,
-        "threshold": {
-            "threshold_type": "absolute",
-            "value": 0.05
-        }
-    }, {
-        "id": "mean_500_ms_latency_percentile",
-        "metric_id": "mean_500_ms_latency_percentile",
+        "id": "0",
+        "metric_id": "500_ms_latency_percentile",
         "is_reward": False,
         "threshold": {
             "threshold_type": "absolute",
             "value": 0.99
         }
     }, {
-        "id": "mean_books_purchased",
-        "metric_id": "mean_books_purchased",
-        "is_reward": True
+        "id": "1",
+        "metric_id": "iter8_error_rate",
+        "is_reward": False,
+        "threshold": {
+            "threshold_type": "absolute",
+            "value": 0.0001
+        }
     }],
     "baseline": {
         "id": "productpage-v1",

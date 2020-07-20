@@ -72,7 +72,7 @@ def config_logger(log_level = "debug"):
             ' - %(filename)s:%(lineno)d - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logging.getLogger('iter8_analytics').info("Configured logger")
+    logging.getLogger('iter8_analytics').debug("Configured logger")
 
 if __name__ == '__main__':
     config_logger(config.env_config[constants.LOG_LEVEL])
