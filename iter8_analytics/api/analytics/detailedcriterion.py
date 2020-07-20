@@ -65,7 +65,8 @@ class DetailedCriterion():
             ratio_statistics = self.get_ratio_statistics())
 
     def get_ratio_statistics(self):
-        b = self.detailed_version.metrics["ratio_metrics"][self.metric_id].belief
+        rm = self.detailed_version.metrics["ratio_metrics"][self.metric_id]
+        b = rm.belief
         if b.status == StatusEnum.uninitialized_belief:
             return None
         # if samples for this metric are all nans, return None
@@ -114,7 +115,8 @@ class DetailedCriterion():
                         logger.debug("Returning zeros")
                         return np.zeros((Belief.sample_size, )).astype(np.float)
             else: # self.is_counter == False. Ratio metric.
-                b = self.detailed_version.metrics["ratio_metrics"][self.metric_id].belief
+                rm = self.detailed_version.metrics["ratio_metrics"][self.metric_id]
+                b = rm.belief
                 if b.status == StatusEnum.uninitialized_belief:
                     logger.debug(f"Uninitialized belief for metric {ms.id} for {self.detailed_version.id}")
                     logger.debug("Returning zeros")                  

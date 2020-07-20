@@ -126,9 +126,9 @@ class DetailedVersion():
         if not self.reward_metric_id: # return pseudo-reward
             return np.full((Belief.sample_size, ), np.float(self.pseudo_reward))
         else: # try and return a real reward
-            drm = self.metrics["ratio_metrics"][self.reward_metric_id]
-            if drm.belief.status == StatusEnum.all_ok:
-                return drm.belief.sample_posterior()
+            rm = self.metrics["ratio_metrics"][self.reward_metric_id]
+            if rm.belief.status == StatusEnum.all_ok:
+                return rm.belief.sample_posterior()
             else: 
                 return np.full((Belief.sample_size, ), np.nan)
 

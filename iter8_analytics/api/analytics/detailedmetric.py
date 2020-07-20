@@ -21,9 +21,11 @@ class Belief():
         self.status = status
         self.sample = None
 
-    def sample_posterior(self):
+    def sample_posterior(self, mini = 0.0):
         if self.sample is None:
-            self.compute_sample()
+            self.compute_initial_sample()
+        if mini is not None:
+            self.sample = np.maximum(self.sample, mini)
         return self.sample
 
 class GaussianBelief(Belief):
@@ -33,15 +35,25 @@ class GaussianBelief(Belief):
         self.variance = variance
         self.stddev = np.sqrt(variance)
 
-    def compute_sample(self):
+    def compute_initial_sample(self):
         self.sample = np.random.normal(loc = self.mean, scale = self.stddev, size = self.sample_size)
+
+class BetaBelief(Belief):
+    def __init__(self, alpha = 1.0, beta = 1.0):
+        super().__init__(StatusEnum.all_ok)
+        self.alpha = alpha
+        self.beta = beta
+
+    def compute_initial_sample(self):
+        self.sample = np.random.beta(a = self.alpha, b = self.beta, size = self.sample_size)
+
 
 class ConstantBelief(Belief):
     def __init__(self, value):
         super().__init__(StatusEnum.all_ok)
         self.value = value
 
-    def compute_sample(self):
+    def compute_initial_sample(self):
         self.sample = np.full((self.sample_size, ), np.float(self.value))
 
 class DetailedMetric():
@@ -92,17 +104,30 @@ class DetailedRatioMetric(DetailedMetric):
 
         if self.aggregated_metric.value is not None:
             logger.debug(f"Metric value: {self.aggregated_metric.value}")
+
             denominator_id = self.metric_spec.denominator
             denominator_value = self.detailed_version.metrics["counter_metrics"][denominator_id].aggregated_metric.value
+            numerator_id = self.metric_spec.numerator
+            numerator_value = self.detailed_version.metrics["counter_metrics"][numerator_id].aggregated_metric.value
+
             if denominator_value is not None:
                 if denominator_value > 0:
-                    mm = ratio_max_mins[self.metric_id]
-                    logger.debug(f"Ratio max mins: {mm}")
-                    if mm.maximum is not None and mm.minimum is not None:
-                        width = mm.maximum - mm.minimum
-                        if width > 0:
-                            self.belief = GaussianBelief(mean = self.aggregated_metric.value, variance=width*AdvancedParameters.variance_boost_factor / (1 + denominator_value))
-                            logger.debug(f"Gaussian belief: {self.belief}")
-                        else:
-                            self.belief = ConstantBelief(value = mm.maximum)
-                            logger.debug(f"Constant belief: {self.belief}")
+                    # try to use beta belief first -- most specific
+                    if self.metric_spec.zero_to_one:
+                        if numerator_value is not None:
+                            self.belief = BetaBelief(alpha = 1.0 + numerator_value, beta = 1.0 + denominator_value - numerator_value)
+                            logger.debug(f"Beta belief: {self.belief}")
+                            return
+                    else: # try to use Gaussian belief
+                        mm = ratio_max_mins[self.metric_id]
+                        logger.debug(f"Ratio max mins: {mm}")
+                        if mm.maximum is not None and mm.minimum is not None:
+                            width = mm.maximum - mm.minimum
+                            if width > 0:
+                                self.belief = GaussianBelief(mean = self.aggregated_metric.value, variance=width*AdvancedParameters.variance_boost_factor / (1 + denominator_value))
+                                logger.debug(f"Gaussian belief: {self.belief}")
+                                return
+                            else:
+                                self.belief = ConstantBelief(value = mm.maximum)
+                                logger.debug(f"Constant belief: {self.belief}")
+                                return

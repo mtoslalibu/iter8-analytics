@@ -172,7 +172,7 @@ class Experiment():
         # utility samples are needed for winner assessment and traffic recommendations
         self.create_utility_samples()
         self.create_winner_assessments()
-        self.add_baseline_bias()
+        # self.add_baseline_bias()
         self.create_traffic_recommendations()
         return self.assemble_assessment_and_recommendations()
 
