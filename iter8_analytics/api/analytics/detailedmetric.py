@@ -114,8 +114,8 @@ class DetailedRatioMetric(DetailedMetric):
             if denominator_value is not None and denominator_value > 0:
                 if self.metric_spec.zero_to_one: # beta belief
                     if self.aggregated_metric.value > 1.0:
-                        raise HTTPException(status_code=422, detail=f"Value {self.aggregated_metric.value} exceeds 1.0 for ratio metric {self.metric_id} which has zero_to_one set to true.")
-                    numerator_value = self.aggregated_metric.value * denominator_value
+                        logger.warning(f"Value {self.aggregated_metric.value} exceeds 1.0 for ratio metric {self.metric_id} which has zero_to_one set to true.")
+                    numerator_value = min(self.aggregated_metric.value, 1.0) * denominator_value
                     diff = denominator_value - numerator_value
                     self.belief = BetaBelief(alpha=1.0 + numerator_value, beta=1.0 + diff)
                     logger.debug(f"Beta belief: {self.belief}")
