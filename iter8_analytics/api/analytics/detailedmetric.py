@@ -6,6 +6,7 @@ import logging
 
 # external module dependencies
 import numpy as np
+from fastapi import HTTPException
 
 # iter8 dependencies
 from iter8_analytics.api.analytics.types import *
@@ -115,7 +116,10 @@ class DetailedRatioMetric(DetailedMetric):
                     # try to use beta belief first -- most specific
                     if self.metric_spec.zero_to_one:
                         if numerator_value is not None:
-                            self.belief = BetaBelief(alpha = 1.0 + numerator_value, beta = 1.0 + denominator_value - numerator_value)
+                            diff = denominator_value - numerator_value
+                            self.belief = BetaBelief(alpha = 1.0 + numerator_value, beta = 1.0 + diff)
+                            if diff < 0.0:
+                                raise HTTPException(status_code=422, detail = f"Numerator value {numerator_value} is greater than denominator value {denominator_value} for ratio metric {self.metric_id} which has zero_to_one set to true")
                             logger.debug(f"Beta belief: {self.belief}")
                             return
                     else: # try to use Gaussian belief
