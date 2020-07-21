@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime,timezone
 import json
+from pprint import pformat
 
 # python libraries
 import requests_mock
@@ -170,3 +171,13 @@ class TestDetailedVersion:
         })
 
         exp_with_partial_last_state.detailed_versions['reviews_candidate'].create_criteria_assessments()
+
+class TestAssessments:
+    def test_assessment(self):
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_no_data_response.json")))
+
+            eip = ExperimentIterationParameters(** eip_with_assessment)
+            exp = Experiment(eip)
+            res = exp.run()
+

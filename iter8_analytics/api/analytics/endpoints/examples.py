@@ -536,3 +536,276 @@ reviews_example_without_request_count = copy.deepcopy(reviews_example)
 del reviews_example_without_request_count["criteria"][1]
 del reviews_example_without_request_count["metric_specs"]["counter_metrics"][0]
 del reviews_example_without_request_count["metric_specs"]["ratio_metrics"][0]
+
+eip_with_assessment = {
+    "name": "productpage-abn-test",
+    "start_time": "2020-07-20T17:19:13-04:00",
+    "service_name": "productpage",
+    "iteration_number": 17,
+    "metric_specs": {
+        "counter_metrics": [{
+            "name": "iter8_request_count",
+            "query_template": "sum(increase(istio_requests_total{reporter='source',job='istio-mesh'}[$interval])) by ($version_labels)"
+        }, {
+            "name": "iter8_total_latency",
+            "query_template": "(sum(increase(istio_request_duration_seconds_sum{reporter='source',job='istio-mesh'}[$interval])) by ($version_labels))*1000"
+        }, {
+            "name": "iter8_error_count",
+            "preferred_direction": "lower",
+            "query_template": "sum(increase(istio_requests_total{response_code=~'5..',reporter='source',job='istio-mesh'}[$interval])) by ($version_labels)"
+        }, {
+            "name": "books_purchased_total",
+            "query_template": "sum(increase(number_of_books_purchased_total{}[$interval])) by ($version_labels)"
+        }, {
+            "name": "le_500_ms_latency_request_count",
+            "query_template": "(sum(increase(istio_request_duration_seconds_bucket{le='0.5',reporter='source',job='istio-mesh'}[$interval])) by ($version_labels))"
+        }],
+        "ratio_metrics": [{
+            "name": "iter8_mean_latency",
+            "numerator": "iter8_total_latency",
+            "denominator": "iter8_request_count",
+            "preferred_direction": "lower"
+        }, {
+            "name": "iter8_error_rate",
+            "numerator": "iter8_error_count",
+            "denominator": "iter8_request_count",
+            "zero_to_one": True,
+            "preferred_direction": "lower"
+        }, {
+            "name": "mean_books_purchased",
+            "numerator": "books_purchased_total",
+            "denominator": "iter8_request_count",
+            "preferred_direction": "higher"
+        }, {
+            "name": "500_ms_latency_percentile",
+            "numerator": "le_500_ms_latency_request_count",
+            "denominator": "iter8_request_count",
+            "zero_to_one": True,
+            "preferred_direction": "higher"
+        }]
+    },
+    "criteria": [{
+        "id": "iter8_mean_latency",
+        "metric_id": "iter8_mean_latency",
+        "is_reward": False,
+        "threshold": {
+            "threshold_type": "absolute",
+            "value": 1500
+        }
+    }, {
+        "id": "iter8_error_rate",
+        "metric_id": "iter8_error_rate",
+        "is_reward": False,
+        "threshold": {
+            "threshold_type": "absolute",
+            "value": 0.05
+        }
+    }, {
+        "id": "500_ms_latency_percentile",
+        "metric_id": "500_ms_latency_percentile",
+        "is_reward": False,
+        "threshold": {
+            "threshold_type": "absolute",
+            "value": 0.9
+        }
+    }, {
+        "id": "mean_books_purchased",
+        "metric_id": "mean_books_purchased",
+        "is_reward": True
+    }],
+    "baseline": {
+        "id": "productpage-v1",
+        "version_labels": {
+            "destination_workload": "productpage-v1",
+            "destination_workload_namespace": "kubecon-demo"
+        }
+    },
+    "candidates": [{
+        "id": "productpage-v2",
+        "version_labels": {
+            "destination_workload": "productpage-v2",
+            "destination_workload_namespace": "kubecon-demo"
+        }
+    }, {
+        "id": "productpage-v3",
+        "version_labels": {
+            "destination_workload": "productpage-v3",
+            "destination_workload_namespace": "kubecon-demo"
+        }
+    }],
+    "last_state": {
+        "aggregated_counter_metrics": {
+            "productpage-v1": {
+                "books_purchased_total": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.001436+00:00",
+                    "value": 2675.060869565217
+                },
+                "iter8_error_count": {
+                    "status": "no versions in prometheus response",
+                    "timestamp": "2020-07-20T21:25:00.726973+00:00",
+                    "value": 0
+                },
+                "iter8_request_count": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.500394+00:00",
+                    "value": 1100.9376796274955
+                },
+                "iter8_total_latency": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.608216+00:00",
+                    "value": 116867.79877397961
+                },
+                "le_500_ms_latency_request_count": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.880245+00:00",
+                    "value": 1066.2376477633036
+                }
+            },
+            "productpage-v2": {
+                "books_purchased_total": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.001436+00:00",
+                    "value": 43495.340441392604
+                },
+                "iter8_error_count": {
+                    "status": "no versions in prometheus response",
+                    "timestamp": "2020-07-20T21:25:00.726973+00:00",
+                    "value": 0
+                },
+                "iter8_request_count": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.500394+00:00",
+                    "value": 1103.040681252753
+                },
+                "iter8_total_latency": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.608216+00:00",
+                    "value": 1513982.9278989176
+                },
+                "le_500_ms_latency_request_count": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.880245+00:00",
+                    "value": 270.2396902763801
+                }
+            },
+            "productpage-v3": {
+                "books_purchased_total": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.001436+00:00",
+                    "value": 15931.255805285438
+                },
+                "iter8_error_count": {
+                    "status": "no versions in prometheus response",
+                    "timestamp": "2020-07-20T21:25:00.726973+00:00",
+                    "value": 0
+                },
+                "iter8_request_count": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.500394+00:00",
+                    "value": 1084.1133447970965
+                },
+                "iter8_total_latency": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.608216+00:00",
+                    "value": 98910.32374279092
+                },
+                "le_500_ms_latency_request_count": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:00.880245+00:00",
+                    "value": 1074.6497084334599
+                }
+            }
+        },
+        "aggregated_ratio_metrics": {
+            "productpage-v1": {
+                "500_ms_latency_percentile": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.488586+00:00",
+                    "value": 0.9684813840907572
+                },
+                "iter8_error_rate": {
+                    "status": "zeroed ratio",
+                    "timestamp": "2020-07-20T21:25:01.342217+00:00",
+                    "value": 0
+                },
+                "iter8_mean_latency": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.118267+00:00",
+                    "value": 106.15296481951826
+                },
+                "mean_books_purchased": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.617785+00:00",
+                    "value": 2.422820076378882
+                }
+            },
+            "productpage-v2": {
+                "500_ms_latency_percentile": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.488586+00:00",
+                    "value": 0.24499521628654852
+                },
+                "iter8_error_rate": {
+                    "status": "zeroed ratio",
+                    "timestamp": "2020-07-20T21:25:01.342217+00:00",
+                    "value": 0
+                },
+                "iter8_mean_latency": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.118267+00:00",
+                    "value": 1372.5540260033258
+                },
+                "mean_books_purchased": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.617785+00:00",
+                    "value": 39.38968647171404
+                }
+            },
+            "productpage-v3": {
+                "500_ms_latency_percentile": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.488586+00:00",
+                    "value": 0.9912706209096545
+                },
+                "iter8_error_rate": {
+                    "status": "zeroed ratio",
+                    "timestamp": "2020-07-20T21:25:01.342217+00:00",
+                    "value": 0
+                },
+                "iter8_mean_latency": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.118267+00:00",
+                    "value": 91.23614631023943
+                },
+                "mean_books_purchased": {
+                    "status": "all_ok",
+                    "timestamp": "2020-07-20T21:25:01.617785+00:00",
+                    "value": 14.679574964516965
+                }
+            }
+        },
+        "ratio_max_mins": {
+            "500_ms_latency_percentile": {
+                "maximum": 0.9912706209096545,
+                "minimum": 0.16666650018723458
+            },
+            "iter8_error_rate": {
+                "maximum": 0,
+                "minimum": 0
+            },
+            "iter8_mean_latency": {
+                "maximum": 1507.8847318570406,
+                "minimum": 91.23614631023943
+            },
+            "mean_books_purchased": {
+                "maximum": 39.693079869958254,
+                "minimum": 2.2894643119744784
+            }
+        }
+    }, 
+    "traffic_control": {
+        "max_increment": 25,
+        "strategy": "progressive"
+    }
+}

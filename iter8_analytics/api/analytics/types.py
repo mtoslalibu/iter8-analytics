@@ -255,4 +255,4 @@ class AdvancedParameters:
     exploration_traffic_percentage = 5.0 # 5% of traffic always used for exploration
     posterior_probability_for_credible_intervals = 0.95
     min_posterior_probability_for_winner = 0.99 # no winner until iter8 is 99% confident
-    variance_boost_factor = 100.0 # a higher value of this factor encourages greater exploration
+    variance_boost_factor = 1.0 # a higher value of this factor encourages greater exploration

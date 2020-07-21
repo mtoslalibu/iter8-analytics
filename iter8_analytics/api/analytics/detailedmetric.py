@@ -40,7 +40,7 @@ class GaussianBelief(Belief):
         self.sample = np.random.normal(loc = self.mean, scale = self.stddev, size = self.sample_size)
 
 class BetaBelief(Belief):
-    def __init__(self, alpha = 1.0, beta = 1.0):
+    def __init__(self, alpha = 0.1, beta = 0.1):
         super().__init__(StatusEnum.all_ok)
         self.alpha = alpha
         self.beta = beta
@@ -108,6 +108,7 @@ class DetailedRatioMetric(DetailedMetric):
 
             denominator_id = self.metric_spec.denominator
             denominator_value = self.detailed_version.metrics["counter_metrics"][denominator_id].aggregated_metric.value
+            logger.debug(f"Denominator_id: {denominator_id} Denominator value: {denominator_value}")
             # numerator_id = self.metric_spec.numerator
             # numerator_value = self.detailed_version.metrics["counter_metrics"][numerator_id].aggregated_metric.value
 
@@ -117,7 +118,7 @@ class DetailedRatioMetric(DetailedMetric):
                         logger.warning(f"Value {self.aggregated_metric.value} exceeds 1.0 for ratio metric {self.metric_id} which has zero_to_one set to true.")
                     numerator_value = min(self.aggregated_metric.value, 1.0) * denominator_value
                     diff = denominator_value - numerator_value
-                    self.belief = BetaBelief(alpha=1.0 + numerator_value, beta=1.0 + diff)
+                    self.belief = BetaBelief(alpha = 0.1 + numerator_value, beta = 0.1 + diff)
                     logger.debug(f"Beta belief: {self.belief}")
                     return
                 else:  # Gaussian or constant or undefined
