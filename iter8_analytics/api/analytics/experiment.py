@@ -160,17 +160,27 @@ class Experiment():
 
         for detailed_version in self.detailed_versions.values():
             # beliefs are needed for creating posterior samples
-            logger.info(f"Updating beliefs for {detailed_version.id}")
+            logger.debug(f"Updating beliefs for {detailed_version.id}")
             detailed_version.update_beliefs()
             # posterior samples for ratio metrics are needed to create reward and criterion masks
             detailed_version.create_ratio_metric_samples()
             # this step involves creating detailed criteria, along with reward and criterion masks
             detailed_version.create_criteria_assessments()
             # reward and criteria masks are used to compute utility samples
-            self.rewards[detailed_version.id] = detailed_version.get_reward_sample()
+            self.rewards[detailed_version.id] = detailed_version.get_reward_sample()            
             self.criteria_mask[detailed_version.id] = detailed_version.get_criteria_mask()
         # utility samples are needed for winner assessment and traffic recommendations
+        logger.debug("Reward sample")
+        logger.debug(self.rewards.head())
+
+        logger.debug("Criteria mask")
+        logger.debug(self.criteria_mask.head())
+
         self.create_utility_samples()
+
+        logger.debug("Utility sample")
+        logger.debug(self.utilities.head())
+
         self.create_winner_assessments()
         # self.add_baseline_bias()
         self.create_traffic_recommendations()
@@ -296,7 +306,7 @@ class Experiment():
         """
         self.traffic_split[k] = {}
 
-        logger.info(f"Top k split with k = {k}")
+        logger.debug(f"Top k split with k = {k}")
 
         logger.debug("Utilities")
         logger.debug(self.utilities.head())

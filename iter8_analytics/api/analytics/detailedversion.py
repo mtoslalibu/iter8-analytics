@@ -85,10 +85,17 @@ class DetailedVersion():
             new_counter_metrics (Dict[iter8id, CounterDataPoint]): dictionary mapping from metric id to CounterDataPoint
         """
         for metric_id in new_counter_metrics:
-            if new_counter_metrics[metric_id].value is not None:
-                self.metrics["counter_metrics"][metric_id].set_aggregated_metric(AggregatedCounterDataPoint(
-                    ** new_counter_metrics[metric_id].dict()
-                ))
+            logger.debug(f"Aggregated counter metric before. Version: {self.id} Metric: {metric_id} Aggregated Counter Metric: {self.metrics['counter_metrics'][metric_id].aggregated_metric}")
+
+            old_val = self.metrics['counter_metrics'][metric_id].aggregated_metric.value
+            new_val = new_counter_metrics[metric_id].value
+            if new_val is not None:
+                if old_val is not None and old_val > new_val:
+                    break # counters should only increase. new_val is zero
+                    
+                self.metrics["counter_metrics"][metric_id].set_aggregated_metric(AggregatedCounterDataPoint(** new_counter_metrics[metric_id].dict()))
+
+            logger.debug(f"Aggregated counter metric after. Version: {self.id} Metric: {metric_id} Aggregated Counter Metric: {self.metrics['counter_metrics'][metric_id].aggregated_metric}")
         
     def aggregate_ratio_metrics(self, new_ratio_metrics: Dict[iter8id, RatioDataPoint]):
         """combine aggregated ratio metrics from last state for this version with new ratio metrics. Aggregated results stored in self.aggregated_ratio_metrics
@@ -97,17 +104,32 @@ class DetailedVersion():
             new_ratio_metrics (Dict[iter8id, RatioDataPoint]): dictionary mapping from metric id to RatioDataPoint
         """
         for metric_id in new_ratio_metrics:
+            logger.debug(f"Aggregated ratio metric before. Version: {self.id} Metric: {metric_id} Aggregated Ratio Metric: {self.metrics['ratio_metrics'][metric_id].aggregated_metric}")
+
             if new_ratio_metrics[metric_id].value is not None:
+                logger.debug(f"New Ratio metric. Version: {self.id} Metric: {metric_id} New Ratio Metric: {new_ratio_metrics[metric_id]}")
+
+                # prefer all_ok to zeroed_ratio
+                if new_ratio_metrics[metric_id].status == StatusEnum.zeroed_ratio:
+                    if self.metrics['ratio_metrics'][metric_id].aggregated_metric.status == StatusEnum.all_ok:
+                        break
+
+                # otherwise, go ahead and update
                 self.metrics["ratio_metrics"][metric_id].set_aggregated_metric(AggregatedRatioDataPoint(
                     ** new_ratio_metrics[metric_id].dict()
                 ))
-                
+
+            logger.debug(f"Aggregated ratio metric after. Version: {self.id} Metric: {metric_id} Aggregated Ratio Metric: {self.metrics['ratio_metrics'][metric_id].aggregated_metric}")
+
+
     def update_beliefs(self):
         """Update beliefs for ratio metrics. If belief update is not possible due to insufficient data, then the relevant status codes are populated here
         """
         for rm in self.metrics["ratio_metrics"].values():
+            logger.debug(f"Version: {self.id} Metric: {rm.metric_id}")
+            logger.debug(f"detailed metric: {rm.aggregated_metric}")
             rm.update_belief()
-            logger.info(f"Updated belief: {vars(rm.belief)}")
+            logger.debug(f"Updated belief: {vars(rm.belief)}")
 
     def create_ratio_metric_samples(self):
         """Create ratio metric samples used for assessment and traffic routing
@@ -134,8 +156,11 @@ class DetailedVersion():
 
     def get_criteria_mask(self):
         product_cm = np.ones((Belief.sample_size, ))
+        logger.debug(f"Creating criteria mask for version: {self.id}")
         for criterion in self.experiment.eip.criteria:
             cm = self.detailed_criteria[criterion.id].get_criterion_mask()
+            logger.debug(f"Criteria with metric {criterion.metric_id}")
+            logger.debug(cm)
             product_cm *= cm
         return product_cm
             

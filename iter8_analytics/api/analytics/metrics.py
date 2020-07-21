@@ -198,7 +198,7 @@ class PrometheusMetricQuery():
         """
         interval = int((current_time - self.query_spec.start_time).total_seconds())
         if interval < 20.0: # less than twenty seconds has elapsed since start of the experiment
-            logger.info("Less than 20 seconds have elapsed since the start of the experiment")
+            logger.debug("Less than 20 seconds have elapsed since the start of the experiment")
             return self.post_process({
                 "status": "success", 
                 "data": {

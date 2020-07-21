@@ -338,4 +338,3 @@ class TestMetrics:
         assert nrmm["metric1"] == RatioMaxMin(minimum = 0.1, maximum = 0.3)
         assert nrmm["metric2"] == RatioMaxMin(minimum = 0.2, maximum = 0.2)
         assert nrmm["metric3"] == RatioMaxMin()
-
