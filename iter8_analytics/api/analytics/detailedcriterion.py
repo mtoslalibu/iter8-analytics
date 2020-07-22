@@ -129,10 +129,35 @@ class DetailedCriterion():
                     return np.zeros((Belief.sample_size, )).astype(np.float) # can't use nan values
                 else:
                     logger.debug(f"Returning posterior indicators for metric {ms.id} for {self.detailed_version.id}")
-                    if ms.preferred_direction == DirectionEnum.lower:
-                        return (sample <= self.spec.threshold.value).astype(np.float)
-                    else:
-                        return (sample >= self.spec.threshold.value).astype(np.float)
+                    if self.spec.threshold.threshold_type == ThresholdEnum.absolute:
+                        if ms.preferred_direction == DirectionEnum.lower:
+                            return (sample <= self.spec.threshold.value).astype(np.float)
+                        else:
+                            return (sample >= self.spec.threshold.value).astype(np.float)
+                    else: # relative threshold
+                        baseline = self.detailed_version.experiment.detailed_baseline_version
+                        if self.detailed_version.id == baseline.id: 
+                            # baseline is always assumed to satisfy relative thresholds
+                            logger.debug(f"Relative thresholds for metric {ms.id} for baseline version {self.detailed_version.id}")
+                            logger.debug("Returning ones as criteria mask")
+                            return np.ones((Belief.sample_size, )).astype(np.float)
+
+                        baseline_belief = baseline.metrics["ratio_metrics"][self.metric_id].belief
+                        if baseline_belief.status == StatusEnum.uninitialized_belief:
+                            logger.debug(f"Uninitialized baseline belief for metric {ms.id} for {self.detailed_version.id}")
+                            logger.debug("Returning zeros as criteria mask")
+                            return np.zeros((Belief.sample_size, )).astype(np.float) # nothing is known about this version
+
+                        baseline_sample = baseline_belief.sample_posterior() # go to the baseline and get its sample for this ratio metric
+                        if ms.preferred_direction == DirectionEnum.lower:
+                            logger.debug(f"Computing criteria mask with relative threshold: {self.detailed_version.id}")
+                            logger.debug(f"sample: {sample}")
+                            logger.debug(f"sample: {baseline_sample}")
+                            logger.debug(f"{(sample <= baseline_sample * self.spec.threshold.value).astype(np.float)}")
+                            return (sample <= baseline_sample * self.spec.threshold.value).astype(np.float)
+                        else:
+                            return (sample >= baseline_sample * self.spec.threshold.value).astype(np.float)
+
                 
 
     def create_threshold_assessment(self):

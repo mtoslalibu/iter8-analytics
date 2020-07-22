@@ -159,9 +159,11 @@ class Experiment():
         self.criteria_mask = pd.DataFrame()
 
         for detailed_version in self.detailed_versions.values():
-            # beliefs are needed for creating posterior samples
+            # baseline beliefs and all other version are needed for posterior samples
             logger.debug(f"Updating beliefs for {detailed_version.id}")
             detailed_version.update_beliefs()
+
+        for detailed_version in self.detailed_versions.values():
             # posterior samples for ratio metrics are needed to create reward and criterion masks
             detailed_version.create_ratio_metric_samples()
             # this step involves creating detailed criteria, along with reward and criterion masks
