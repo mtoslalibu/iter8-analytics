@@ -181,3 +181,23 @@ class TestAssessments:
             exp = Experiment(eip)
             res = exp.run()
 
+    def test_relative_threshold(self):
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_no_data_response.json")))
+
+            eip_with_relative = copy.deepcopy(eip_with_assessment)
+            eip_with_relative["criteria"][0] = {
+                "id": "iter8_mean_latency",
+                "metric_id": "iter8_mean_latency",
+                "is_reward": False,
+                "threshold": {
+                    "threshold_type": "relative",
+                    "value": 1.6
+                }
+            }
+            eip = ExperimentIterationParameters(** eip_with_relative)
+            exp = Experiment(eip)
+            res = exp.run()
+            for c in res.candidate_assessments:
+                if c.id == 'productpage-v3':
+                    assert c.win_probability == 1.0
