@@ -89,6 +89,17 @@ class Experiment():
             # there is more than one reward metric
             raise HTTPException(status_code = 422, detail = "More than one reward criteria found")
 
+        # raise exception if you find a criterion with a threshold and no corresponding preferred_direction
+        for c in self.eip.criteria:
+            if c.threshold:
+                if c.metric_id in all_counter_metric_specs:
+                    ms = all_counter_metric_specs[c.metric_id]
+                else:
+                    ms = all_ratio_metric_specs[c.metric_id]
+                if ms.preferred_direction is None:                    
+                    raise HTTPException(status_code = 422, detail = f"Criterion uses {c.metric_id} with a threshold, but the metric does not have a preferred direction set.")
+
+
         # Initialize detailed versions. Pseudo reward for baseline = 1.0; pseudo reward for 
         # candidate is 2.0 + its index in the candidates list (i.e., the first candidate has
         # pseudo reward 2.0, 2nd has 3.0, and so on)
