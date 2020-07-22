@@ -129,10 +129,18 @@ class DetailedCriterion():
                     return np.zeros((Belief.sample_size, )).astype(np.float) # can't use nan values
                 else:
                     logger.debug(f"Returning posterior indicators for metric {ms.id} for {self.detailed_version.id}")
-                    if ms.preferred_direction == DirectionEnum.lower:
-                        return (sample <= self.spec.threshold.value).astype(np.float)
-                    else:
-                        return (sample >= self.spec.threshold.value).astype(np.float)
+                    if self.spec.threshold.type == ThresholdEnum.absolute:
+                        if ms.preferred_direction == DirectionEnum.lower:
+                            return (sample <= self.spec.threshold.value).astype(np.float)
+                        else:
+                            return (sample >= self.spec.threshold.value).astype(np.float)
+                    else: # relative threshold
+                        baseline_sample = self.detailed_version.experiment.detailed_baseline_version.metrics["ratio_metrics"][self.metric_id].belief.sample_posterior() # go to the baseline and get its sample for this ratio metric
+                        if ms.preferred_direction == DirectionEnum.lower:
+                            return (sample <= baseline_sample * self.spec.threshold.value).astype(np.float)
+                        else:
+                            return (sample >= baseline_sample * self.spec.threshold.value).astype(np.float)
+
                 
 
     def create_threshold_assessment(self):
