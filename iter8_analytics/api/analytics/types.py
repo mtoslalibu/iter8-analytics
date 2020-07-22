@@ -5,7 +5,7 @@ Module containing pydantic data models for iter8 along with some global constant
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
-from typing import Tuple, Union, Sequence, Iterable, Dict, Any, List
+from typing import Tuple, Union, Sequence, Iterable, Dict, Any, List, Optional
 
 # external module dependencies
 from pydantic import BaseModel, Field
@@ -191,7 +191,7 @@ class Statistics(BaseModel):
 
 class ThresholdAssessment(BaseModel):
     threshold_breached: bool = Field(..., description = "True if threshold is breached. False otherwise")
-    probability_of_satisfying_threshold: float = Field(..., le = 1.0, ge = 0.0, description="Probability of satisfying the threshold. Defined only for ratio metrics. This is currently computed based on Bayesian estimation")
+    probability_of_satisfying_threshold: Optional[float] = Field(None, le = 1.0, ge = 0.0, description="Probability of satisfying the threshold. Defined only for ratio metrics. This is currently computed based on Bayesian estimation")
 
 class CriterionAssessment(BaseModel): # assessment per criterion per version
     id: str = Field(..., description = "ID of the criterion")
