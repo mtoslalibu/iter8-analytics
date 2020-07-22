@@ -129,7 +129,7 @@ class DetailedCriterion():
                     return np.zeros((Belief.sample_size, )).astype(np.float) # can't use nan values
                 else:
                     logger.debug(f"Returning posterior indicators for metric {ms.id} for {self.detailed_version.id}")
-                    if self.spec.threshold.type == ThresholdEnum.absolute:
+                    if self.spec.threshold.threshold_type == ThresholdEnum.absolute:
                         if ms.preferred_direction == DirectionEnum.lower:
                             return (sample <= self.spec.threshold.value).astype(np.float)
                         else:
