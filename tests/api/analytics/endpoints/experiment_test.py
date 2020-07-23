@@ -172,7 +172,7 @@ class TestDetailedVersion:
 
         exp_with_partial_last_state.detailed_versions['reviews_candidate'].create_criteria_assessments()
 
-class TestAssessments:
+class TestAssessmentsAndLastState:
     def test_assessment(self):
         with requests_mock.mock(real_http=True) as m:
             m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_no_data_response.json")))
@@ -180,6 +180,13 @@ class TestAssessments:
             eip = ExperimentIterationParameters(** eip_with_assessment)
             exp = Experiment(eip)
             res = exp.run()
+
+            assert res.last_state
+            assert res.last_state["traffic_split_recommendation"]
+            assert res.last_state["aggregated_counter_metrics"]
+            assert res.last_state["aggregated_ratio_metrics"]
+            assert res.last_state["ratio_max_mins"]
+
 
     def test_relative_threshold(self):
         with requests_mock.mock(real_http=True) as m:
@@ -201,6 +208,13 @@ class TestAssessments:
             for c in res.candidate_assessments:
                 if c.id == 'productpage-v3':
                     assert c.win_probability == 1.0
+
+            assert res.last_state
+            assert res.last_state["traffic_split_recommendation"]
+            assert res.last_state["aggregated_counter_metrics"]
+            assert res.last_state["aggregated_ratio_metrics"]
+            assert res.last_state["ratio_max_mins"]
+
 
     def test_absolute_threshold_with_books(self):
         with requests_mock.mock(real_http=True) as m:
