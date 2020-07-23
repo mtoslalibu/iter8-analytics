@@ -293,25 +293,17 @@ class Experiment():
         self.traffic_split_recommendation = {
             x: {} for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform]
         }
-        self.create_progressive_recommendation() # PBR  = posterior Bayesian sampling
-        self.create_top_2_recommendation()
-        self.create_uniform_recommendation()
-        self.mix_recommendations() # after taking into account step size and current split
 
-    def create_progressive_recommendation(self):
-        """Create traffic recommendations for the progressive strategy -- uses the posterior Bayesian routing (PBR) algorithm
-        """
-        self.create_top_k_recommendation(1)
+        for i in [1, 2, len(self.detailed_versions)]:
+            self.create_top_k_recommendation(i)
 
-    def create_top_2_recommendation(self):
-        """Create traffic recommendations for the progressive strategy -- uses the top-2 posterior Bayesian routing (top-2 PBR) algorithm
-        """
-        self.create_top_k_recommendation(2)
+        self.traffic_split_recommendation = {
+            TrafficSplitStrategy.progressive: self.traffic_split[1],
+            TrafficSplitStrategy.top_2: self.traffic_split[2],
+            TrafficSplitStrategy.uniform: self.traffic_split[len(self.detailed_versions)]
+        }
 
-    def create_uniform_recommendation(self):
-        """Create traffic recommendations based on uniform traffic split
-        """
-        self.create_top_k_recommendation(len(self.detailed_versions))
+        self.apply_max_increment()
 
     def create_top_k_recommendation(self, k):
         """
@@ -353,19 +345,8 @@ class Experiment():
         integral_split_gen = gen_round(mix_split * 100, 100)
         for key in self.utilities:
             self.traffic_split[k][key] = next(integral_split_gen)
-
-        # apply max_increment based traffic capping
-        # if old split exists, get it.
-        # else, initialize it.
-        # for each candidate:
-            # if the increase is greater than max_increment:
-                # cap it at max_increment
-                # and push the reminder to baseline
-                # maintain total = 100% as the loop invariant
         
-
-
-    def mix_recommendations(self):
+    def apply_max_increment(self):
         """Create the final traffic recommendations
         """
         # apply max_increment based traffic capping
@@ -377,25 +358,27 @@ class Experiment():
             old_split = {
                 x: {
                     y: 0 for y in self.detailed_versions
-                } for x in [1, 2, len(self.detailed_versions)]
+                } for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform]
             }
             for x in old_split:
                 old_split[x][self.detailed_baseline_version.id] = 100
-        
-        
 
-        logger.debug("Integral split")
-        logger.debug(self.traffic_split)
+        logger.debug("Current split before")
+        logger.debug(self.traffic_split_recommendation)
+                
+        for x in self.traffic_split_recommendation: # for each strategy
+            for y in self.detailed_candidate_versions: # for each candidate
+                increase = self.traffic_split_recommendation[x][y] - old_split[x][y]
+                excess = max(0, increase - self.eip.traffic_control.max_increment)
+                # cap increase and add it to baseline
+                self.traffic_split_recommendation[x][y] -= excess
+                self.traffic_split_recommendation[x][self.detailed_baseline_version.id] += excess
+
         logger.debug("Old split")
         logger.debug(old_split)
-        
-        # if old split exists, get it.
-        # else, initialize it.
-        # for each candidate:
-            # if the increase is greater than max_increment:
-                # cap it at max_increment
-                # and push the reminder to baseline
-                # maintain total = 100% as the loop invariant
+
+        logger.debug("Current split after")
+        logger.debug(self.traffic_split_recommendation)
         
 
     def assemble_assessment_and_recommendations(self):
@@ -422,13 +405,6 @@ class Experiment():
                     win_probability = self.win_probababilities[version.id]
                 ))
 
-        # get traffic splits
-        ts = {
-            'progressive': self.traffic_split[1],
-            'top_2': self.traffic_split[2],
-            'uniform': self.traffic_split[len(self.detailed_versions)]
-        }
-
         # get winner assessments
 
         wvf = False
@@ -454,13 +430,14 @@ class Experiment():
             "timestamp": datetime.now(),
             "baseline_assessment": baseline_assessment,
             "candidate_assessments": candidate_assessments,
-            "traffic_split_recommendation": ts,
+            "traffic_split_recommendation": self.traffic_split_recommendation,
             "winner_assessment": wa,
             "status": [],
             "last_state": {
                 "aggregated_counter_metrics": self.aggregated_counter_metrics,
                 "aggregated_ratio_metrics": self.get_aggregated_ratio_metrics(),
-                "ratio_max_mins": self.ratio_max_mins
+                "ratio_max_mins": self.ratio_max_mins,
+                "traffic_split_recommendation": self.traffic_split_recommendation
             }
         })
         return it8ar
