@@ -271,7 +271,10 @@ class DetailedCriterion():
                             )
                             return self.threshold_assessment
                         else: # baseline sample also looks good
-                            post = compute_probability_of_satisfying_threshold(b.sample_posterior(), bdm.belief.sample_posterior(), ms.preferred_direction)
+                            logger.debug(f"Comparing candidate {self.detailed_version.id} with baseline {baseline.id} for metric {self.metric_id} with relative threshold of {self.spec.threshold.value}")
+                            logger.debug(f"Candidate's posterior: {b.sample_posterior()}")
+                            logger.debug(f"Baseline's posterior: {bdm.belief.sample_posterior()}")
+                            post = compute_probability_of_satisfying_threshold(b.sample_posterior(), bdm.belief.sample_posterior() * self.spec.threshold.value, ms.preferred_direction)
                             logger.debug(f"post looks good: {post}")
                             self.threshold_assessment = ThresholdAssessment(
                                 threshold_breached = breach,

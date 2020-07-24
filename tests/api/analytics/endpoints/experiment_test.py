@@ -215,6 +215,26 @@ class TestAssessmentsAndLastState:
             assert res.last_state["aggregated_ratio_metrics"]
             assert res.last_state["ratio_max_mins"]
 
+    def test_relative_win_probability_and_threshold_assessment(self):
+        with requests_mock.mock(real_http=True) as m:
+            m.get(metrics_endpoint, json=json.load(open("tests/data/prometheus_no_data_response.json")))
+
+            eip = copy.deepcopy(eip_with_relative_assessments)            
+            eip = ExperimentIterationParameters(** eip)
+            exp = Experiment(eip)
+            res = exp.run()
+            for c in res.candidate_assessments:
+                if c.id == 'productpage-v3':
+                    assert c.win_probability == 1.0
+
+            assert res.last_state
+            assert res.last_state["traffic_split_recommendation"]
+            assert res.last_state["aggregated_counter_metrics"]
+            assert res.last_state["aggregated_ratio_metrics"]
+            assert res.last_state["ratio_max_mins"]
+
+
+
 
     def test_absolute_threshold_with_books(self):
         with requests_mock.mock(real_http=True) as m:
