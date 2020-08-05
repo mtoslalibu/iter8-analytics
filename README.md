@@ -31,10 +31,10 @@ The components of iter8 are divided across a few github repositories.
 
 - [iter8](https://github.com/iter8-tools/iter8) The main iter8 repository containing the kubernetes controller that orchestrates iter8's experiments.
 - [iter8-analytics](https://github.com/iter8-tools/iter8-analytics) This repository containing the iter8-analytics component.
-- [iter8-trend](https://github.com/iter8-tools/iter8-trend) This repository contains the iter8-trend component.
+- [iter8-trend](https://github.com/iter8-tools/iter8-trend) The repository contains the iter8-trend component.
 
 In addition,
-- iter8's extensions to Kiali is contained in [kiali](https://github.com/kiali/kiali-ui), [kiali-ui](https://github.com/kiali/kiali-ui), and [k-charted](https://github.com/kiali/k-charted). 
+- iter8's extensions to Kiali is contained in [kiali](https://github.com/kiali/kiali), [kiali-ui](https://github.com/kiali/kiali-ui), and [k-charted](https://github.com/kiali/k-charted). 
 - iter8's extensions to KUI is contained in [kui](https://github.com/IBM/kui). 
 
 
@@ -56,7 +56,7 @@ The following instructions have been tested in a Python 3.7.4 virtual environmen
 ```
 Navigate to http://localhost:5555/docs on your browser. You can interact with the iter8-analytics service and read its API documentation here. When you `POST` a request to iter8-analytics, it interacts with Prometheus -- make sure your Prometheus URL in step 5 is accessible if you want the `POST` to work.
 
-### Testing iter8-analytics v1.0.0 locally
+### Running unit tests for iter8-analytics v1.0.0 locally
 The following instructions have been tested in a Python 3.7.4 virtual environment.
 
 ```
@@ -68,4 +68,4 @@ The following instructions have been tested in a Python 3.7.4 virtual environmen
 6. export ITER8_ANALYTICS_METRICS_BACKEND_URL=<URL of your prometheus service>
 7. make test
 ```
-You can see the coverage report by opening `htmlcov/index.html` on your browser. The prometheus URL in step 6 is a dummy URL since all Prometheus calls are mocked in tests.
+You can see the coverage report by opening `htmlcov/index.html` on your browser. The prometheus URL in step 6 is a dummy URL since all Prometheus calls are mocked in unit tests.
