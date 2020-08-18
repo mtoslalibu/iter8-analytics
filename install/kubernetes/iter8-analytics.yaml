@@ -67,7 +67,7 @@ spec:
     spec:
       containers:
         - name: iter8-analytics
-          image: "iter8/iter8-analytics:v1.0.0-preview"
+          image: "iter8/iter8-analytics:v1.0.0-rc1"
           imagePullPolicy: Always
           env:
             - name: METRICS_BACKEND_CONFIGFILE
@@ -77,7 +77,7 @@ spec:
             
           volumeMounts:
             - name: config-volume
-              mountPath: /python_code/src/config.yaml
+              mountPath: /config.yaml
               subPath: config.yaml
       volumes:
         - name: config-volume
