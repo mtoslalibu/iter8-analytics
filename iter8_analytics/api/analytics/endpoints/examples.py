@@ -1114,7 +1114,17 @@ eip_with_relative_assessments = {
                 "productpage-v2": 34,
                 "productpage-v3": 33,
                 "productpage-v1": 33
-            }
+            },
+            "top_1_lts": {
+                "productpage-v2": 32,
+                "productpage-v3": 35,
+                "productpage-v1": 33
+            },
+            "top_2_lts": {
+                "productpage-v2": 34,
+                "productpage-v3": 33,
+                "productpage-v1": 33
+            },
         }
     },
     "traffic_control": {

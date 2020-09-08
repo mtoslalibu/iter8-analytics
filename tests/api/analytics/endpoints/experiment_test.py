@@ -226,7 +226,6 @@ class TestAssessmentsAndLastState:
             for c in res.candidate_assessments:
                 if c.id == 'productpage-v3':
                     assert c.win_probability == 1.0
-
             assert res.last_state
             assert res.last_state["traffic_split_recommendation"]
             assert res.last_state["aggregated_counter_metrics"]

@@ -169,6 +169,9 @@ class Experiment():
         self.rewards = pd.DataFrame()
         self.criteria_mask = pd.DataFrame()
 
+        # create masks for logistic formulation
+        self.criteria_mask_lts = pd.DataFrame()
+
         for detailed_version in self.detailed_versions.values():
             # baseline beliefs and all other version are needed for posterior samples
             logger.debug(f"Updating beliefs for {detailed_version.id}")
@@ -182,12 +185,17 @@ class Experiment():
             # reward and criteria masks are used to compute utility samples
             self.rewards[detailed_version.id] = detailed_version.get_reward_sample()            
             self.criteria_mask[detailed_version.id] = detailed_version.get_criteria_mask()
+            self.criteria_mask_lts[detailed_version.id] = detailed_version.get_criteria_mask_lts()
+
         # utility samples are needed for winner assessment and traffic recommendations
         logger.debug("Reward sample")
         logger.debug(self.rewards.head())
 
         logger.debug("Criteria mask")
         logger.debug(self.criteria_mask.head())
+
+        logger.debug("Criteria mask LTS")
+        logger.debug(self.criteria_mask_lts.head())
 
         self.create_utility_samples()
 
@@ -216,11 +224,19 @@ class Experiment():
         logger.debug("Criteria mask")
         logger.debug(self.criteria_mask.head())
 
+        logger.debug("Criteria mask LTS")
+        logger.debug(self.criteria_mask_lts.head())
+
 
         # multiple effective rewards with criteria masks
         self.utilities = self.effective_rewards * self.criteria_mask
+        self.utilities_lts = self.effective_rewards * self.criteria_mask_lts
+
         logger.debug("Created utility samples")
         logger.debug(self.utilities.head())
+
+        logger.debug("Created utility samples LTS")
+        logger.debug(self.utilities_lts.head())
 
     def add_baseline_bias(self):
         # bias term to ensure baseline is picked when all versions have zero utilities
@@ -270,6 +286,7 @@ class Experiment():
                     metric_id_to_list_of_values[metric_id].append(a)
                     metric_id_to_list_of_values[metric_id].append(b)
 
+
         for version_id in self.new_ratio_metrics:
             for metric_id in self.new_ratio_metrics[version_id]:
                 a = self.new_ratio_metrics[version_id][metric_id].value
@@ -291,38 +308,48 @@ class Experiment():
         """Create traffic recommendations for individual algorithms
         """
         self.traffic_split_recommendation = {
-            x: {} for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform]
+            x: {} for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform, TrafficSplitStrategy.top_1_lts, TrafficSplitStrategy.top_2_lts]
         }
 
         for i in [1, 2, len(self.detailed_versions)]:
-            self.create_top_k_recommendation(i)
+            self.create_top_k_recommendation(i, self.utilities)
+
+        ## Logistic traffic split 
+        for idx, val in enumerate(["top_1_lts","top_2_lts"]):
+            self.create_top_k_recommendation(val, self.utilities_lts, idx+1)
 
         self.traffic_split_recommendation = {
             TrafficSplitStrategy.progressive: self.traffic_split[1],
             TrafficSplitStrategy.top_2: self.traffic_split[2],
-            TrafficSplitStrategy.uniform: self.traffic_split[len(self.detailed_versions)]
+            TrafficSplitStrategy.uniform: self.traffic_split[len(self.detailed_versions)],
+            TrafficSplitStrategy.top_1_lts: self.traffic_split["top_1_lts"],
+            TrafficSplitStrategy.top_2_lts: self.traffic_split["top_2_lts"]
         }
 
         self.apply_max_increment()
 
-    def create_top_k_recommendation(self, k):
+    def create_top_k_recommendation(self, k, utilities, lts_index = -1):
         """
-        Create traffic split using the top-k PBR algorithm
+        Create traffic split using the top-k PBR algorithm and top-k LTS algorithm
         """
         self.traffic_split[k] = {}
 
         logger.debug(f"Top k split with k = {k}")
 
         logger.debug("Utilities")
-        logger.debug(self.utilities.head())
+        logger.debug(utilities.head())
 
         # get the fractional split
-        rank_df = self.utilities.rank(axis = 1, method = 'min', ascending = False)
+        rank_df = utilities.rank(axis = 1, method = 'min', ascending = False)
 
         logger.debug("Rank")
         logger.debug(rank_df.head())
 
-        low_rank = rank_df <= k
+        # if lts_index != -1 then top-lts is employed 
+        if lts_index == -1:
+            low_rank = rank_df <= k
+        else:    
+            low_rank = rank_df <= lts_index
 
         logger.debug("Low rank")
         logger.debug(low_rank.head())
@@ -343,7 +370,7 @@ class Experiment():
 
         # round the mix split so that it sums up to 100
         integral_split_gen = gen_round(mix_split * 100, 100)
-        for key in self.utilities:
+        for key in utilities:
             self.traffic_split[k][key] = next(integral_split_gen)
         
     def apply_max_increment(self):
@@ -358,13 +385,14 @@ class Experiment():
             old_split = {
                 x: {
                     y: 0 for y in self.detailed_versions
-                } for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform]
+                } for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform, TrafficSplitStrategy.top_1_lts, TrafficSplitStrategy.top_2_lts]
             }
             for x in old_split:
                 old_split[x][self.detailed_baseline_version.id] = 100
 
         logger.debug("Current split before")
         logger.debug(self.traffic_split_recommendation)
+
                 
         for x in self.traffic_split_recommendation: # for each strategy
             for y in self.detailed_candidate_versions: # for each candidate

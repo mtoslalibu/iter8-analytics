@@ -79,6 +79,27 @@ class DetailedCriterion():
         # compute the relevant statistics and return ratio metrics
         # tbd
         return RatioStatistics(credible_interval = ci)
+    
+    def get_criterion_mask_lts(self): 
+        ms = self.detailed_metric.metric_spec
+        if not self.spec.threshold:
+            logger.debug(f"No threshold for {ms.id} for {self.detailed_version.id}")
+            logger.debug("Returning ones")
+            return np.ones((Belief.sample_size, )).astype(np.float)
+        else: 
+            if self.threshold_assessment is None: 
+                return np.zeros((Belief.sample_size, )).astype(np.float)
+
+            if self.is_counter: 
+                p = self.threshold_assessment.probability_of_satisfying_threshold
+                if p is None:
+                    return np.zeros((Belief.sample_size, )).astype(np.float)
+                return np.random.binomial(1, p, (Belief.sample_size, )).astype(np.float)
+            else: 
+                amplification_coefficient = self.detailed_version.experiment.eip.traffic_control.amplification
+                logger.debug("LTS amplification factor")
+                logger.debug(amplification_coefficient)
+                return 1/(1 + np.exp(-1 * amplification_coefficient * (1 - (self.detailed_metric.belief.sample_posterior()/self.spec.threshold.value))))
 
     def get_criterion_mask(self):
         ms = self.detailed_metric.metric_spec

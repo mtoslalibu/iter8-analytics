@@ -154,6 +154,16 @@ class DetailedVersion():
             else: 
                 return np.full((Belief.sample_size, ), np.nan)
 
+    def get_criteria_mask_lts(self):
+        product_cm = np.ones((Belief.sample_size, ))
+        logger.debug(f"Creating lts criteria mask for version: {self.id}")
+        for criterion in self.experiment.eip.criteria:
+            cm = self.detailed_criteria[criterion.id].get_criterion_mask_lts()
+            logger.debug(f"LTS Criteria with metric {criterion.metric_id}")
+            logger.debug(cm)
+            product_cm *= cm
+        return product_cm
+
     def get_criteria_mask(self):
         product_cm = np.ones((Belief.sample_size, ))
         logger.debug(f"Creating criteria mask for version: {self.id}")

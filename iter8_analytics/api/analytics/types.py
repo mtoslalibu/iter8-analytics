@@ -72,11 +72,14 @@ class TrafficSplitStrategy(str, Enum):
     progressive = "progressive" # PBR
     top_2 = "top_2" # top 2 PBR
     uniform = "uniform" # Uniform split
+    top_1_lts = "top_1_lts" # top 1 Logistic Thompson Sampling -- from hotcloud
+    top_2_lts = "top_2_lts" # top 2 Logistic Thompson Sampling -- from hotcloud
 
 class TrafficControl(BaseModel): # parameters pertaining to traffic control
     max_increment: float = Field(
         2.0, description="Maximum possible increment in a candidate's traffic during the initial phase of the experiment", ge=0.0, le=100.0)
     strategy: TrafficSplitStrategy = Field(TrafficSplitStrategy.progressive, description = "Traffic split algorithm to use during the experiment")
+    amplification: float = Field(10, description="Tunable parameter to enable logistic formulation with hard or soft constraints", ge=0.0)
 
 class StatusEnum(str, Enum):
     all_ok = "all_ok"
@@ -146,7 +149,7 @@ class ExperimentIterationParameters(BaseModel):
     criteria: Sequence[Criterion] = Field(
         ..., description="Criteria to be assessed for each version in this experiment")
     traffic_control: TrafficControl = Field(TrafficControl(
-        max_increment = 2.0, strategy = TrafficSplitStrategy.progressive
+        max_increment = 2.0, strategy = TrafficSplitStrategy.progressive, amplification = 10.0
     ), description = "Traffic control parameters") # default traffic control
     last_state: LastState = Field(
         None, description="Last recorded state from analytics service")
