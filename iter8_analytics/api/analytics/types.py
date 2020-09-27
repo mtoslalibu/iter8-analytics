@@ -74,6 +74,7 @@ class TrafficSplitStrategy(str, Enum):
     uniform = "uniform" # Uniform split
     top_1_lts = "top_1_lts" # top 1 Logistic Thompson Sampling -- from hotcloud
     top_2_lts = "top_2_lts" # top 2 Logistic Thompson Sampling -- from hotcloud
+    exp3 = "exp3"
 
 class TrafficControl(BaseModel): # parameters pertaining to traffic control
     max_increment: float = Field(

@@ -42,6 +42,7 @@ class Experiment():
 
         # Initialized traffic split dictionary
         self.traffic_split = {}
+
  
         # Get all counter and ratio metric specs into their respective dictionaries
         all_counter_metric_specs = {}
@@ -111,6 +112,14 @@ class Experiment():
         }
         self.detailed_baseline_version = DetailedBaselineVersion(self.eip.baseline, self)
         self.detailed_versions[self.eip.baseline.id] = self.detailed_baseline_version
+
+        # Initialize exp3 weights init 1 for all self.detailed_versions
+        self.exp3_weights = {}
+        for key in self.detailed_versions.keys():
+            self.exp3_weights[key] = 1
+
+        logger.debug(f"Exp3 weights: {self.exp3_weights}") 
+
 
         # check if there is a reward metric, and what its preferred direction is
         self.reward_metric_id = None
@@ -308,25 +317,99 @@ class Experiment():
         """Create traffic recommendations for individual algorithms
         """
         self.traffic_split_recommendation = {
-            x: {} for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform, TrafficSplitStrategy.top_1_lts, TrafficSplitStrategy.top_2_lts]
+            x: {} for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform, TrafficSplitStrategy.top_1_lts, TrafficSplitStrategy.top_2_lts, TrafficSplitStrategy.exp3]
         }
 
         for i in [1, 2, len(self.detailed_versions)]:
             self.create_top_k_recommendation(i, self.utilities)
-
+        
+        self.create_exp3_recommendation()
         ## Logistic traffic split 
         for idx, val in enumerate(["top_1_lts","top_2_lts"]):
             self.create_top_k_recommendation(val, self.utilities_lts, idx+1)
+
+        
 
         self.traffic_split_recommendation = {
             TrafficSplitStrategy.progressive: self.traffic_split[1],
             TrafficSplitStrategy.top_2: self.traffic_split[2],
             TrafficSplitStrategy.uniform: self.traffic_split[len(self.detailed_versions)],
             TrafficSplitStrategy.top_1_lts: self.traffic_split["top_1_lts"],
-            TrafficSplitStrategy.top_2_lts: self.traffic_split["top_2_lts"]
+            TrafficSplitStrategy.top_2_lts: self.traffic_split["top_2_lts"],
+            TrafficSplitStrategy.exp3: self.traffic_split["exp3"]
         }
 
         self.apply_max_increment()
+
+    def create_exp3_recommendation(self):
+        # init weights = [1.0] * numActions
+        # NEED: WEIGHTS, 
+        # REQ COUNT FROM self.new_counter_metrics, 
+        # REWARD = self.new_ratio_metrics VALUES FROM PREVIOUS ITERATION
+        # CALCULATE EFFECTIVE REWARD  self.eip.criteria HAS THE CONSTRAINTS
+        self.traffic_split["exp3"] = {}
+        logger.debug(f"Exp3 split")
+
+        def distr(weights, gamma=0.0):
+            distr = {}
+            theSum = 100 # actually 100 now ## float(sum(weights))
+            for version, w in weights.items():
+                distr[version] = (1.0 - gamma) * (w / theSum) + (gamma / len(weights))
+            return distr
+        if self.eip.last_state and self.eip.last_state.traffic_split_recommendation:
+            old_split = self.eip.last_state.traffic_split_recommendation
+            # get exp3 split, which are actually the weights
+            self.exp3_weights = old_split[TrafficSplitStrategy.exp3]
+
+        logger.debug(f"Weights now:{self.exp3_weights}, with len:{len(self.exp3_weights)}")
+
+        
+        probabilityDistribution = distr(self.exp3_weights, 0.1)
+        logger.debug(f"probability dist: {probabilityDistribution}")
+        #theReward = reward(choice, t) # RATIO METRICS 
+        logger.debug(f"counter metrics: {self.new_counter_metrics}")
+        logger.debug(f"ratio metrics: {self.new_ratio_metrics}")
+        
+        for choice in probabilityDistribution:
+            logger.debug(f"req count {self.new_counter_metrics[choice][ITER8_REQUEST_COUNT].value}")
+            if self.new_counter_metrics[choice][ITER8_REQUEST_COUNT].value > 0:
+                theReward = self.new_ratio_metrics[choice][self.reward_metric_id].value
+                logger.debug(f"Reward {theReward} ")
+                estimatedReward = 1.0 * theReward / probabilityDistribution[choice]
+                gamma = 0.07
+                self.exp3_weights[choice] *= math.exp(estimatedReward * gamma / len(self.exp3_weights)) # important that we use estimated reward here!
+
+        # a = {k: v / total for total in (sum(a.itervalues(), 0.0),) for k, v in a.iteritems()}
+        logger.debug(f"Weights now: {self.exp3_weights}")
+
+        total = sum(self.exp3_weights.values())
+        logger.debug(f"Total weights: {total}")
+        fractional_split_dict = {k: v / total for k, v in self.exp3_weights.items()}
+        # fractional_split = weights/sum(self.exp3_weights.values()) 
+
+        logger.debug(f"Fractional split dict: {fractional_split_dict}")
+
+        fractional_split = pd.Series(fractional_split_dict)
+
+        logger.debug(f"Fractional split: {fractional_split}") 
+
+        uniform_split = np.full(fractional_split.shape, 1.0 / len(self.detailed_versions))
+
+        logger.debug(f"Uniform split: {uniform_split}")
+
+        # exploration traffic fraction
+        etf = AdvancedParameters.exploration_traffic_percentage / 100.0 
+        mix_split = (uniform_split * etf) + (fractional_split * (1 - etf))
+
+        logger.debug(f"Mix split: {mix_split}")
+
+        # round the mix split so that it sums up to 100
+        integral_split_gen = gen_round(mix_split * 100, 100)
+        for key in probabilityDistribution: # version
+            self.traffic_split["exp3"][key] = next(integral_split_gen)
+ 
+
+
 
     def create_top_k_recommendation(self, k, utilities, lts_index = -1):
         """
@@ -357,6 +440,7 @@ class Experiment():
         fractional_split = low_rank.sum() / low_rank.sum().sum()
 
         logger.debug(f"Fractional split: {fractional_split}")
+        # logger.debug(f"Fractional split type: {type(fractional_split)}")
 
         uniform_split = np.full(fractional_split.shape, 1.0 / len(self.detailed_versions))
 
@@ -385,7 +469,7 @@ class Experiment():
             old_split = {
                 x: {
                     y: 0 for y in self.detailed_versions
-                } for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform, TrafficSplitStrategy.top_1_lts, TrafficSplitStrategy.top_2_lts]
+                } for x in [TrafficSplitStrategy.progressive, TrafficSplitStrategy.top_2, TrafficSplitStrategy.uniform, TrafficSplitStrategy.top_1_lts, TrafficSplitStrategy.top_2_lts, TrafficSplitStrategy.exp3]
             }
             for x in old_split:
                 old_split[x][self.detailed_baseline_version.id] = 100

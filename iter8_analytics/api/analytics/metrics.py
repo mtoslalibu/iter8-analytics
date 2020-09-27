@@ -35,7 +35,8 @@ def new_ratio_max_min(metric_id_to_list_of_values: Dict[iter8id, Iterable[float]
     max_min_lists = {
         metric_id: [None, None] for metric_id in metric_id_to_list_of_values
     }
-
+    logger.debug("mert metricid")
+    logger.debug(metric_id_to_list_of_values)
     for metric_id in metric_id_to_list_of_values:
         try:
             max_min_lists[metric_id][0], max_min_lists[metric_id][1] = min(metric_id_to_list_of_values[metric_id]), max(metric_id_to_list_of_values[metric_id])
