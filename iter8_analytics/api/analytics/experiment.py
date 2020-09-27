@@ -342,10 +342,7 @@ class Experiment():
         self.apply_max_increment()
 
     def create_exp3_recommendation(self):
-        # init weights = [1.0] * numActions
-        # NEED: WEIGHTS, 
-        # REQ COUNT FROM self.new_counter_metrics, 
-        # REWARD = self.new_ratio_metrics VALUES FROM PREVIOUS ITERATION
+        # init weights = [1.0] * numActions # REQ COUNT FROM self.new_counter_metrics,  REWARD = self.new_ratio_metrics VALUES FROM PREVIOUS ITERATION
         # CALCULATE EFFECTIVE REWARD  self.eip.criteria HAS THE CONSTRAINTS
         self.traffic_split["exp3"] = {}
         logger.debug(f"Exp3 split")
@@ -374,10 +371,20 @@ class Experiment():
             logger.debug(f"req count {self.new_counter_metrics[choice][ITER8_REQUEST_COUNT].value}")
             if self.new_counter_metrics[choice][ITER8_REQUEST_COUNT].value > 0:
                 theReward = self.new_ratio_metrics[choice][self.reward_metric_id].value
-                logger.debug(f"Reward {theReward} ")
+
+                ### check constraint below: if constraint is not satisfied, decrease reward
+                for cri in self.eip.criteria:
+                    if not (cri.is_reward) and cri.threshold != None:
+                        if self.ratio_metric_specs[cri.metric_id].preferred_direction == DirectionEnum.lower and self.new_ratio_metrics[choice][cri.metric_id].value >= cri.threshold.value:
+                            theReward = 0
+                        elif self.ratio_metric_specs[cri.metric_id].preferred_direction == DirectionEnum.higher and self.new_ratio_metrics[choice][cri.metric_id].value <= cri.threshold.value:
+                            theReward = 0
+                logger.debug(f"Choice: {choice}, Reward {theReward} ")
                 estimatedReward = 1.0 * theReward / probabilityDistribution[choice]
-                gamma = 0.07
+                gamma = 0.01
                 self.exp3_weights[choice] *= math.exp(estimatedReward * gamma / len(self.exp3_weights)) # important that we use estimated reward here!
+                # constrained exp3 self.eip.criteria
+        logger.debug(f"Criteria: {self.eip.criteria}")
 
         # a = {k: v / total for total in (sum(a.itervalues(), 0.0),) for k, v in a.iteritems()}
         logger.debug(f"Weights now: {self.exp3_weights}")
