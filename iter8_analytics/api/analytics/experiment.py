@@ -367,6 +367,10 @@ class Experiment():
         logger.debug(f"counter metrics: {self.new_counter_metrics}")
         logger.debug(f"ratio metrics: {self.new_ratio_metrics}")
         
+        gamma = self.eip.traffic_control.gamma
+
+        logger.debug(f"Gamma for exp3: {gamma}")
+
         for choice in probabilityDistribution:
             logger.debug(f"req count {self.new_counter_metrics[choice][ITER8_REQUEST_COUNT].value}")
             if self.new_counter_metrics[choice][ITER8_REQUEST_COUNT].value > 0:
@@ -381,7 +385,7 @@ class Experiment():
                             theReward = 0
                 logger.debug(f"Choice: {choice}, Reward {theReward} ")
                 estimatedReward = 1.0 * theReward / probabilityDistribution[choice]
-                gamma = 0.01
+                # gamma = 0.01
                 self.exp3_weights[choice] *= math.exp(estimatedReward * gamma / len(self.exp3_weights)) # important that we use estimated reward here!
                 # constrained exp3 self.eip.criteria
         logger.debug(f"Criteria: {self.eip.criteria}")

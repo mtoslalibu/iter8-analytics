@@ -81,6 +81,7 @@ class TrafficControl(BaseModel): # parameters pertaining to traffic control
         2.0, description="Maximum possible increment in a candidate's traffic during the initial phase of the experiment", ge=0.0, le=100.0)
     strategy: TrafficSplitStrategy = Field(TrafficSplitStrategy.progressive, description = "Traffic split algorithm to use during the experiment")
     amplification: float = Field(10, description="Tunable parameter to enable logistic formulation with hard or soft constraints", ge=0.0)
+    gamma: float = Field(0.07, description="Tunable parameter to enable exp3 for quick responses", ge=0.0)
 
 class StatusEnum(str, Enum):
     all_ok = "all_ok"
@@ -150,7 +151,7 @@ class ExperimentIterationParameters(BaseModel):
     criteria: Sequence[Criterion] = Field(
         ..., description="Criteria to be assessed for each version in this experiment")
     traffic_control: TrafficControl = Field(TrafficControl(
-        max_increment = 2.0, strategy = TrafficSplitStrategy.progressive, amplification = 10.0
+        max_increment = 2.0, strategy = TrafficSplitStrategy.progressive, amplification = 10.0, gamma = 0.07
     ), description = "Traffic control parameters") # default traffic control
     last_state: LastState = Field(
         None, description="Last recorded state from analytics service")
@@ -258,5 +259,5 @@ class Iter8AssessmentAndRecommendation(BaseModel):
 class AdvancedParameters:
     exploration_traffic_percentage = 5.0 # 5% of traffic always used for exploration
     posterior_probability_for_credible_intervals = 0.95
-    min_posterior_probability_for_winner = 0.99 # no winner until iter8 is 99% confident
+    min_posterior_probability_for_winner = 0.95 # no winner until iter8 is 99% confident
     variance_boost_factor = 1.0 # a higher value of this factor encourages greater exploration
