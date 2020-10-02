@@ -86,7 +86,8 @@ class DetailedCriterion():
             logger.debug(f"No threshold for {ms.id} for {self.detailed_version.id}")
             logger.debug("Returning ones")
             return np.ones((Belief.sample_size, )).astype(np.float)
-        else: 
+        else:
+            logger.debug("LTS amplification factor should reveal") 
             if self.threshold_assessment is None: 
                 return np.zeros((Belief.sample_size, )).astype(np.float)
 

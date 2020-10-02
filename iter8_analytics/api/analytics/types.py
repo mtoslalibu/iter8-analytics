@@ -82,6 +82,7 @@ class TrafficControl(BaseModel): # parameters pertaining to traffic control
     strategy: TrafficSplitStrategy = Field(TrafficSplitStrategy.progressive, description = "Traffic split algorithm to use during the experiment")
     amplification: float = Field(10, description="Tunable parameter to enable logistic formulation with hard or soft constraints", ge=0.0)
     gamma: float = Field(0.07, description="Tunable parameter to enable exp3 for quick responses", ge=0.0)
+    posterior: float = Field(0.95, description="Minimum posterior probability for winner", ge=0.0,le=1.1)
 
 class StatusEnum(str, Enum):
     all_ok = "all_ok"

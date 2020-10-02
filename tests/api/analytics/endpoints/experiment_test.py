@@ -4,6 +4,7 @@ import logging
 from datetime import datetime,timezone
 import json
 from pprint import pformat
+import time
 
 # python libraries
 import requests_mock
@@ -148,7 +149,19 @@ class TestExperiment:
             eip = ExperimentIterationParameters(** eip_with_percentile)
             eip.start_time = datetime.now(timezone.utc)
             exp = Experiment(eip)
-            exp.run()
+            # print("mert")
+            # time this run
+            # increase number of versions by changing version in 1) eipwithpercentile 2) sample response
+            # logger.info(f"mert:{time.time()}")
+            current_time = time.time()
+            for i in range(10):
+                exp.run()
+            finished = time.time()
+            f = open("demofile2.txt", "a")
+            f.write(f"{finished-current_time}")
+            f.close()
+
+            # logger.info(f"mert:{time.time()}")
 
 
 class TestDetailedVersion:
@@ -204,6 +217,7 @@ class TestAssessmentsAndLastState:
             }
             eip = ExperimentIterationParameters(** eip_with_relative)
             exp = Experiment(eip)
+            
             res = exp.run()
             for c in res.candidate_assessments:
                 if c.id == 'productpage-v3':

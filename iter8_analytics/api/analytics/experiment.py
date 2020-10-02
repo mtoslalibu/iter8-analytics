@@ -360,16 +360,16 @@ class Experiment():
 
         logger.debug(f"Weights now:{self.exp3_weights}, with len:{len(self.exp3_weights)}")
 
-        
-        probabilityDistribution = distr(self.exp3_weights, 0.1)
+        gamma = self.eip.traffic_control.gamma
+        logger.debug(f"Gamma for exp3: {gamma}")
+
+        probabilityDistribution = distr(self.exp3_weights, gamma)
         logger.debug(f"probability dist: {probabilityDistribution}")
         #theReward = reward(choice, t) # RATIO METRICS 
         logger.debug(f"counter metrics: {self.new_counter_metrics}")
         logger.debug(f"ratio metrics: {self.new_ratio_metrics}")
         
-        gamma = self.eip.traffic_control.gamma
 
-        logger.debug(f"Gamma for exp3: {gamma}")
 
         for choice in probabilityDistribution:
             logger.debug(f"req count {self.new_counter_metrics[choice][ITER8_REQUEST_COUNT].value}")
@@ -535,7 +535,15 @@ class Experiment():
         current_best_version = self.win_probababilities.index[np.argmax(self.win_probababilities)]
         probability_of_winning_for_best_version = self.win_probababilities[current_best_version]
 
-        if probability_of_winning_for_best_version > AdvancedParameters.min_posterior_probability_for_winner:
+        ## get min posterior probability from eip
+        if self.eip.traffic_control.posterior:
+            min_posterior_probability_for_winner = self.eip.traffic_control.posterior
+        else:
+            min_posterior_probability_for_winner = AdvancedParameters.min_posterior_probability_for_winner
+
+        logger.debug(f"Minumum posterior probability: {min_posterior_probability_for_winner}")
+
+        if probability_of_winning_for_best_version > min_posterior_probability_for_winner:
             wvf = True
 
         wa = WinnerAssessment(
